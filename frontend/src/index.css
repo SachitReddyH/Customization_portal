@@ -1,0 +1,379 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --accent: #F05E3E;
+  --dark: #333333;
+  --white: #FFFFFF;
+  --font-body: 'Montserrat', sans-serif;
+  --font-display: 'Montserrat', serif;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--dark);
+  background: var(--white);
+  overflow-x: hidden;
+}
+
+/* ══════════════════════════════════════════════════
+   LANDING PAGE — split layout
+══════════════════════════════════════════════════ */
+.landing-split {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* ── Left panel ──────────────────────────────────── */
+.landing-left {
+  position: relative;
+  flex: 1 1 58%;
+  /*
+    ── SWAP HERO IMAGE HERE ──────────────────────────
+    Replace url('/villa_pic.png') with your actual image path.
+    e.g. background-image: url('/your-hero.jpg');
+  */
+  background-image: url('/villa_pic.png');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-left-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+}
+
+/* Navbar inside left panel */
+.navbar-split {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  height: 72px;
+  flex-shrink: 0;
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  text-decoration: none;
+}
+.navbar-logo-text {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--white);
+  letter-spacing: 0.06em;
+}
+.navbar-logo-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-left: 3px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+/* Hero heading — centred in remaining left space */
+.landing-hero-content {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 48px 72px;
+}
+
+.hero-heading {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4.2vw, 64px);
+  line-height: 1.15;
+  text-align: center;
+
+  /* Fade from light grey → bright white */
+  animation: heroFadeWhite 3s ease-out 0.4s both;
+}
+
+@keyframes heroFadeWhite {
+  0%   { color: #9a9a9a; opacity: 0; }
+  /* 60%  { color: #d8d8d8; opacity: 0.85; } */
+  100% { color: #ffffff; opacity: 1; }
+}
+
+/* ── Right panel ─────────────────────────────────── */
+.landing-right {
+  flex: 0 0 42%;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 40px;
+}
+
+.login-panel {
+  width: 100%;
+  max-width: 380px;
+}
+
+.login-title {
+  font-family: var(--font-display);
+  font-size: 34px;
+  color: var(--dark);
+  margin-bottom: 8px;
+}
+
+.login-subtitle {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 36px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* ── Shared form styles ──────────────────────────── */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.modal-field label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #888;
+  text-transform: uppercase;
+}
+.modal-field input {
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 13px 14px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s;
+  color: var(--dark);
+}
+.modal-field input:focus { border-color: var(--accent); }
+
+.btn-submit {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--white);
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  width: 100%;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: opacity 0.2s;
+  letter-spacing: 0.02em;
+}
+.btn-submit:hover { opacity: 0.88; }
+.btn-submit:disabled { opacity: 0.65; cursor: not-allowed; }
+
+.modal-footer {
+  margin-top: 22px;
+  text-align: center;
+  font-size: 13px;
+  color: #888;
+}
+.modal-footer a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+.modal-error {
+  font-size: 13px;
+  color: #e53e3e;
+}
+
+
+/* ══════════════════════════════════════════════════
+   PAGE 2 — CUSTOMISATION HUB
+══════════════════════════════════════════════════ */
+.hub-page {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.hub-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.hub-video-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.55);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+.hub-video-overlay.active { opacity: 1; }
+
+/* ── Hub hero — centred text + CTA ──────────────────── */
+.hub-hero {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 6vh;        /* sit slightly below true centre */
+  gap: 36px;
+  transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.5s ease;
+  pointer-events: all;
+}
+
+.hub-hero.exit {
+  transform: translateY(-110vh);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hub-hero-heading {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(40px, 7vw, 100px);
+  line-height: 1.08;
+  text-align: center;
+  letter-spacing: 0.02em;
+  animation: heroFadeWhite 3s ease-out 2s both;
+}
+
+.hub-cta-btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white);
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  border-radius: 6px;
+  padding: 13px 40px;
+  cursor: pointer;
+  transition: background 0.22s ease, border-color 0.22s ease;
+  animation: heroBtnFade 0.6s ease 2.5s both;
+}
+.hub-cta-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--white);
+}
+
+@keyframes heroBtnFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Category cards ──────────────────────────────── */
+.categories-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  padding: 0 40px;
+}
+
+.categories-grid {
+  width: min(960px, 90vw);
+  pointer-events: all;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: center;
+}
+
+.cards-row {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  width: 100%;
+}
+
+.card {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 24px 22px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+  /* start below the viewport */
+  transform: translateY(100vh);
+  transition: box-shadow 0.25s ease,
+              transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.card.visible { transform: translateY(0); }
+.card:hover {
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22);
+  transform: translateY(-6px) !important;
+}
+
+.card-icon {
+  font-size: 28px;
+  margin-bottom: 14px;
+  display: block;
+}
+.card-name {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--dark);
+  margin-bottom: 10px;
+  position: relative;
+  padding-bottom: 10px;
+}
+.card-name::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 32px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.card-tagline {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.55;
+}

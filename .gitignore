@@ -1,0 +1,52 @@
+# ── Python / Backend ─────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+ENV/
+
+# ── Environment / Secrets ────────────────────────
+.env
+*.env
+.env.local
+.env.*.local
+
+# ── Node / Frontend ──────────────────────────────
+node_modules/
+frontend/dist/
+frontend/build/
+frontend/.vite/
+*.tsbuildinfo
+
+# ── OS ───────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE ──────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Large media (>100MB, not tracked by git) ─────
+*.mp4
+*.mov
+*.avi
+
+# ── Temp / logs ──────────────────────────────────
+*.log
+*.tmp
+~$*
+
+# ── Excel temp files ─────────────────────────────
+~$*.xlsx
