@@ -38,8 +38,7 @@ desktop.ini
 *.swp
 *.swo
 
-# ── Large media (>100MB, not tracked by git) ─────
-*.mp4
+# ── Large media — tracked via Git LFS instead ────
 *.mov
 *.avi
 
