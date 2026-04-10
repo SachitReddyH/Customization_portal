@@ -47,10 +47,10 @@ export default function CustomisationHub() {
 
   return (
     <div className="hub-page">
-      {/* ── Background video — served from backend static so it works on Vercel ── */}
+      {/* ── Background video ── */}
       <video
         className="hub-video"
-        src={`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/static/villa_banner.mp4`}
+        src="/villa_banner.mp4"
         autoPlay
         muted
         loop
