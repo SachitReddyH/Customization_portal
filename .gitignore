@@ -43,6 +43,12 @@ desktop.ini
 *.mov
 *.avi
 
+# ── Floor package source images (serving copies are in backend/static/) ──
+floorpackageimages/
+
+# ── Claude Code local settings ───────────────────
+.claude/
+
 # ── Temp / logs ──────────────────────────────────
 *.log
 *.tmp
