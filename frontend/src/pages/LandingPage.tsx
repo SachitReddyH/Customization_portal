@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { login } from '../services/api'
 
 export default function LandingPage() {
   const navigate = useNavigate()
@@ -8,6 +9,8 @@ export default function LandingPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // No auto-redirect — always show the login form so the browser back button works naturally
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10)
@@ -18,15 +21,20 @@ export default function LandingPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!email || !password) {
-      setError('Please enter your email and password.')
-      return
-    }
+    if (!email || !password) { setError('Please enter your email and password.'); return }
     setLoading(true)
-    // TODO: Replace with real API call → POST /auth/login
-    await new Promise(r => setTimeout(r, 600))
-    setLoading(false)
-    navigate('/hub')
+    try {
+      const data = await login(email, password)
+      localStorage.setItem('access_token', data.access_token)
+      localStorage.setItem('refresh_token', data.refresh_token)
+      localStorage.setItem('user_role', data.role)
+      localStorage.setItem('user_name', data.full_name)
+      navigate(data.role === 'admin' ? '/admin' : '/hub')
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Invalid email or password.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

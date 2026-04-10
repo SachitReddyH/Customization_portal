@@ -54,36 +54,36 @@ async def get_options_direct(
 
 @router.get("/{category_id}/floors")
 async def get_floors(category_id: str, user=Depends(get_current_user)):
-    """Returns distinct floors that have options for this category."""
+    """Returns distinct floors that have at least one upgradeable option."""
     if category_id not in ROOM_BASED_CATS:
         raise HTTPException(status_code=400, detail="This category does not use room-based navigation")
 
     db = get_db()
-    # For flooring individual options and all bathroom options
     sub = "individual" if category_id == "CAT002" else None
-    query: dict = {"category_id": category_id, "is_active": True}
+    query: dict = {"category_id": category_id, "is_active": True, "has_upgrade": True}
     if sub:
         query["sub_section"] = sub
 
     floors = await db.customization_options.distinct("floor", query)
 
-    # Order by floor
-    floor_order = {"Ground Floor": 1, "First Floor": 2, "Second Floor": 3, "All Floors": 4}
-    floors = sorted([f for f in floors if f], key=lambda x: floor_order.get(x, 99))
-    return {"floors": floors}
+    # Order by floor, exclude non-floor pseudo-values
+    floor_order = {"Ground Floor": 1, "First Floor": 2, "Second Floor": 3}
+    valid = [f for f in floors if f and f in floor_order]
+    return {"floors": sorted(valid, key=lambda x: floor_order[x])}
 
 
 @router.get("/{category_id}/floors/{floor}/rooms")
 async def get_rooms_in_floor(
     category_id: str, floor: str, user=Depends(get_current_user)
 ):
-    """Returns distinct rooms within a floor for this category."""
+    """Returns distinct rooms within a floor that have at least one upgradeable option."""
     if category_id not in ROOM_BASED_CATS:
         raise HTTPException(status_code=400, detail="This category does not use room-based navigation")
 
     db = get_db()
     sub = "individual" if category_id == "CAT002" else None
-    query: dict = {"category_id": category_id, "floor": floor, "is_active": True}
+    # Only include rooms that have at least one upgradeable option
+    query: dict = {"category_id": category_id, "floor": floor, "is_active": True, "has_upgrade": True}
     if sub:
         query["sub_section"] = sub
 
@@ -93,8 +93,8 @@ async def get_rooms_in_floor(
     )
     opts = await cursor.to_list(length=None)
 
-    # Deduplicate by location_id
-    seen = {}
+    # Deduplicate by location_id, preserving first-seen order
+    seen: dict = {}
     for o in opts:
         loc = o.get("location_id")
         if loc and loc not in seen:

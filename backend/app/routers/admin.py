@@ -111,15 +111,28 @@ async def get_customer_selections(customer_id: str, user=Depends(require_admin))
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
 
-    selections = await db.customer_selections.find_one({"customer_id": ObjectId(customer_id)})
-    if not selections:
-        return {"customer": customer["full_name"], "selections": [], "status": "not_started"}
+    # Always return a consistent customer object
+    customer_info = {
+        "id": str(customer["_id"]),
+        "full_name": customer["full_name"],
+        "email": customer["email"],
+        "phone": customer.get("phone"),
+        "villa_id": str(customer["villa_id"]) if customer.get("villa_id") else None,
+    }
 
-    selections["id"] = str(selections["_id"])
-    selections["customer_id"] = str(selections["customer_id"])
-    if selections.get("villa_id"):
-        selections["villa_id"] = str(selections["villa_id"])
-    return selections
+    selections_doc = await db.customer_selections.find_one({"customer_id": ObjectId(customer_id)})
+    if not selections_doc:
+        return {
+            "customer": customer_info,
+            "selections": [],
+            "status": "not_started",
+        }
+
+    return {
+        "customer": customer_info,
+        "selections": selections_doc.get("selections", []),
+        "status": selections_doc.get("status", "in_progress"),
+    }
 
 
 # ── Options Management ─────────────────────────────────────────────────────

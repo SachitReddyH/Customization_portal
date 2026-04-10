@@ -13,12 +13,14 @@ class QuoteRequestResponse(BaseModel):
     villa_id: Optional[str] = None
     customer_name: Optional[str] = None
     villa_name: Optional[str] = None
-    status: str                             # pending | reviewed | quoted | accepted
+    status: str                             # pending | reviewed | quoted | accepted | rejected
+    notification_type: Optional[str] = None # new | updated | None (None = seen by admin)
     customer_notes: Optional[str] = None
     admin_notes: Optional[str] = None
     quoted_price: Optional[float] = None
-    selection_snapshot: Optional[dict] = None
+    selection_snapshot: Optional[List[dict]] = None
     requested_at: datetime
+    updated_at: Optional[datetime] = None   # set when customer updates an existing request
     reviewed_at: Optional[datetime] = None
     reviewed_by: Optional[str] = None
 

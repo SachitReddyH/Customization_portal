@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutGrid, Layers, Bath, ArrowUpSquare,
-  Leaf, Wifi, Wind, Tv2,
+  Leaf, Wifi, Wind, Tv2, LogOut,
 } from 'lucide-react'
 
 const CATEGORIES = [
@@ -22,8 +23,12 @@ const ROWS = [
 ]
 
 export default function CustomisationHub() {
-  const [expanded, setExpanded] = useState(false)
-  const [settled, setSettled] = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
+  // If coming back from a category page, jump straight to cards
+  const returnedFromCategory = (location.state as any)?.showCards === true
+  const [expanded, setExpanded] = useState(returnedFromCategory)
+  const [settled, setSettled] = useState(returnedFromCategory)
 
   const handleCustomise = () => {
     if (!expanded) {
@@ -31,6 +36,13 @@ export default function CustomisationHub() {
       // Last card finishes at: 7 cards × 60ms stagger + 550ms slide duration
       setTimeout(() => setSettled(true), 7 * 60 + 600)
     }
+  }
+
+  const userName = localStorage.getItem('user_name') ?? ''
+
+  const handleLogout = () => {
+    localStorage.clear()
+    navigate('/')
   }
 
   return (
@@ -47,6 +59,15 @@ export default function CustomisationHub() {
 
       {/* White frosted overlay */}
       <div className={`hub-video-overlay ${expanded ? 'active' : ''}`} />
+
+      {/* ── Top-right: user + logout ── */}
+      <div className={`hub-topbar ${expanded ? 'hub-topbar--dark' : ''}`}>
+        <span className="hub-topbar-name">{userName}</span>
+        <button className="hub-topbar-logout" onClick={handleLogout} title="Log out">
+          <LogOut size={15} />
+          <span>Logout</span>
+        </button>
+      </div>
 
       {/* ── Hero text + CTA — slides out upward on expand ── */}
       <div className={`hub-hero ${expanded ? 'exit' : ''}`}>
@@ -73,7 +94,7 @@ export default function CustomisationHub() {
                     style={{
                       transitionDelay: settled ? '0ms' : expanded ? `${globalIdx * 60}ms` : '0ms',
                     }}
-                    onClick={() => console.log('Selected:', cat.id)}
+                    onClick={() => navigate(`/category/${cat.id}`)}
                   >
                     <span className="card-icon">
                       <Icon size={26} strokeWidth={1.5} color="#F05E3E" />

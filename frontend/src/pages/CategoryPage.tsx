@@ -1,0 +1,847 @@
+import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { ArrowLeft, X, ChevronDown, ChevronRight, ShoppingCart } from 'lucide-react'
+import {
+  getCategory, getCategories, getFloors, getRooms, getRoomOptions,
+  getDirectOptions, getFlooringPackages,
+  getMyVilla, getMySelections, upsertSelection, removeSelection,
+  getMyQuotes, requestQuote,
+  BASE,
+} from '../services/api'
+
+/* ── Types ──────────────────────────────────────── */
+interface Option {
+  id: string
+  option_id: string
+  category_id: string
+  sub_section?: string
+  location_id?: string
+  floor?: string
+  space?: string
+  room_code?: string
+  rooms_covered?: { location_id: string; floor: string; space: string; room_code: string; standard_spec: string; upgrade_spec: string; has_upgrade: boolean }[]
+  option_name?: string
+  standard_spec?: string
+  upgrade_spec?: string
+  has_upgrade: boolean
+  price_inr?: number
+  price_status: string
+  price_unit?: string
+  package_tier?: string
+  description?: string
+  detailed_spec?: string
+  images: { standard?: string; upgrade?: string }
+  option_type?: string
+}
+
+interface SelectionItem {
+  option_id: string
+  category_id: string
+  sub_section?: string
+  location_id?: string
+  selection_type: 'standard' | 'upgrade'
+}
+
+interface Room { location_id: string; floor: string; space: string; room_code: string }
+
+/* ── Constants ──────────────────────────────────── */
+const ROOM_BASED = ['CAT002', 'CAT003']
+const FLOOR_SUFFIX: Record<string, string> = {
+  'Ground Floor': 'gf', 'First Floor': 'ff', 'Second Floor': 'sf',
+}
+const SUB_SECTIONS: Record<string, { id: string; label: string }[]> = {
+  CAT002: [{ id: 'package', label: 'Packages' }, { id: 'individual', label: 'Room Upgrades' }],
+  CAT003: [{ id: 'sanitaryware', label: 'Sanitaryware' }, { id: 'cp_fittings', label: 'CP Fittings' }],
+}
+
+// Package floor-plan images served from backend static folder
+const PACKAGE_IMAGES: Record<string, string> = {
+  'OPT-FP-001': `${BASE}/static/package_images/OPT-FP-001.png`,
+  'OPT-FP-002': `${BASE}/static/package_images/OPT-FP-002.png`,
+  'OPT-FP-004': `${BASE}/static/package_images/OPT-FP-004.png`,
+}
+
+/* ── Price helper ───────────────────────────────── */
+const formatPrice = (opt: Option) => {
+  if (opt.price_status === 'fixed' && opt.price_inr)
+    return `₹${opt.price_inr.toLocaleString('en-IN')}`
+  if (opt.price_status === 'on_request') return 'Price on Request'
+  return 'TBD'
+}
+
+/* ── Floor plan URL helper ──────────────────────── */
+const floorPlanUrl = (villa: any, floor: string) => {
+  if (!villa) return null
+  const t = villa.villa_type?.toLowerCase().replace(' ', '') // 'type1'
+  const f = villa.facing?.toLowerCase()                      // 'east'/'west'
+  const suffix = FLOOR_SUFFIX[floor]
+  if (!t || !f || !suffix) return null
+  const key = `${t}_${f}`                                    // 'type1_east'
+  const valid = ['type1_east', 'type2_west']
+  if (!valid.includes(key)) return null
+  return `${BASE}/static/floor_plans/${key}_${suffix}.png`
+}
+
+/* ══════════════════════════════════════════════════
+   MAIN COMPONENT
+══════════════════════════════════════════════════ */
+export default function CategoryPage() {
+  const { categoryId } = useParams<{ categoryId: string }>()
+  const navigate = useNavigate()
+
+  const [category, setCategory] = useState<any>(null)
+  const [villa, setVilla] = useState<any>(null)
+
+  // Floor / room nav state
+  const [floors, setFloors] = useState<string[]>([])
+  const [floorsLoading, setFloorsLoading] = useState(false)
+  const [floorsError, setFloorsError] = useState(false)
+  const [roomsByFloor, setRoomsByFloor] = useState<Record<string, Room[]>>({})
+  const [expandedFloors, setExpandedFloors] = useState<Set<string>>(new Set())
+  const [selectedFloor, setSelectedFloor] = useState<string>('')
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
+
+  // Sub-section tabs
+  const tabs = SUB_SECTIONS[categoryId!] ?? []
+  const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? '')
+
+  // Options
+  const [options, setOptions] = useState<Option[]>([])
+  const [optionsLoading, setOptionsLoading] = useState(false)
+
+  // Selections (cart)
+  const [selections, setSelections] = useState<SelectionItem[]>([])
+  // Local map option_id → option (for cart display)
+  const [optionMap, setOptionMap] = useState<Record<string, Option>>({})
+  // Category id → display name (for cart grouping)
+  const [categoryNames, setCategoryNames] = useState<Record<string, string>>({})
+
+  // Floor plan lightbox
+  const [lightboxUrl, setLightboxUrl] = useState('')
+
+  // Quote request
+  const [pendingQuote, setPendingQuote] = useState<any>(null)   // the pending quote object
+  const [quoteModalOpen, setQuoteModalOpen] = useState(false)
+  const [quoteModalMode, setQuoteModalMode] = useState<'new' | 'update'>('new')
+  const [quoteNotes, setQuoteNotes] = useState('')
+  const [quoteSubmitting, setQuoteSubmitting] = useState(false)
+  const [quoteJustActed, setQuoteJustActed] = useState(false)   // show inline success flash
+  const [quoteError, setQuoteError] = useState('')
+
+  const isRoomBased = ROOM_BASED.includes(categoryId!)
+  const isPackageTab = activeTab === 'package'
+
+  // Map of location_id → package name for rooms covered by a selected package
+  const packageCoveredRooms = useMemo<Record<string, string>>(() => {
+    const covered: Record<string, string> = {}
+    const pkgSel = selections.find(s => s.category_id === 'CAT002' && s.sub_section === 'package')
+    if (!pkgSel) return covered
+    const pkgOpt = optionMap[pkgSel.option_id]
+    if (!pkgOpt?.rooms_covered) return covered
+    const pkgName = pkgOpt.option_name ?? pkgOpt.description ?? 'Selected Package'
+    pkgOpt.rooms_covered.forEach(r => { covered[r.location_id] = pkgName })
+    return covered
+  }, [selections, optionMap])
+
+  /* ── Load floors (also used for retry) ─────────── */
+  const loadFloors = useCallback(async (catId: string) => {
+    setFloorsLoading(true)
+    setFloorsError(false)
+    try {
+      const d = await getFloors(catId)
+      const floorList = d.floors ?? []
+      setFloors(floorList)
+      if (floorList.length) {
+        setSelectedFloor(floorList[0])
+        setExpandedFloors(new Set([floorList[0]]))
+      }
+    } catch (e) {
+      console.error('Failed to load floors:', e)
+      setFloorsError(true)
+    } finally {
+      setFloorsLoading(false)
+    }
+  }, [])
+
+  /* ── Initial loads ─────────────────────────────── */
+  useEffect(() => {
+    if (!categoryId) return
+    getCategory(categoryId).then(setCategory).catch(console.error)
+    getMyVilla().then(villas => setVilla(villas[0] ?? null)).catch(console.error)
+    getMyQuotes().then((qs: any[]) => {
+      const pq = qs.find((q: any) => q.status === 'pending')
+      setPendingQuote(pq ?? null)
+    }).catch(console.error)
+
+    // Fetch categories → build name map for cart grouping
+    getCategories().then((cats: any[]) => {
+      const map: Record<string, string> = {}
+      cats.forEach(c => { map[c.category_id] = c.name })
+      setCategoryNames(map)
+    }).catch(console.error)
+
+    // Fetch all selections; then pre-load options for every category in the cart
+    getMySelections().then(async d => {
+      const sels: SelectionItem[] = d.selections ?? []
+      setSelections(sels)
+
+      // Unique category_ids that appear in selections (to populate optionMap for cart names)
+      const catIds = Array.from(new Set(sels.map((s: SelectionItem) => s.category_id)))
+      catIds.forEach(async (cid: string) => {
+        try {
+          const opts: Option[] = await getDirectOptions(cid)
+          setOptionMap(prev => {
+            const next = { ...prev }
+            opts.forEach(o => { next[o.option_id] = o })
+            return next
+          })
+        } catch { /* silently ignore */ }
+      })
+    }).catch(console.error)
+
+    if (ROOM_BASED.includes(categoryId)) {
+      loadFloors(categoryId)
+      // Pre-load packages so rooms_covered is in optionMap even if user never clicks Packages tab
+      if (categoryId === 'CAT002') {
+        getFlooringPackages().then(pkgs => {
+          setOptionMap(prev => {
+            const next = { ...prev }
+            pkgs.forEach((p: Option) => { next[p.option_id] = p })
+            return next
+          })
+        }).catch(console.error)
+      }
+    } else {
+      loadDirectOptions(categoryId)
+    }
+  }, [categoryId, loadFloors])
+
+  /* ── Load rooms when floor expands ─────────────── */
+  const loadRooms = useCallback(async (floor: string) => {
+    if (roomsByFloor[floor]) return
+    try {
+      const d = await getRooms(categoryId!, floor)
+      setRoomsByFloor(prev => ({ ...prev, [floor]: d.rooms ?? [] }))
+      // Auto-select first room
+      if (d.rooms?.length && !selectedRoom) {
+        setSelectedRoom(d.rooms[0])
+      }
+    } catch (e) { console.error(e) }
+  }, [categoryId, roomsByFloor, selectedRoom])
+
+  useEffect(() => {
+    if (selectedFloor) loadRooms(selectedFloor)
+  }, [selectedFloor])
+
+  /* ── Load options for room ──────────────────────── */
+  useEffect(() => {
+    if (!isRoomBased || !selectedRoom || isPackageTab) return
+    setOptionsLoading(true)
+    const sub = activeTab || undefined
+    getRoomOptions(categoryId!, selectedRoom.location_id, sub)
+      .then(opts => {
+        setOptions(opts)
+        setOptionMap(prev => {
+          const next = { ...prev }
+          opts.forEach((o: Option) => { next[o.option_id] = o })
+          return next
+        })
+      })
+      .catch(console.error)
+      .finally(() => setOptionsLoading(false))
+  }, [selectedRoom, activeTab, isRoomBased, isPackageTab])
+
+  /* ── Load packages (flooring) ─────────────────── */
+  useEffect(() => {
+    if (!isPackageTab) return
+    setOptionsLoading(true)
+    getFlooringPackages()
+      .then(opts => {
+        setOptions(opts)
+        setOptionMap(prev => {
+          const next = { ...prev }
+          opts.forEach((o: Option) => { next[o.option_id] = o })
+          return next
+        })
+      })
+      .catch(console.error)
+      .finally(() => setOptionsLoading(false))
+  }, [isPackageTab])
+
+  const loadDirectOptions = async (catId: string) => {
+    setOptionsLoading(true)
+    try {
+      const opts = await getDirectOptions(catId)
+      setOptions(opts)
+      setOptionMap(prev => {
+        const next = { ...prev }
+        opts.forEach((o: Option) => { next[o.option_id] = o })
+        return next
+      })
+    } catch (e) { console.error(e) }
+    finally { setOptionsLoading(false) }
+  }
+
+  /* ── Floor sidebar interactions ─────────────────── */
+  const toggleFloor = (floor: string) => {
+    setSelectedFloor(floor)
+    setExpandedFloors(prev => {
+      const next = new Set(prev)
+      next.has(floor) ? next.delete(floor) : next.add(floor)
+      return next
+    })
+    loadRooms(floor)
+  }
+
+  const selectRoom = (room: Room) => {
+    setSelectedRoom(room)
+    setSelectedFloor(room.floor)
+  }
+
+  /* ── Tab switch ──────────────────────────────────── */
+  const switchTab = (tab: string) => {
+    setActiveTab(tab)
+    setOptions([])
+    if (tab !== 'package' && selectedRoom) return // will re-fetch via useEffect
+  }
+
+  /* ── Selection helpers ───────────────────────────── */
+  const isSelected = (optionId: string, locationId?: string, type?: string) =>
+    selections.some(s =>
+      s.option_id === optionId &&
+      (locationId ? s.location_id === locationId : true) &&
+      (type ? s.selection_type === type : true)
+    )
+
+  const getSelectionType = (optionId: string, locationId?: string) =>
+    selections.find(s => s.option_id === optionId && s.location_id === locationId)?.selection_type
+
+  const handleSelect = async (opt: Option, type: 'standard' | 'upgrade') => {
+    const alreadySelected = isSelected(opt.option_id, opt.location_id, type)
+
+    try {
+      if (alreadySelected) {
+        const updated = await removeSelection({ option_id: opt.option_id, location_id: opt.location_id })
+        setSelections(updated.selections ?? [])
+      } else {
+        const updated = await upsertSelection({
+          category_id: opt.category_id,
+          sub_section: opt.sub_section,
+          option_id: opt.option_id,
+          location_id: opt.location_id,
+          selection_type: type,
+        })
+        setSelections(updated.selections ?? [])
+      }
+    } catch (e) { console.error(e) }
+  }
+
+  const handleRemoveFromCart = async (sel: SelectionItem) => {
+    try {
+      const updated = await removeSelection({ option_id: sel.option_id, location_id: sel.location_id })
+      setSelections(updated.selections ?? [])
+    } catch (e) { console.error(e) }
+  }
+
+  const handleRequestQuote = async () => {
+    setQuoteSubmitting(true)
+    setQuoteError('')
+    try {
+      const result = await requestQuote({ customer_notes: quoteNotes.trim() || undefined })
+      setPendingQuote(result)
+      setQuoteJustActed(true)
+      setQuoteModalOpen(false)
+      setQuoteNotes('')
+      setTimeout(() => setQuoteJustActed(false), 4000)
+    } catch (e: any) {
+      setQuoteError(e.response?.data?.detail ?? 'Failed to submit. Please try again.')
+    } finally {
+      setQuoteSubmitting(false)
+    }
+  }
+
+  /* ── Render ──────────────────────────────────────── */
+  return (
+    <div className="cat-page">
+
+      {/* ── Top nav ── */}
+      <nav className="cat-nav">
+        <button className="cat-back" onClick={() => navigate('/hub', { state: { showCards: true } })}>
+          <ArrowLeft size={18} /> Back
+        </button>
+        <span className="cat-nav-title">{category?.name ?? ''}</span>
+        <span className="cat-nav-right">{localStorage.getItem('user_name') ?? ''}</span>
+      </nav>
+
+      {/* ── Content ── */}
+      <div className="cat-content">
+
+        {/* ══ LEFT — Floor sidebar (hidden on Packages tab) ══ */}
+        {isRoomBased && !isPackageTab && (
+          <aside className="floor-sidebar">
+            <p className="sidebar-heading">Floors & Rooms</p>
+
+            {floorsLoading && (
+              <p className="sidebar-status">Loading…</p>
+            )}
+
+            {!floorsLoading && floorsError && (
+              <div className="sidebar-error">
+                <p>Could not load floors</p>
+                <button onClick={() => loadFloors(categoryId!)}>Retry</button>
+              </div>
+            )}
+
+            {!floorsLoading && !floorsError && floors.length === 0 && (
+              <p className="sidebar-status">No floors found</p>
+            )}
+
+            {floors.map(floor => (
+              <div key={floor} className="floor-group">
+                <button
+                  className={`floor-item ${selectedFloor === floor ? 'active' : ''}`}
+                  onClick={() => toggleFloor(floor)}
+                >
+                  <span className="floor-label">{floor}</span>
+                  {expandedFloors.has(floor)
+                    ? <ChevronDown size={14} />
+                    : <ChevronRight size={14} />}
+                </button>
+
+                {expandedFloors.has(floor) && (
+                  <div className="room-list">
+                    {(roomsByFloor[floor] ?? []).map(room => (
+                      <button
+                        key={room.location_id}
+                        className={`room-item ${selectedRoom?.location_id === room.location_id ? 'active' : ''}`}
+                        onClick={() => selectRoom(room)}
+                      >
+                        {room.space}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </aside>
+        )}
+
+        {/* ══ MIDDLE — Options panel ══ */}
+        <main className={`options-panel ${(!isRoomBased || isPackageTab) ? 'options-panel--wide' : ''}`}>
+
+          {/* Sub-section tabs */}
+          {tabs.length > 0 && (
+            <div className="subtabs">
+              {tabs.map(t => (
+                <button
+                  key={t.id}
+                  className={`subtab ${activeTab === t.id ? 'active' : ''}`}
+                  onClick={() => switchTab(t.id)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="options-heading">
+            {isRoomBased && !isPackageTab && selectedRoom
+              ? <><span className="options-room">{selectedRoom.space}</span><span className="options-floor">{selectedRoom.floor}</span></>
+              : isPackageTab
+              ? <span className="options-room">Flooring Packages</span>
+              : <span className="options-room">{category?.name}</span>
+            }
+          </div>
+
+          {optionsLoading
+            ? <div className="options-loading">Loading…</div>
+            : (() => {
+                // For packages show all; for regular options hide anything with no upgrade
+                const visible = isPackageTab
+                  ? options
+                  : options.filter(opt => opt.has_upgrade)
+                if (visible.length === 0)
+                  return (
+                    <div className="options-empty">
+                      {isRoomBased && !isPackageTab && !selectedRoom
+                        ? 'Select a room from the left'
+                        : 'No options available'}
+                    </div>
+                  )
+                return (
+                  <div className="options-grid">
+                    {visible.map(opt => (
+                      <OptionCard
+                        key={opt.option_id + (opt.location_id ?? '')}
+                        opt={opt}
+                        selectedType={getSelectionType(opt.option_id, opt.location_id)}
+                        onSelect={handleSelect}
+                        isPackage={isPackageTab}
+                        coveredByPackage={opt.location_id ? packageCoveredRooms[opt.location_id] : undefined}
+                      />
+                    ))}
+                  </div>
+                )
+              })()
+          }
+        </main>
+
+        {/* ══ RIGHT — Floor plan + Cart ══ */}
+        <aside className="right-panel">
+
+          {/* Floor plan (room-based only, hidden on Packages tab) */}
+          {isRoomBased && !isPackageTab && (
+            <div className="floorplan-section">
+              <p className="right-section-label">Floor Plan — {selectedFloor || '–'}</p>
+              {(() => {
+                const url = floorPlanUrl(villa, selectedFloor)
+                return url
+                  ? (
+                    <div className="floorplan-img-wrap" title="Click to enlarge" onClick={() => setLightboxUrl(url)}>
+                      <img src={url} alt={`${selectedFloor} plan`} className="floorplan-img" />
+                      <span className="floorplan-zoom-hint">🔍 Click to enlarge</span>
+                    </div>
+                  )
+                  : <div className="floorplan-placeholder">Floor plan not available</div>
+              })()}
+            </div>
+          )}
+
+          {/* Cart */}
+          <div className={`cart-section ${(!isRoomBased || isPackageTab) ? 'cart-section--full' : ''}`}>
+            <div className="cart-header">
+              <ShoppingCart size={16} />
+              <span>Your Selections</span>
+              <span className="cart-count">{selections.length}</span>
+            </div>
+
+            {selections.length === 0
+              ? <p className="cart-empty">No selections yet</p>
+              : <div className="cart-list">
+                  {(() => {
+                    // Group selections by category_id
+                    const groups: Record<string, SelectionItem[]> = {}
+                    selections.forEach(s => {
+                      if (!groups[s.category_id]) groups[s.category_id] = []
+                      groups[s.category_id].push(s)
+                    })
+                    return Object.entries(groups).map(([catId, items]) => (
+                      <div key={catId} className="cart-category-group">
+                        <div className="cart-category-label">
+                          {categoryNames[catId] ?? catId}
+                        </div>
+                        {items.map((sel, i) => {
+                          const opt = optionMap[sel.option_id]
+                          const name = opt?.option_name ?? opt?.space ?? opt?.description ?? sel.option_id
+                          return (
+                            <div key={i} className="cart-item">
+                              <div className="cart-item-info">
+                                <span className="cart-item-name">{name}</span>
+                                {opt?.space && opt?.option_name && (
+                                  <span className="cart-item-room">{opt.space}</span>
+                                )}
+                                <span className={`cart-item-type ${sel.selection_type}`}>
+                                  {sel.selection_type === 'upgrade' ? 'Upgrade' : 'Standard'}
+                                </span>
+                                <span className="cart-item-price">
+                                  {opt ? formatPrice(opt) : '–'}
+                                </span>
+                              </div>
+                              <button
+                                className="cart-item-remove"
+                                onClick={() => handleRemoveFromCart(sel)}
+                              >
+                                <X size={13} />
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ))
+                  })()}
+                </div>
+            }
+
+            {/* ── Request for Quote ── */}
+            <div className="cart-quote-section">
+              {pendingQuote ? (
+                <>
+                  {/* Persistent banner — always shows while a pending quote exists */}
+                  <div className={`cart-quote-success ${quoteJustActed ? 'cart-quote-success--flash' : ''}`}>
+                    <span className="cart-quote-success-icon">✓</span>
+                    <span>
+                      {quoteJustActed && pendingQuote.notification_type === 'updated'
+                        ? <>Selections updated.<br />Admin has been notified.</>
+                        : quoteJustActed
+                        ? <>Quote request submitted.<br />Our team will be in touch soon.</>
+                        : <>Quote request pending.<br />Our team will be in touch soon.</>
+                      }
+                    </span>
+                  </div>
+                  {/* Update button — lets customer re-submit after adding new items */}
+                  {selections.length > 0 && (
+                    <button
+                      className="cart-quote-update-btn"
+                      onClick={() => { setQuoteModalMode('update'); setQuoteModalOpen(true); setQuoteError('') }}
+                    >
+                      Update my request with current selections
+                    </button>
+                  )}
+                </>
+              ) : (
+                <button
+                  className="cart-quote-btn"
+                  disabled={selections.length === 0}
+                  onClick={() => { setQuoteModalMode('new'); setQuoteModalOpen(true); setQuoteError('') }}
+                >
+                  Request for Quote
+                </button>
+              )}
+            </div>
+          </div>
+
+        </aside>
+      </div>
+
+      {/* ── Quote request modal ── */}
+      {quoteModalOpen && (
+        <div className="quote-modal-overlay" onClick={() => !quoteSubmitting && setQuoteModalOpen(false)}>
+          <div className="quote-modal" onClick={e => e.stopPropagation()}>
+            <h3 className="quote-modal-title">
+              {quoteModalMode === 'update' ? 'Update Quote Request' : 'Request for Quote'}
+            </h3>
+            <p className="quote-modal-subtitle">
+              {quoteModalMode === 'update'
+                ? `Your existing request will be updated with your current selections (${selections.length} item${selections.length !== 1 ? 's' : ''}). The admin will be notified of the change.`
+                : `Your current selections (${selections.length} item${selections.length !== 1 ? 's' : ''}) will be sent to our team. You can add an optional note below.`
+              }
+            </p>
+            <textarea
+              className="quote-modal-notes"
+              placeholder="Any special requests or questions for our team… (optional)"
+              value={quoteNotes}
+              onChange={e => setQuoteNotes(e.target.value)}
+              rows={4}
+              disabled={quoteSubmitting}
+            />
+            {quoteError && <p className="quote-modal-error">{quoteError}</p>}
+            <div className="quote-modal-actions">
+              <button
+                className="quote-modal-submit"
+                onClick={handleRequestQuote}
+                disabled={quoteSubmitting}
+              >
+                {quoteSubmitting ? 'Submitting…' : quoteModalMode === 'update' ? 'Update Request' : 'Submit Request'}
+              </button>
+              <button
+                className="quote-modal-cancel"
+                onClick={() => setQuoteModalOpen(false)}
+                disabled={quoteSubmitting}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Floor plan lightbox ── */}
+      {lightboxUrl && (
+        <div className="lightbox-overlay" onClick={() => setLightboxUrl('')}>
+          <button className="lightbox-close" onClick={() => setLightboxUrl('')}><X size={22} /></button>
+          <img
+            src={lightboxUrl}
+            alt="Floor plan"
+            className="lightbox-img"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+    </div>
+  )
+}
+
+/* ══════════════════════════════════════════════════
+   OPTION CARD
+══════════════════════════════════════════════════ */
+function OptionCard({
+  opt, selectedType, onSelect, isPackage, coveredByPackage,
+}: {
+  opt: Option
+  selectedType?: string
+  onSelect: (opt: Option, type: 'standard' | 'upgrade') => void
+  isPackage: boolean
+  coveredByPackage?: string   // package name if this room is included in a selected package
+}) {
+  if (isPackage) return <PackageCard opt={opt} selectedType={selectedType} onSelect={onSelect} />
+
+  // has_upgrade=false → filtered out before reaching here, but guard anyway
+  if (!opt.has_upgrade) return null
+
+  const hasStandard = Boolean(opt.standard_spec)
+  const upgradeOnly = !hasStandard
+
+  // ── Room is covered by a selected package ──────────────────────────────
+  if (coveredByPackage) {
+    return (
+      <div className="opt-card opt-card--pkg-covered">
+        <div className="opt-card-header">
+          <span className="opt-card-name">{opt.option_name ?? opt.space ?? opt.option_id}</span>
+          {opt.room_code && <span className="opt-card-code">{opt.room_code}</span>}
+        </div>
+        <div className="pkg-covered-banner">
+          <span className="pkg-covered-check">✓</span>
+          <span className="pkg-covered-text">
+            Included in <strong>{coveredByPackage}</strong>
+          </span>
+        </div>
+        {opt.standard_spec && (
+          <p className="pkg-covered-spec">
+            <em>Standard:</em> {opt.standard_spec}
+            {opt.upgrade_spec && <><br /><em>Upgrade:</em> {opt.upgrade_spec}</>}
+          </p>
+        )}
+        <div className="opt-price-row">
+          <span className="pkg-covered-price-note">Price included in package</span>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Normal card ────────────────────────────────────────────────────────
+  return (
+    <div className="opt-card">
+      <div className="opt-card-header">
+        <span className="opt-card-name">{opt.option_name ?? opt.space ?? opt.option_id}</span>
+        {opt.package_tier && opt.package_tier !== opt.option_name && (
+          <span className="opt-card-tier">{opt.package_tier}</span>
+        )}
+        {opt.room_code && !opt.package_tier && <span className="opt-card-code">{opt.room_code}</span>}
+      </div>
+
+      <div className={`opt-specs ${upgradeOnly ? 'opt-specs--single' : ''}`}>
+
+        {/* Standard card — only when standard_spec exists */}
+        {hasStandard && (
+          <div
+            className={`spec-card ${selectedType === 'standard' ? 'selected' : ''}`}
+            onClick={() => onSelect(opt, 'standard')}
+          >
+            <div className="spec-img-wrap">
+              <img src={opt.images?.standard ?? '/placeholder.png'} alt="standard"
+                onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80"><rect width="100" height="80" fill="%23f5f5f5"/><text x="50" y="45" text-anchor="middle" fill="%23aaa" font-size="11">Standard</text></svg>' }}
+              />
+            </div>
+            <p className="spec-label">Standard</p>
+            <p className="spec-desc">{opt.standard_spec}</p>
+            <div className={`spec-check ${selectedType === 'standard' ? 'active' : ''}`}>
+              {selectedType === 'standard' ? '✓ Selected' : 'Keep Standard'}
+            </div>
+          </div>
+        )}
+
+        {/* Upgrade card — always shown (we filtered out has_upgrade=false above) */}
+        <div
+          className={`spec-card spec-card--upgrade ${selectedType === 'upgrade' ? 'selected' : ''}`}
+          onClick={() => onSelect(opt, 'upgrade')}
+        >
+          <div className="spec-img-wrap">
+            <img src={opt.images?.upgrade ?? '/placeholder.png'} alt="upgrade"
+              onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80"><rect width="100" height="80" fill="%23fff3f0"/><text x="50" y="45" text-anchor="middle" fill="%23F05E3E" font-size="11">Upgrade</text></svg>' }}
+            />
+          </div>
+          <p className="spec-label upgrade-label">{upgradeOnly ? 'Option' : 'Upgrade'}</p>
+          <p className="spec-desc">{opt.upgrade_spec ?? opt.detailed_spec ?? opt.description ?? '–'}</p>
+          <div className={`spec-check upgrade ${selectedType === 'upgrade' ? 'active' : ''}`}>
+            {selectedType === 'upgrade' ? '✓ Selected' : upgradeOnly ? 'Select' : 'Select Upgrade'}
+          </div>
+        </div>
+      </div>
+
+      {opt.detailed_spec && <p className="opt-detail">{opt.detailed_spec}</p>}
+      <div className="opt-price-row">
+        <span className="opt-price">{formatPrice(opt)}</span>
+        {opt.price_unit && <span className="opt-unit">/ {opt.price_unit}</span>}
+      </div>
+    </div>
+  )
+}
+
+/* ── Package card (flooring packages) ─────────── */
+function PackageCard({
+  opt, selectedType, onSelect,
+}: {
+  opt: Option
+  selectedType?: string
+  onSelect: (opt: Option, type: 'standard' | 'upgrade') => void
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const imageUrl = PACKAGE_IMAGES[opt.option_id]
+
+  return (
+    <div className={`pkg-card ${selectedType ? 'selected' : ''}`}>
+
+      {/* ── Top row: name + selected badge ── */}
+      <div className="pkg-card-top">
+        <span className="pkg-name">{opt.option_name ?? opt.description}</span>
+        {selectedType && <span className="pkg-check">✓ Selected</span>}
+      </div>
+
+      {/* ── Rooms covered chips ── */}
+      {(opt.rooms_covered ?? []).length > 0 && (
+        <div className="pkg-rooms">
+          {(opt.rooms_covered ?? []).map((r, i) => (
+            <span key={i} className="pkg-room-chip">{r.space}</span>
+          ))}
+        </div>
+      )}
+
+      {/* ── Spec comparison row ── */}
+      <div className="pkg-specs">
+        <div className="pkg-spec-col">
+          <span className="pkg-spec-label">Standard</span>
+          <span className="pkg-spec-val">{opt.rooms_covered?.[0]?.standard_spec ?? '–'}</span>
+        </div>
+        <div className="pkg-arrow">→</div>
+        <div className="pkg-spec-col">
+          <span className="pkg-spec-label">Upgrade</span>
+          <span className="pkg-spec-val">{opt.rooms_covered?.[0]?.upgrade_spec ?? '–'}</span>
+        </div>
+      </div>
+
+      {/* ── Expanded floor plan image ── */}
+      {expanded && (
+        <div className="pkg-details">
+          {imageUrl
+            ? <img src={imageUrl} alt={`${opt.option_name} floor plan`} className="pkg-floorplan-img" />
+            : <div className="pkg-no-image">No floor plan available for this package</div>
+          }
+        </div>
+      )}
+
+      {/* ── Action row: price + view details + select ── */}
+      <div className="pkg-actions">
+        <span className="opt-price">{formatPrice(opt)}</span>
+
+        <div className="pkg-action-btns">
+          {imageUrl && (
+            <button
+              className="pkg-details-btn"
+              onClick={() => setExpanded(prev => !prev)}
+            >
+              {expanded ? 'Hide Details ↑' : 'View Details ↓'}
+            </button>
+          )}
+
+          <button
+            className={`pkg-select-btn ${selectedType ? 'pkg-select-btn--selected' : ''}`}
+            onClick={() => onSelect(opt, 'upgrade')}
+          >
+            {selectedType ? '✓ Selected' : 'Select Package'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}

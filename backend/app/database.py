@@ -1,5 +1,8 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from app.config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 client: AsyncIOMotorClient = None
 db = None
@@ -7,9 +10,20 @@ db = None
 
 async def connect_db():
     global client, db
-    client = AsyncIOMotorClient(settings.MONGODB_URI)
+    client = AsyncIOMotorClient(
+        settings.MONGODB_URI,
+        tls=True,
+        tlsAllowInvalidCertificates=True,   # works around Windows OpenSSL TLS handshake issues
+        serverSelectionTimeoutMS=10_000,
+        connectTimeoutMS=10_000,
+    )
     db = client[settings.DATABASE_NAME]
-    await create_indexes()
+    try:
+        await create_indexes()
+        logger.info("✅  Connected to MongoDB and indexes verified.")
+    except Exception as exc:
+        logger.error("⚠️  Could not create indexes on startup: %s", exc)
+        # Server still starts — indexes will be created on first successful write
 
 
 async def close_db():

@@ -471,6 +471,7 @@ def seed_lift_interior(db, xl):
         if not opt_id:
             continue
         price_inr, price_status = parse_price(row["Price_INR"])
+        detailed = clean(row["Detailed_Spec"])
         docs.append({
             "option_id": opt_id,
             "category_id": "CAT004",
@@ -483,19 +484,19 @@ def seed_lift_interior(db, xl):
             "option_type": None,
             "option_name": clean(row["Option_Name"]),
             "standard_spec": None,
-            "upgrade_spec": None,
-            "has_upgrade": False,
+            "upgrade_spec": detailed,          # all options are upgrades; spec goes here
+            "has_upgrade": True,               # every lift interior option is an upgrade
             "villa_type_applicable": ["All"],
             "facing_applicable": None,
             "price_inr": price_inr,
             "price_unit": clean(row["Pricing_Unit"]),
             "price_status": price_status,
             "package_tier": clean(row["Option_Name"]),  # Basic/Elite/Grandeur
-            "description": clean(row["Detailed_Spec"]),
-            "detailed_spec": clean(row["Detailed_Spec"]),
+            "description": detailed,
+            "detailed_spec": detailed,
             "images": {
-                "standard": "/static/options/placeholder/standard.png",
-                "upgrade": None,
+                "standard": None,
+                "upgrade": "/static/options/placeholder/upgrade.png",
             },
             "notes": None,
             "sort_order": i + 1,
@@ -529,6 +530,7 @@ def seed_landscape(db, xl):
         full_name = clean(row["Option_Name"])
         # Extract short name (before em dash)
         short_name = full_name.split("–")[0].split("-")[0].strip() if full_name else None
+        detailed = clean(row["Detailed_Spec"])
         docs.append({
             "option_id": opt_id,
             "category_id": "CAT005",
@@ -541,8 +543,8 @@ def seed_landscape(db, xl):
             "option_type": None,
             "option_name": short_name,
             "standard_spec": None,
-            "upgrade_spec": None,
-            "has_upgrade": False,
+            "upgrade_spec": detailed,          # all landscape options are upgrades
+            "has_upgrade": True,               # every landscape option is an upgrade
             "villa_type_applicable": ["All"],
             "facing_applicable": None,
             "price_inr": price_inr,
@@ -550,10 +552,10 @@ def seed_landscape(db, xl):
             "price_status": price_status,
             "package_tier": None,
             "description": full_name,
-            "detailed_spec": clean(row["Detailed_Spec"]),
+            "detailed_spec": detailed,
             "images": {
-                "standard": "/static/options/placeholder/standard.png",
-                "upgrade": None,
+                "standard": None,
+                "upgrade": "/static/options/placeholder/upgrade.png",
             },
             "notes": None,
             "sort_order": i + 1,
@@ -577,6 +579,7 @@ def seed_smart_home(db, xl):
             continue
         price_inr, price_status = parse_price(row["Price_INR"])
         tier = clean(row["Package_Tier"])
+        detailed = clean(row["Detailed_Spec"])
         docs.append({
             "option_id": opt_id,
             "category_id": "CAT006",
@@ -589,8 +592,8 @@ def seed_smart_home(db, xl):
             "option_type": None,
             "option_name": f"Smart Home - {tier}" if tier else clean(row["Option_Name"]),
             "standard_spec": None,
-            "upgrade_spec": None,
-            "has_upgrade": False,
+            "upgrade_spec": detailed,          # all smart home options are upgrades
+            "has_upgrade": True,               # every smart home option is an upgrade
             "villa_type_applicable": ["All"],
             "facing_applicable": None,
             "price_inr": price_inr,
@@ -598,10 +601,10 @@ def seed_smart_home(db, xl):
             "price_status": price_status,
             "package_tier": tier,
             "description": clean(row["Option_Name"]),
-            "detailed_spec": clean(row["Detailed_Spec"]),
+            "detailed_spec": detailed,
             "images": {
-                "standard": "/static/options/placeholder/standard.png",
-                "upgrade": None,
+                "standard": None,
+                "upgrade": "/static/options/placeholder/upgrade.png",
             },
             "notes": None,
             "sort_order": i + 1,
