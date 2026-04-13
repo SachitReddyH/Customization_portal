@@ -494,13 +494,42 @@ body {
 }
 
 .cat-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.cat-nav-username {
   font-family: var(--font-body);
   font-size: 12px;
   font-weight: 500;
   color: #888;
   letter-spacing: 0.05em;
-  flex-shrink: 0;
   text-transform: uppercase;
+}
+
+.cat-nav-gallery-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #666;
+  background: #f2f0ed;
+  border: 1.5px solid #e2e0dc;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.cat-nav-gallery-btn:hover {
+  background: var(--dark);
+  color: #fff;
+  border-color: var(--dark);
 }
 
 /* ── Content wrapper (columns) ───────────────────── */

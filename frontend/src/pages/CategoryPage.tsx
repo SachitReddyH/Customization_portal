@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, X, ChevronDown, ChevronRight, ShoppingCart } from 'lucide-react'
+import { ArrowLeft, X, ChevronDown, ChevronRight, ShoppingCart, Images } from 'lucide-react'
 import {
   getCategory, getCategories, getFloors, getRooms, getRoomOptions,
   getDirectOptions, getFlooringPackages,
@@ -82,6 +82,59 @@ const floorPlanUrl = (villa: any, floor: string) => {
   return `${BASE}/static/floor_plans/${key}_${suffix}.png`
 }
 
+/* ── Mock villa gallery data ─────────────────────── */
+interface MockImage { file: string; label: string }
+interface MockGroup { group: string; images: MockImage[] }
+
+const MOCK_GALLERY: MockGroup[] = [
+  {
+    group: 'Ground Floor',
+    images: [
+      { file: 'Ground Floor- Drawing Room.jpg',      label: 'Drawing Room'         },
+      { file: 'Ground Floor- DiningLiving Room.jpg',  label: 'Dining & Living Room' },
+      { file: 'Ground Floor- DiningLiving.jpg',       label: 'Dining & Living'      },
+      { file: 'Ground Floor- LivingDining.jpg',       label: 'Living & Dining'      },
+      { file: 'Ground Floor- Kitchen.jpg',            label: 'Kitchen'              },
+      { file: 'Ground Floor- Kitchen-11.jpg',         label: 'Kitchen — View 2'     },
+      { file: 'Ground Floor- Bedroom-1.jpg',          label: 'Bedroom 1'            },
+      { file: 'Ground Floor- Bedroom-1-a.jpg',        label: 'Bedroom 1 — Alt'      },
+      { file: 'Ground Floor- Deck.jpg',               label: 'Deck'                 },
+      { file: 'Ground Floor- Carpark Side Deck.jpg',  label: 'Carpark Side Deck'    },
+    ],
+  },
+  {
+    group: 'First Floor',
+    images: [
+      { file: 'First Floor_ MBR -1.jpg',             label: 'Master Bedroom'          },
+      { file: 'First Floor_ MBR -2.jpg',             label: 'Master Bedroom — View 2' },
+      { file: 'First Floor- Bedroom-2.jpg',           label: 'Bedroom 2'               },
+      { file: 'First Floor- Bedroom-2 Balcony.jpg',   label: 'Bedroom 2 — Balcony'     },
+      { file: 'First Floor- Family Lounge.jpg',       label: 'Family Lounge'           },
+    ],
+  },
+  {
+    group: 'Second Floor',
+    images: [
+      { file: 'Second Floor- Bedroom-3.jpg',           label: 'Bedroom 3'               },
+      { file: 'Second Floor- Bedroom-3- Dresser.jpg',  label: 'Bedroom 3 — Dresser'     },
+      { file: 'Second Floor- Home Theatre.jpg',        label: 'Home Theatre'            },
+      { file: 'Second Floor- Home Theatre-1.jpg',      label: 'Home Theatre — View 2'   },
+      { file: 'Second Floor- Home Theatre (1).jpg',    label: 'Home Theatre — View 3'   },
+      { file: 'Second Floor- Semi Covered Terrace.jpg',label: 'Semi Covered Terrace'    },
+    ],
+  },
+  {
+    group: 'Additional',
+    images: [
+      { file: 'Additional- Lift Cladding.jpg', label: 'Lift Cladding' },
+      { file: 'Staircase.jpg',                  label: 'Staircase'     },
+      { file: 'Villa Front Porch.jpg',           label: 'Front Porch'   },
+    ],
+  },
+]
+
+const mockImgSrc = (file: string) => `/mockvillaimages/${encodeURIComponent(file)}`
+
 /* ══════════════════════════════════════════════════
    MAIN COMPONENT
 ══════════════════════════════════════════════════ */
@@ -127,6 +180,9 @@ export default function CategoryPage() {
   const [quoteSubmitting, setQuoteSubmitting] = useState(false)
   const [quoteJustActed, setQuoteJustActed] = useState(false)   // show inline success flash
   const [quoteError, setQuoteError] = useState('')
+
+  const [galleryOpen, setGalleryOpen] = useState(false)
+  const [galleryLightbox, setGalleryLightbox] = useState<MockImage | null>(null)
 
   const isRoomBased = ROOM_BASED.includes(categoryId!)
   const isPackageTab = activeTab === 'package'
@@ -370,7 +426,17 @@ export default function CategoryPage() {
           <ArrowLeft size={18} /> Back
         </button>
         <span className="cat-nav-title">{category?.name ?? ''}</span>
-        <span className="cat-nav-right">{localStorage.getItem('user_name') ?? ''}</span>
+        <div className="cat-nav-right">
+          <button
+            className="cat-nav-gallery-btn"
+            onClick={() => setGalleryOpen(true)}
+            title="Mock Villa Images"
+          >
+            <Images size={14} />
+            <span>Mock Villa</span>
+          </button>
+          <span className="cat-nav-username">{localStorage.getItem('user_name') ?? ''}</span>
+        </div>
       </nav>
 
       {/* ── Content ── */}
@@ -655,6 +721,63 @@ export default function CategoryPage() {
             className="lightbox-img"
             onClick={e => e.stopPropagation()}
           />
+        </div>
+      )}
+
+      {/* ── Mock Villa gallery modal ── */}
+      {galleryOpen && (
+        <div className="mv-overlay" onClick={() => setGalleryOpen(false)}>
+          <div className="mv-panel" onClick={e => e.stopPropagation()}>
+            <div className="mv-header">
+              <div>
+                <h2 className="mv-title">Mock Villa</h2>
+                <p className="mv-subtitle">Reference images across all floors</p>
+              </div>
+              <button className="mv-close" onClick={() => setGalleryOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="mv-body">
+              {MOCK_GALLERY.map(section => (
+                <div key={section.group} className="mv-section">
+                  <h3 className="mv-section-title">{section.group}</h3>
+                  <div className="mv-grid">
+                    {section.images.map(img => (
+                      <div key={img.file} className="mv-item" onClick={() => setGalleryLightbox(img)}>
+                        <div className="mv-img-wrap">
+                          <img
+                            src={mockImgSrc(img.file)}
+                            alt={img.label}
+                            loading="lazy"
+                            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                          />
+                        </div>
+                        <p className="mv-label">{img.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Mock Villa lightbox ── */}
+      {galleryLightbox && (
+        <div className="mv-lightbox" onClick={() => setGalleryLightbox(null)}>
+          <button className="mv-lightbox-close" onClick={() => setGalleryLightbox(null)}>
+            <X size={24} />
+          </button>
+          <img
+            src={mockImgSrc(galleryLightbox.file)}
+            alt={galleryLightbox.label}
+            className="mv-lightbox-img"
+            onClick={e => e.stopPropagation()}
+          />
+          <p className="mv-lightbox-label" onClick={e => e.stopPropagation()}>
+            {galleryLightbox.label}
+          </p>
         </div>
       )}
 
