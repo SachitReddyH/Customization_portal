@@ -32,8 +32,7 @@ const MOCK_GALLERY: MockGroup[] = [
     images: [
       { file: 'Ground Floor- Drawing Room.jpg',      label: 'Drawing Room'         },
       { file: 'Ground Floor- DiningLiving Room.jpg',  label: 'Dining & Living Room' },
-      { file: 'Ground Floor- DiningLiving.jpg',       label: 'Dining & Living'      },
-      { file: 'Ground Floor- LivingDining.jpg',       label: 'Living & Dining'      },
+      { file: 'Ground Floor- DiningLiving.jpg',       label: 'Dining & Living Room — View 2' },
       { file: 'Ground Floor- Kitchen.jpg',            label: 'Kitchen'              },
       { file: 'Ground Floor- Kitchen-11.jpg',         label: 'Kitchen — View 2'     },
       { file: 'Ground Floor- Bedroom-1.jpg',          label: 'Bedroom 1'            },
@@ -59,7 +58,6 @@ const MOCK_GALLERY: MockGroup[] = [
       { file: 'Second Floor- Bedroom-3- Dresser.jpg',  label: 'Bedroom 3 — Dresser'     },
       { file: 'Second Floor- Home Theatre.jpg',        label: 'Home Theatre'            },
       { file: 'Second Floor- Home Theatre-1.jpg',      label: 'Home Theatre — View 2'   },
-      { file: 'Second Floor- Home Theatre (1).jpg',    label: 'Home Theatre — View 3'   },
       { file: 'Second Floor- Semi Covered Terrace.jpg',label: 'Semi Covered Terrace'    },
     ],
   },
