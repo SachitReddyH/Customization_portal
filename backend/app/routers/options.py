@@ -87,24 +87,35 @@ async def get_rooms_in_floor(
     if sub:
         query["sub_section"] = sub
 
-    cursor = db.customization_options.find(
-        query,
-        {"location_id": 1, "floor": 1, "space": 1, "room_code": 1}
-    )
+    cursor = db.customization_options.find(query, {"location_id": 1})
     opts = await cursor.to_list(length=None)
 
-    # Deduplicate by location_id, preserving first-seen order
-    seen: dict = {}
+    # Collect unique location_ids (preserving order)
+    seen_ids: list = []
+    seen_set: set = set()
     for o in opts:
         loc = o.get("location_id")
-        if loc and loc not in seen:
-            seen[loc] = {
-                "location_id": loc,
-                "floor": o.get("floor"),
-                "space": o.get("space"),
-                "room_code": o.get("room_code"),
-            }
-    return {"rooms": list(seen.values())}
+        if loc and loc not in seen_set:
+            seen_ids.append(loc)
+            seen_set.add(loc)
+
+    # Resolve display fields from the locations collection (source of truth)
+    loc_cursor = db.locations.find(
+        {"location_id": {"$in": seen_ids}},
+        {"location_id": 1, "floor": 1, "space": 1, "room_code": 1}
+    )
+    loc_docs = {d["location_id"]: d async for d in loc_cursor}
+
+    rooms = []
+    for loc_id in seen_ids:
+        loc = loc_docs.get(loc_id, {})
+        rooms.append({
+            "location_id": loc_id,
+            "floor":       loc.get("floor"),
+            "space":       loc.get("space"),
+            "room_code":   loc.get("room_code"),
+        })
+    return {"rooms": rooms}
 
 
 @router.get("/{category_id}/rooms/{location_id}", response_model=List[OptionResponse])
