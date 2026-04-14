@@ -866,9 +866,11 @@ function OptionCard({
   // ── Horizontal card (upgradeOnly: single image, no standard alternative) ──
   if (upgradeOnly) {
     const imgSrcUrl = imgUrl(opt.images?.upgrade)
+    const [descHovered, setDescHovered] = useState(false)
+    const desc = opt.detailed_spec ?? opt.description
     return (
       <div
-        className={`opt-card opt-card--horizontal ${selectedType ? 'opt-card--horizontal-selected' : ''}`}
+        className={`opt-card opt-card--horizontal ${selectedType ? 'opt-card--horizontal-selected' : ''} ${descHovered ? 'opt-card--horizontal-expanded' : ''}`}
         onClick={() => onSelect(opt, 'upgrade')}
       >
         {/* Left: image */}
@@ -891,8 +893,15 @@ function OptionCard({
             {opt.room_code && <span className="opt-card-code">{opt.room_code}</span>}
           </div>
 
-          {(opt.detailed_spec ?? opt.description) && (
-            <p className="opt-horiz-desc">{opt.detailed_spec ?? opt.description}</p>
+          {desc && (
+            <p
+              className={`opt-horiz-desc ${descHovered ? 'opt-horiz-desc--expanded' : ''}`}
+              onMouseEnter={e => { e.stopPropagation(); setDescHovered(true) }}
+              onMouseLeave={() => setDescHovered(false)}
+              onClick={e => e.stopPropagation()}
+            >
+              {desc}
+            </p>
           )}
 
           <div className="opt-horiz-footer">

@@ -816,8 +816,12 @@ body {
   padding: 0;
   overflow: hidden;
   cursor: pointer;
-  transition: box-shadow 0.2s, border-color 0.2s;
+  transition: box-shadow 0.2s, border-color 0.2s, height 0.25s ease;
   height: 220px;
+}
+.opt-card--horizontal-expanded {
+  height: auto;
+  min-height: 220px;
 }
 .opt-card--horizontal:hover {
   box-shadow: 0 6px 24px rgba(0,0,0,0.10);
@@ -890,6 +894,17 @@ body {
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
+  cursor: default;
+}
+.opt-horiz-desc--expanded {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+  background: #fffdf9;
+  border-radius: 6px;
+  padding: 8px 10px;
+  border: 1px solid #f0ece4;
+  color: #555;
 }
 
 .opt-horiz-footer {
