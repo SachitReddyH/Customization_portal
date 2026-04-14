@@ -753,7 +753,7 @@ body {
 
 /* When no floor sidebar — centre cards with a comfortable max width */
 .options-grid--direct {
-  max-width: 680px;
+  max-width: 1000px;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
@@ -817,7 +817,7 @@ body {
   overflow: hidden;
   cursor: pointer;
   transition: box-shadow 0.2s, border-color 0.2s;
-  min-height: 260px;
+  min-height: 200px;
 }
 .opt-card--horizontal:hover {
   box-shadow: 0 6px 24px rgba(0,0,0,0.10);
