@@ -849,7 +849,7 @@ body {
   height: 220px;
   border-radius: 7px;
   overflow: hidden;
-  background: #f0eeeb;
+  background: #fff;
   flex-shrink: 0;
   position: relative;
   cursor: zoom-in;
@@ -859,8 +859,6 @@ body {
   height: 100%;
   object-fit: contain;
   transition: transform 0.25s;
-  padding: 6px;
-  box-sizing: border-box;
 }
 .spec-img-wrap:hover img {
   transform: scale(1.02);
