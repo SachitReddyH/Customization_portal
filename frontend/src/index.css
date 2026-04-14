@@ -817,7 +817,7 @@ body {
   overflow: hidden;
   cursor: pointer;
   transition: box-shadow 0.2s, border-color 0.2s;
-  min-height: 200px;
+  height: 220px;
 }
 .opt-card--horizontal:hover {
   box-shadow: 0 6px 24px rgba(0,0,0,0.10);
@@ -886,6 +886,10 @@ body {
   line-height: 1.6;
   margin: 0 0 auto;
   flex: 1;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
 }
 
 .opt-horiz-footer {
