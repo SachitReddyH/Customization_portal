@@ -50,7 +50,11 @@ const FLOOR_SUFFIX: Record<string, string> = {
   'Ground Floor': 'gf', 'First Floor': 'ff', 'Second Floor': 'sf',
 }
 const SUB_SECTIONS: Record<string, { id: string; label: string }[]> = {
-  CAT002: [{ id: 'package', label: 'Packages' }, { id: 'individual', label: 'Room Upgrades' }],
+  CAT002: [
+    { id: 'package',    label: 'Packages' },
+    { id: 'individual', label: 'Room Upgrades' },
+    { id: 'bathroom',   label: 'Bathroom (Wall & Flooring)' },
+  ],
   CAT003: [{ id: 'sanitaryware', label: 'Sanitaryware' }, { id: 'cp_fittings', label: 'CP Fittings' }],
 }
 
@@ -197,8 +201,9 @@ export default function CategoryPage() {
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [galleryLightbox, setGalleryLightbox] = useState<MockImage | null>(null)
 
-  const isRoomBased = ROOM_BASED.includes(categoryId!)
-  const isPackageTab = activeTab === 'package'
+  const isRoomBased   = ROOM_BASED.includes(categoryId!)
+  const isPackageTab  = activeTab === 'package'
+  const isBathroomTab = activeTab === 'bathroom'
 
   // Map of location_id → package name for rooms covered by a selected package
   const packageCoveredRooms = useMemo<Record<string, string>>(() => {
@@ -315,7 +320,7 @@ export default function CategoryPage() {
 
   /* ── Load options for room ──────────────────────── */
   useEffect(() => {
-    if (!isRoomBased || !selectedRoom || isPackageTab) return
+    if (!isRoomBased || !selectedRoom || isPackageTab || isBathroomTab) return
     setOptionsLoading(true)
     const sub = activeTab || undefined
     getRoomOptions(categoryId!, selectedRoom.location_id, sub)
@@ -330,6 +335,23 @@ export default function CategoryPage() {
       .catch(console.error)
       .finally(() => setOptionsLoading(false))
   }, [selectedRoom, activeTab, isRoomBased, isPackageTab])
+
+  /* ── Load bathroom options (flat list, sub_section=bathroom) ── */
+  useEffect(() => {
+    if (!isBathroomTab) return
+    setOptionsLoading(true)
+    getDirectOptions('CAT002', 'bathroom')
+      .then(opts => {
+        setOptions(opts)
+        setOptionMap(prev => {
+          const next = { ...prev }
+          opts.forEach((o: Option) => { next[o.option_id] = o })
+          return next
+        })
+      })
+      .catch(console.error)
+      .finally(() => setOptionsLoading(false))
+  }, [isBathroomTab])
 
   /* ── Load packages (flooring) ─────────────────── */
   useEffect(() => {
@@ -467,7 +489,7 @@ export default function CategoryPage() {
       <div className="cat-content">
 
         {/* ══ LEFT — Floor sidebar (hidden on Packages tab) ══ */}
-        {isRoomBased && !isPackageTab && (
+        {isRoomBased && !isPackageTab && !isBathroomTab && (
           <aside className="floor-sidebar">
             <p className="sidebar-heading">Floors & Rooms</p>
 
@@ -517,7 +539,7 @@ export default function CategoryPage() {
         )}
 
         {/* ══ MIDDLE — Options panel ══ */}
-        <main className={`options-panel ${(!isRoomBased || isPackageTab) ? 'options-panel--wide' : ''}`}>
+        <main className={`options-panel ${(!isRoomBased || isPackageTab || isBathroomTab) ? 'options-panel--wide' : ''}`}>
 
           {/* Sub-section tabs */}
           {tabs.length > 0 && (
@@ -535,12 +557,14 @@ export default function CategoryPage() {
           )}
 
           {/* Heading — only shown for room-based or package tabs, not plain direct categories */}
-          {(isRoomBased || isPackageTab) && (
+          {(isRoomBased || isPackageTab || isBathroomTab) && (
             <div className="options-heading">
-              {isRoomBased && !isPackageTab && selectedRoom
+              {isRoomBased && !isPackageTab && !isBathroomTab && selectedRoom
                 ? <><span className="options-room">{selectedRoom.space}</span><span className="options-floor">{selectedRoom.floor}</span></>
                 : isPackageTab
                 ? <span className="options-room">Flooring Packages</span>
+                : isBathroomTab
+                ? <span className="options-room">Bathroom (Wall &amp; Flooring)</span>
                 : <span className="options-room">{category?.name}</span>
               }
             </div>
@@ -556,13 +580,13 @@ export default function CategoryPage() {
                 if (visible.length === 0)
                   return (
                     <div className="options-empty">
-                      {isRoomBased && !isPackageTab && !selectedRoom
+                      {isRoomBased && !isPackageTab && !isBathroomTab && !selectedRoom
                         ? 'Select a room from the left'
                         : 'No options available'}
                     </div>
                   )
                 return (
-                  <div className={`options-grid${!isRoomBased ? ' options-grid--direct' : ''}`}>
+                  <div className={`options-grid${(!isRoomBased || isBathroomTab) ? ' options-grid--direct' : ''}`}>
                     {visible.map(opt => (
                       <OptionCard
                         key={opt.option_id + (opt.location_id ?? '')}
@@ -584,8 +608,8 @@ export default function CategoryPage() {
         {/* ══ RIGHT — Floor plan + Cart ══ */}
         <aside className="right-panel">
 
-          {/* Floor plan (room-based only, hidden on Packages tab) */}
-          {isRoomBased && !isPackageTab && (
+          {/* Floor plan (room-based only, hidden on Packages/Bathroom tabs) */}
+          {isRoomBased && !isPackageTab && !isBathroomTab && (
             <div className="floorplan-section">
               <p className="right-section-label">Floor Plan — {selectedFloor || '–'}</p>
               {(() => {
@@ -603,7 +627,7 @@ export default function CategoryPage() {
           )}
 
           {/* Cart */}
-          <div className={`cart-section ${(!isRoomBased || isPackageTab) ? 'cart-section--full' : ''}`}>
+          <div className={`cart-section ${(!isRoomBased || isPackageTab || isBathroomTab) ? 'cart-section--full' : ''}`}>
             <div className="cart-header">
               <ShoppingCart size={16} />
               <span>Your Selections</span>

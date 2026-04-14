@@ -33,7 +33,7 @@ print(f"Loaded {len(locations)} locations")
 
 # ── Step 2: find all options that have a rooms_covered array ──────────────────
 options_col = db.customization_options
-affected = list(options_col.find({"rooms_covered": {"$exists": True, "$ne": []}}))
+affected = list(options_col.find({"rooms_covered": {"$exists": True, "$ne": [], "$type": "array"}}))
 print(f"Found {len(affected)} options with rooms_covered")
 
 updated = 0
