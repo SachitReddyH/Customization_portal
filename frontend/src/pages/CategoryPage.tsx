@@ -133,6 +133,13 @@ const MOCK_GALLERY: MockGroup[] = [
 
 const mockImgSrc = (file: string) => `/mockvillaimages/${encodeURIComponent(file)}`
 
+// Resolve image URLs — static assets live on the Render backend
+const imgUrl = (path?: string | null) => {
+  if (!path) return null
+  if (path.startsWith('/static/')) return `${BASE}${path}`
+  return path
+}
+
 /* ══════════════════════════════════════════════════
    MAIN COMPONENT
 ══════════════════════════════════════════════════ */
@@ -871,7 +878,7 @@ function OptionCard({
             onClick={() => onSelect(opt, 'standard')}
           >
             <div className="spec-img-wrap">
-              <img src={opt.images?.standard ?? '/placeholder.png'} alt="standard"
+              <img src={imgUrl(opt.images?.standard) ?? '/placeholder.png'} alt="standard"
                 onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80"><rect width="100" height="80" fill="%23f5f5f5"/><text x="50" y="45" text-anchor="middle" fill="%23aaa" font-size="11">Standard</text></svg>' }}
               />
             </div>
@@ -889,7 +896,7 @@ function OptionCard({
           onClick={() => onSelect(opt, 'upgrade')}
         >
           <div className="spec-img-wrap">
-            <img src={opt.images?.upgrade ?? '/placeholder.png'} alt="upgrade"
+            <img src={imgUrl(opt.images?.upgrade) ?? '/placeholder.png'} alt="upgrade"
               onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80"><rect width="100" height="80" fill="%23fff3f0"/><text x="50" y="45" text-anchor="middle" fill="%23F05E3E" font-size="11">Upgrade</text></svg>' }}
             />
           </div>
