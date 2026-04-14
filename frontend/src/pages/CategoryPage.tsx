@@ -534,14 +534,17 @@ export default function CategoryPage() {
             </div>
           )}
 
-          <div className="options-heading">
-            {isRoomBased && !isPackageTab && selectedRoom
-              ? <><span className="options-room">{selectedRoom.space}</span><span className="options-floor">{selectedRoom.floor}</span></>
-              : isPackageTab
-              ? <span className="options-room">Flooring Packages</span>
-              : <span className="options-room">{category?.name}</span>
-            }
-          </div>
+          {/* Heading — only shown for room-based or package tabs, not plain direct categories */}
+          {(isRoomBased || isPackageTab) && (
+            <div className="options-heading">
+              {isRoomBased && !isPackageTab && selectedRoom
+                ? <><span className="options-room">{selectedRoom.space}</span><span className="options-floor">{selectedRoom.floor}</span></>
+                : isPackageTab
+                ? <span className="options-room">Flooring Packages</span>
+                : <span className="options-room">{category?.name}</span>
+              }
+            </div>
+          )}
 
           {optionsLoading
             ? <div className="options-loading">Loading…</div>
