@@ -36,7 +36,7 @@ const MOCK_GALLERY: MockGroup[] = [
       { file: 'Ground Floor- Kitchen.jpg',            label: 'Kitchen'              },
       { file: 'Ground Floor- Kitchen-11.jpg',         label: 'Kitchen — View 2'     },
       { file: 'Ground Floor- Bedroom-1.jpg',          label: 'Bedroom 1'            },
-      { file: 'Ground Floor- Bedroom-1-a.jpg',        label: 'Bedroom 1 — Alt'      },
+      { file: 'Ground Floor- Bedroom-1-a.jpg',        label: 'Villa Rear Side - Set Back Area' },
       { file: 'Ground Floor- Deck.jpg',               label: 'Deck'                 },
       { file: 'Ground Floor- Carpark Side Deck.jpg',  label: 'Carpark Side Deck'    },
     ],
