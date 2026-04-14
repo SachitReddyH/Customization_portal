@@ -860,7 +860,53 @@ function OptionCard({
     )
   }
 
-  // ── Normal card ────────────────────────────────────────────────────────
+  // ── Horizontal card (upgradeOnly: single image, no standard alternative) ──
+  if (upgradeOnly) {
+    const imgSrcUrl = imgUrl(opt.images?.upgrade)
+    return (
+      <div
+        className={`opt-card opt-card--horizontal ${selectedType ? 'opt-card--horizontal-selected' : ''}`}
+        onClick={() => onSelect(opt, 'upgrade')}
+      >
+        {/* Left: image */}
+        <div
+          className="opt-horiz-img"
+          onClick={e => { if (imgSrcUrl && onImageClick) { e.stopPropagation(); onImageClick(imgSrcUrl) } }}
+        >
+          <img
+            src={imgSrcUrl ?? '/placeholder.png'}
+            alt={opt.option_name ?? ''}
+            onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="160"><rect width="200" height="160" fill="%23f5f4f2"/><text x="100" y="85" text-anchor="middle" fill="%23ccc" font-size="13">No image</text></svg>' }}
+          />
+          {imgSrcUrl && <span className="spec-img-zoom-hint">🔍 Enlarge</span>}
+        </div>
+
+        {/* Right: details */}
+        <div className="opt-horiz-body">
+          <div className="opt-horiz-top">
+            <h3 className="opt-horiz-name">{opt.option_name ?? opt.space ?? opt.option_id}</h3>
+            {opt.room_code && <span className="opt-card-code">{opt.room_code}</span>}
+          </div>
+
+          {(opt.detailed_spec ?? opt.description) && (
+            <p className="opt-horiz-desc">{opt.detailed_spec ?? opt.description}</p>
+          )}
+
+          <div className="opt-horiz-footer">
+            <span className="opt-price">{formatPrice(opt)}</span>
+            <button
+              className={`opt-horiz-btn ${selectedType ? 'opt-horiz-btn--selected' : ''}`}
+              onClick={e => { e.stopPropagation(); onSelect(opt, 'upgrade') }}
+            >
+              {selectedType ? '✓ Selected' : 'Select'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Standard / Upgrade split card ─────────────────────────────────────
   return (
     <div className="opt-card">
       <div className="opt-card-header">
@@ -873,7 +919,7 @@ function OptionCard({
 
       <div className={`opt-specs ${upgradeOnly ? 'opt-specs--single' : ''}`}>
 
-        {/* Standard card — only when standard_spec exists */}
+        {/* Standard card */}
         {hasStandard && (
           <div
             className={`spec-card ${selectedType === 'standard' ? 'selected' : ''}`}
@@ -894,7 +940,7 @@ function OptionCard({
           </div>
         )}
 
-        {/* Upgrade card — always shown (we filtered out has_upgrade=false above) */}
+        {/* Upgrade card */}
         <div
           className={`spec-card spec-card--upgrade ${selectedType === 'upgrade' ? 'selected' : ''}`}
           onClick={() => onSelect(opt, 'upgrade')}
@@ -905,10 +951,10 @@ function OptionCard({
             />
             <span className="spec-img-zoom-hint">🔍 Click to enlarge</span>
           </div>
-          <p className="spec-label upgrade-label">{upgradeOnly ? 'Option' : 'Upgrade'}</p>
+          <p className="spec-label upgrade-label">Upgrade</p>
           <p className="spec-desc">{opt.upgrade_spec ?? opt.detailed_spec ?? opt.description ?? '–'}</p>
           <div className={`spec-check upgrade ${selectedType === 'upgrade' ? 'active' : ''}`}>
-            {selectedType === 'upgrade' ? '✓ Selected' : upgradeOnly ? 'Select' : 'Select Upgrade'}
+            {selectedType === 'upgrade' ? '✓ Selected' : 'Select Upgrade'}
           </div>
         </div>
       </div>
