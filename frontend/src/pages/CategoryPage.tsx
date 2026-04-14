@@ -19,7 +19,7 @@ interface Option {
   floor?: string
   space?: string
   room_code?: string
-  rooms_covered?: { location_id: string; floor: string; space: string; room_code: string; standard_spec: string; upgrade_spec: string; has_upgrade: boolean }[]
+  rooms_covered?: { location_id: string; standard_spec?: string; upgrade_spec?: string; has_upgrade?: boolean; space?: string; floor?: string; room_code?: string }[]
   option_name?: string
   standard_spec?: string
   upgrade_spec?: string
@@ -148,6 +148,14 @@ export default function CategoryPage() {
   const [floorsLoading, setFloorsLoading] = useState(false)
   const [floorsError, setFloorsError] = useState(false)
   const [roomsByFloor, setRoomsByFloor] = useState<Record<string, Room[]>>({})
+
+  // Flat lookup: location_id → Room, built from all fetched rooms
+  const locationMap = useMemo<Record<string, Room>>(() => {
+    const map: Record<string, Room> = {}
+    Object.values(roomsByFloor).forEach(rooms => rooms.forEach(r => { map[r.location_id] = r }))
+    return map
+  }, [roomsByFloor])
+
   const [expandedFloors, setExpandedFloors] = useState<Set<string>>(new Set())
   const [selectedFloor, setSelectedFloor] = useState<string>('')
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
@@ -263,6 +271,17 @@ export default function CategoryPage() {
             pkgs.forEach((p: Option) => { next[p.option_id] = p })
             return next
           })
+        }).catch(console.error)
+
+        // Pre-fetch all rooms so locationMap resolves package chip labels immediately
+        getFloors(categoryId).then(async d => {
+          const floorList: string[] = d.floors ?? []
+          await Promise.all(floorList.map(async floor => {
+            try {
+              const rd = await getRooms(categoryId, floor)
+              setRoomsByFloor(prev => ({ ...prev, [floor]: rd.rooms ?? [] }))
+            } catch { /* ignore */ }
+          }))
         }).catch(console.error)
       }
     } else {
@@ -542,6 +561,7 @@ export default function CategoryPage() {
                         onSelect={handleSelect}
                         isPackage={isPackageTab}
                         coveredByPackage={opt.location_id ? packageCoveredRooms[opt.location_id] : undefined}
+                        locationMap={locationMap}
                       />
                     ))}
                   </div>
@@ -787,15 +807,16 @@ export default function CategoryPage() {
    OPTION CARD
 ══════════════════════════════════════════════════ */
 function OptionCard({
-  opt, selectedType, onSelect, isPackage, coveredByPackage,
+  opt, selectedType, onSelect, isPackage, coveredByPackage, locationMap,
 }: {
   opt: Option
   selectedType?: string
   onSelect: (opt: Option, type: 'standard' | 'upgrade') => void
   isPackage: boolean
-  coveredByPackage?: string   // package name if this room is included in a selected package
+  coveredByPackage?: string
+  locationMap: Record<string, Room>
 }) {
-  if (isPackage) return <PackageCard opt={opt} selectedType={selectedType} onSelect={onSelect} />
+  if (isPackage) return <PackageCard opt={opt} selectedType={selectedType} onSelect={onSelect} locationMap={locationMap} />
 
   // has_upgrade=false → filtered out before reaching here, but guard anyway
   if (!opt.has_upgrade) return null
@@ -891,11 +912,12 @@ function OptionCard({
 
 /* ── Package card (flooring packages) ─────────── */
 function PackageCard({
-  opt, selectedType, onSelect,
+  opt, selectedType, onSelect, locationMap,
 }: {
   opt: Option
   selectedType?: string
   onSelect: (opt: Option, type: 'standard' | 'upgrade') => void
+  locationMap: Record<string, Room>
 }) {
   const [expanded, setExpanded] = useState(false)
   const imageUrl = PACKAGE_IMAGES[opt.option_id]
@@ -913,7 +935,9 @@ function PackageCard({
       {(opt.rooms_covered ?? []).length > 0 && (
         <div className="pkg-rooms">
           {(opt.rooms_covered ?? []).map((r, i) => (
-            <span key={i} className="pkg-room-chip">{r.space}</span>
+            <span key={i} className="pkg-room-chip">
+              {locationMap[r.location_id]?.space ?? r.space ?? r.location_id}
+            </span>
           ))}
         </div>
       )}

@@ -343,14 +343,13 @@ def seed_flooring_packages(db, xl):
 
         upg = clean(row["Upgrade_Spec"])
         has_upg = upg is not None and upg.upper() != "NA"
+        # Only store location_id + specs — space/floor/room_code are resolved at runtime
+        # from the locations collection so they stay in sync when locations are updated.
         grouped[opt_id]["rooms_covered"].append({
-            "location_id": clean(row["Location_ID"]),
-            "floor": clean(row["Floor"]),
-            "space": clean(row["Space"]),
-            "room_code": clean(row["Room_Code"]),
+            "location_id":   clean(row["Location_ID"]),
             "standard_spec": clean(row["Standard_Spec"]),
-            "upgrade_spec": upg if has_upg else None,
-            "has_upgrade": has_upg,
+            "upgrade_spec":  upg if has_upg else None,
+            "has_upgrade":   has_upg,
         })
 
     docs = list(grouped.values())
