@@ -868,6 +868,14 @@ function OptionCard({
     const imgSrcUrl = imgUrl(opt.images?.upgrade)
     const [descHovered, setDescHovered] = useState(false)
     const desc = opt.detailed_spec ?? opt.description
+
+    // Parse "1. foo 2. bar 3. baz" into an array of point strings
+    const parsePoints = (text: string): string[] | null => {
+      const parts = text.split(/(?=\d+\.\s)/).map(s => s.trim()).filter(Boolean)
+      return parts.length >= 2 ? parts : null
+    }
+    const points = desc ? parsePoints(desc) : null
+
     return (
       <div
         className={`opt-card opt-card--horizontal ${selectedType ? 'opt-card--horizontal-selected' : ''} ${descHovered ? 'opt-card--horizontal-expanded' : ''}`}
@@ -894,14 +902,19 @@ function OptionCard({
           </div>
 
           {desc && (
-            <p
+            <div
               className={`opt-horiz-desc ${descHovered ? 'opt-horiz-desc--expanded' : ''}`}
               onMouseEnter={e => { e.stopPropagation(); setDescHovered(true) }}
               onMouseLeave={() => setDescHovered(false)}
               onClick={e => e.stopPropagation()}
             >
-              {desc}
-            </p>
+              {points
+                ? <ol className="opt-horiz-points">
+                    {points.map((pt, i) => <li key={i}>{pt.replace(/^\d+\.\s*/, '')}</li>)}
+                  </ol>
+                : desc
+              }
+            </div>
           )}
 
           <div className="opt-horiz-footer">

@@ -816,12 +816,14 @@ body {
   padding: 0;
   overflow: hidden;
   cursor: pointer;
-  transition: box-shadow 0.2s, border-color 0.2s, height 0.25s ease;
+  transition: box-shadow 0.2s, border-color 0.2s;
   height: 220px;
+  align-items: stretch;
 }
 .opt-card--horizontal-expanded {
   height: auto;
   min-height: 220px;
+  overflow: visible;
 }
 .opt-card--horizontal:hover {
   box-shadow: 0 6px 24px rgba(0,0,0,0.10);
@@ -863,7 +865,6 @@ body {
   flex-direction: column;
   padding: 22px 22px 18px;
   border-left: 1px solid #ece9e4;
-  justify-content: space-between;
 }
 
 .opt-horiz-top {
@@ -888,11 +889,10 @@ body {
   font-size: 13px;
   color: #777;
   line-height: 1.6;
-  margin: 0 0 auto;
-  flex: 1;
+  margin: 0 0 12px;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   cursor: default;
 }
@@ -902,19 +902,35 @@ body {
   -webkit-line-clamp: unset;
   background: #fffdf9;
   border-radius: 6px;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border: 1px solid #f0ece4;
   color: #555;
+  margin-bottom: 12px;
+}
+
+/* Numbered list inside expanded description */
+.opt-horiz-points {
+  margin: 0;
+  padding-left: 18px;
+  list-style: decimal;
+}
+.opt-horiz-points li {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: #555;
+  line-height: 1.7;
+  padding: 1px 0;
 }
 
 .opt-horiz-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 18px;
+  margin-top: auto;
   padding-top: 14px;
   border-top: 1px solid #f0eeec;
 }
+
 
 .opt-horiz-btn {
   font-family: var(--font-body);
