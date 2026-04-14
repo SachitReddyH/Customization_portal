@@ -748,6 +748,12 @@ body {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  align-items: stretch;
+}
+
+/* When no floor sidebar — constrain card width so they don't stretch end to end */
+.options-grid--direct {
+  max-width: 760px;
 }
 
 /* ── Option Card ─────────────────────────────────── */
@@ -837,16 +843,39 @@ body {
 
 .spec-img-wrap {
   width: 100%;
-  height: 80px;
+  height: 200px;
   border-radius: 7px;
   overflow: hidden;
   background: #f5f4f2;
   flex-shrink: 0;
+  position: relative;
+  cursor: zoom-in;
 }
 .spec-img-wrap img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s;
+}
+.spec-img-wrap:hover img {
+  transform: scale(1.03);
+}
+.spec-img-zoom-hint {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.45);
+  color: #fff;
+  font-size: 11px;
+  font-family: var(--font-body);
+  padding: 3px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.spec-img-wrap:hover .spec-img-zoom-hint {
+  opacity: 1;
 }
 
 .spec-label {

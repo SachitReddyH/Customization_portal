@@ -559,7 +559,7 @@ export default function CategoryPage() {
                     </div>
                   )
                 return (
-                  <div className="options-grid">
+                  <div className={`options-grid${!isRoomBased ? ' options-grid--direct' : ''}`}>
                     {visible.map(opt => (
                       <OptionCard
                         key={opt.option_id + (opt.location_id ?? '')}
@@ -569,6 +569,7 @@ export default function CategoryPage() {
                         isPackage={isPackageTab}
                         coveredByPackage={opt.location_id ? packageCoveredRooms[opt.location_id] : undefined}
                         locationMap={locationMap}
+                        onImageClick={url => setLightboxUrl(url)}
                       />
                     ))}
                   </div>
@@ -814,7 +815,7 @@ export default function CategoryPage() {
    OPTION CARD
 ══════════════════════════════════════════════════ */
 function OptionCard({
-  opt, selectedType, onSelect, isPackage, coveredByPackage, locationMap,
+  opt, selectedType, onSelect, isPackage, coveredByPackage, locationMap, onImageClick,
 }: {
   opt: Option
   selectedType?: string
@@ -822,6 +823,7 @@ function OptionCard({
   isPackage: boolean
   coveredByPackage?: string
   locationMap: Record<string, Room>
+  onImageClick?: (url: string) => void
 }) {
   if (isPackage) return <PackageCard opt={opt} selectedType={selectedType} onSelect={onSelect} locationMap={locationMap} />
 
@@ -879,6 +881,8 @@ function OptionCard({
           >
             <div className="spec-img-wrap">
               <img src={imgUrl(opt.images?.standard) ?? '/placeholder.png'} alt="standard"
+                style={{ cursor: onImageClick && opt.images?.standard ? 'zoom-in' : 'default' }}
+                onClick={e => { const u = imgUrl(opt.images?.standard); if (u && onImageClick) { e.stopPropagation(); onImageClick(u) } }}
                 onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80"><rect width="100" height="80" fill="%23f5f5f5"/><text x="50" y="45" text-anchor="middle" fill="%23aaa" font-size="11">Standard</text></svg>' }}
               />
             </div>
@@ -895,10 +899,11 @@ function OptionCard({
           className={`spec-card spec-card--upgrade ${selectedType === 'upgrade' ? 'selected' : ''}`}
           onClick={() => onSelect(opt, 'upgrade')}
         >
-          <div className="spec-img-wrap">
+          <div className="spec-img-wrap" onClick={e => { const u = imgUrl(opt.images?.upgrade); if (u && onImageClick) { e.stopPropagation(); onImageClick(u) } }}>
             <img src={imgUrl(opt.images?.upgrade) ?? '/placeholder.png'} alt="upgrade"
               onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80"><rect width="100" height="80" fill="%23fff3f0"/><text x="50" y="45" text-anchor="middle" fill="%23F05E3E" font-size="11">Upgrade</text></svg>' }}
             />
+            <span className="spec-img-zoom-hint">🔍 Click to enlarge</span>
           </div>
           <p className="spec-label upgrade-label">{upgradeOnly ? 'Option' : 'Upgrade'}</p>
           <p className="spec-desc">{opt.upgrade_spec ?? opt.detailed_spec ?? opt.description ?? '–'}</p>
