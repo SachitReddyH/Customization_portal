@@ -31,6 +31,7 @@ interface Option {
   description?: string
   detailed_spec?: string
   images: { standard?: string; standard_list?: { path: string; label: string }[]; upgrade?: string }
+  floor_plan_image?: string
   option_type?: string
 }
 
@@ -1047,8 +1048,10 @@ function PackageCard({
   locationMap: Record<string, Room>
   onImageClick?: (url: string) => void
 }) {
-  const standardList = opt.images?.standard_list ?? []
-  const upgradeImg   = imgUrl(opt.images?.upgrade)
+  const [planExpanded, setPlanExpanded] = useState(false)
+  const standardList  = opt.images?.standard_list ?? []
+  const upgradeImg    = imgUrl(opt.images?.upgrade)
+  const floorPlanImg  = imgUrl(opt.floor_plan_image)
 
   // Collect unique standard specs for display (may vary by room)
   const uniqueSpecs = Array.from(
@@ -1127,15 +1130,38 @@ function PackageCard({
         </div>
       </div>
 
-      {/* ── Action row: price + select ── */}
+      {/* ── Expandable floor plan ── */}
+      {floorPlanImg && planExpanded && (
+        <div className="pkg-floorplan-expand">
+          <img
+            src={floorPlanImg}
+            alt={`${opt.option_name} floor plan`}
+            className="pkg-floorplan-img"
+            onClick={() => onImageClick?.(floorPlanImg)}
+            title="Click to enlarge"
+          />
+        </div>
+      )}
+
+      {/* ── Action row: price + view plan + select ── */}
       <div className="pkg-actions">
         <span className="opt-price">{formatPrice(opt)}</span>
-        <button
-          className={`pkg-select-btn ${selectedType ? 'pkg-select-btn--selected' : ''}`}
-          onClick={() => onSelect(opt, 'upgrade')}
-        >
-          {selectedType ? '✓ Selected' : 'Select Package'}
-        </button>
+        <div className="pkg-action-btns">
+          {floorPlanImg && (
+            <button
+              className="pkg-details-btn"
+              onClick={() => setPlanExpanded(prev => !prev)}
+            >
+              {planExpanded ? 'Hide Floor Plan ↑' : 'View Floor Plan ↓'}
+            </button>
+          )}
+          <button
+            className={`pkg-select-btn ${selectedType ? 'pkg-select-btn--selected' : ''}`}
+            onClick={() => onSelect(opt, 'upgrade')}
+          >
+            {selectedType ? '✓ Selected' : 'Select Package'}
+          </button>
+        </div>
       </div>
     </div>
   )

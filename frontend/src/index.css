@@ -1895,6 +1895,14 @@ body {
   background: #faf9f7;
 }
 
+.pkg-floorplan-expand {
+  margin: 4px 0 10px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e5e1db;
+  cursor: zoom-in;
+}
+
 .pkg-floorplan-img {
   width: 100%;
   display: block;
