@@ -1244,44 +1244,121 @@ body {
   border-radius: 20px;
 }
 
-.pkg-specs {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  background: #f9f7f5;
-  border-radius: 9px;
-  margin-bottom: 12px;
+/* ── Package description ── */
+.pkg-desc {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: #777;
+  line-height: 1.5;
+  margin-bottom: 10px;
 }
 
-.pkg-spec-col {
+/* ── Package image row: standard finishes + upgrade ── */
+.pkg-images-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+  background: #f9f7f5;
+  border-radius: 10px;
+  padding: 12px 10px;
+}
+
+.pkg-images-col {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 6px;
+  min-width: 0;
 }
 
-.pkg-spec-label {
+.pkg-img-section-label {
   font-family: var(--font-body);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #aaa;
+  display: block;
 }
 
-.pkg-spec-val {
+.pkg-std-imgs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pkg-upg-img {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pkg-img-wrap {
+  position: relative;
+  cursor: zoom-in;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e5e1db;
+  background: #fff;
+}
+
+.pkg-img-wrap img {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.2s;
+}
+
+.pkg-img-wrap:hover img {
+  transform: scale(1.04);
+}
+
+.pkg-img-label {
+  display: block;
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+  padding: 4px 6px;
+  background: #fafaf8;
+  border-top: 1px solid #f0ece7;
+  line-height: 1.3;
+}
+
+.pkg-img-zoom {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  font-size: 11px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
+.pkg-img-wrap:hover .pkg-img-zoom {
+  opacity: 1;
+}
+
+.pkg-spec-pill {
+  font-family: var(--font-body);
+  font-size: 11px;
   color: #555;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 5px 8px;
   line-height: 1.4;
 }
 
-.pkg-arrow {
-  font-size: 18px;
+.pkg-images-arrow {
+  font-size: 20px;
   color: var(--accent);
   flex-shrink: 0;
+  align-self: center;
   font-weight: 300;
+  padding-top: 18px;
 }
 
 /* ══════════════════════════════════════════════════
@@ -1316,6 +1393,37 @@ body {
   border-bottom: 1px solid #ece9e4;
   overflow: hidden;
   min-height: 0;
+}
+
+/* Package floor-switcher tabs */
+.pkg-floor-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px 12px 2px;
+}
+
+.pkg-floor-tab {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  background: #f5f3f0;
+  color: #777;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.pkg-floor-tab:hover {
+  background: #ece9e4;
+  color: var(--dark);
+}
+
+.pkg-floor-tab.active {
+  background: var(--dark);
+  color: #fff;
+  border-color: var(--dark);
 }
 
 /* Clickable floor plan wrapper */

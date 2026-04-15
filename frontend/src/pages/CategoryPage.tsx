@@ -30,7 +30,7 @@ interface Option {
   package_tier?: string
   description?: string
   detailed_spec?: string
-  images: { standard?: string; upgrade?: string }
+  images: { standard?: string; standard_list?: { path: string; label: string }[]; upgrade?: string }
   option_type?: string
 }
 
@@ -51,18 +51,9 @@ const FLOOR_SUFFIX: Record<string, string> = {
 }
 const SUB_SECTIONS: Record<string, { id: string; label: string }[]> = {
   CAT002: [
-    { id: 'package',    label: 'Packages' },
-    { id: 'individual', label: 'Room Upgrades' },
-    { id: 'bathroom',   label: 'Bathroom (Wall & Flooring)' },
+    { id: 'package', label: 'Packages' },
   ],
   CAT003: [{ id: 'sanitaryware', label: 'Sanitaryware' }, { id: 'cp_fittings', label: 'CP Fittings' }],
-}
-
-// Package floor-plan images served from backend static folder
-const PACKAGE_IMAGES: Record<string, string> = {
-  'OPT-FP-001': `${BASE}/static/package_images/OPT-FP-001.png`,
-  'OPT-FP-002': `${BASE}/static/package_images/OPT-FP-002.png`,
-  'OPT-FP-004': `${BASE}/static/package_images/OPT-FP-004.png`,
 }
 
 /* ── Price helper ───────────────────────────────── */
@@ -188,6 +179,8 @@ export default function CategoryPage() {
 
   // Floor plan lightbox
   const [lightboxUrl, setLightboxUrl] = useState('')
+  // Floor plan tab for packages panel
+  const [pkgFloor, setPkgFloor] = useState('First Floor')
 
   // Quote request
   const [pendingQuote, setPendingQuote] = useState<any>(null)   // the pending quote object
@@ -201,9 +194,8 @@ export default function CategoryPage() {
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [galleryLightbox, setGalleryLightbox] = useState<MockImage | null>(null)
 
-  const isRoomBased   = ROOM_BASED.includes(categoryId!)
-  const isPackageTab  = activeTab === 'package'
-  const isBathroomTab = activeTab === 'bathroom'
+  const isRoomBased  = ROOM_BASED.includes(categoryId!)
+  const isPackageTab = activeTab === 'package'
 
   // Map of location_id → package name for rooms covered by a selected package
   const packageCoveredRooms = useMemo<Record<string, string>>(() => {
@@ -320,7 +312,7 @@ export default function CategoryPage() {
 
   /* ── Load options for room ──────────────────────── */
   useEffect(() => {
-    if (!isRoomBased || !selectedRoom || isPackageTab || isBathroomTab) return
+    if (!isRoomBased || !selectedRoom || isPackageTab) return
     setOptionsLoading(true)
     const sub = activeTab || undefined
     getRoomOptions(categoryId!, selectedRoom.location_id, sub)
@@ -335,23 +327,6 @@ export default function CategoryPage() {
       .catch(console.error)
       .finally(() => setOptionsLoading(false))
   }, [selectedRoom, activeTab, isRoomBased, isPackageTab])
-
-  /* ── Load bathroom options (flat list, sub_section=bathroom) ── */
-  useEffect(() => {
-    if (!isBathroomTab) return
-    setOptionsLoading(true)
-    getDirectOptions('CAT002', 'bathroom')
-      .then(opts => {
-        setOptions(opts)
-        setOptionMap(prev => {
-          const next = { ...prev }
-          opts.forEach((o: Option) => { next[o.option_id] = o })
-          return next
-        })
-      })
-      .catch(console.error)
-      .finally(() => setOptionsLoading(false))
-  }, [isBathroomTab])
 
   /* ── Load packages (flooring) ─────────────────── */
   useEffect(() => {
@@ -489,7 +464,7 @@ export default function CategoryPage() {
       <div className="cat-content">
 
         {/* ══ LEFT — Floor sidebar (hidden on Packages tab) ══ */}
-        {isRoomBased && !isPackageTab && !isBathroomTab && (
+        {isRoomBased && !isPackageTab && (
           <aside className="floor-sidebar">
             <p className="sidebar-heading">Floors & Rooms</p>
 
@@ -539,7 +514,7 @@ export default function CategoryPage() {
         )}
 
         {/* ══ MIDDLE — Options panel ══ */}
-        <main className={`options-panel ${(!isRoomBased || isPackageTab || isBathroomTab) ? 'options-panel--wide' : ''}`}>
+        <main className={`options-panel ${(!isRoomBased || isPackageTab) ? 'options-panel--wide' : ''}`}>
 
           {/* Sub-section tabs */}
           {tabs.length > 0 && (
@@ -556,16 +531,14 @@ export default function CategoryPage() {
             </div>
           )}
 
-          {/* Heading — only shown for room-based or package tabs, not plain direct categories */}
-          {(isRoomBased || isPackageTab || isBathroomTab) && (
+          {/* Heading — shown for room-based tabs */}
+          {isRoomBased && (
             <div className="options-heading">
-              {isRoomBased && !isPackageTab && !isBathroomTab && selectedRoom
-                ? <><span className="options-room">{selectedRoom.space}</span><span className="options-floor">{selectedRoom.floor}</span></>
-                : isPackageTab
+              {isPackageTab
                 ? <span className="options-room">Flooring Packages</span>
-                : isBathroomTab
-                ? <span className="options-room">Bathroom (Wall &amp; Flooring)</span>
-                : <span className="options-room">{category?.name}</span>
+                : selectedRoom
+                ? <><span className="options-room">{selectedRoom.space}</span><span className="options-floor">{selectedRoom.floor}</span></>
+                : null
               }
             </div>
           )}
@@ -580,13 +553,13 @@ export default function CategoryPage() {
                 if (visible.length === 0)
                   return (
                     <div className="options-empty">
-                      {isRoomBased && !isPackageTab && !isBathroomTab && !selectedRoom
+                      {isRoomBased && !isPackageTab && !selectedRoom
                         ? 'Select a room from the left'
                         : 'No options available'}
                     </div>
                   )
                 return (
-                  <div className={`options-grid${(!isRoomBased || isBathroomTab) ? ' options-grid--direct' : ''}`}>
+                  <div className={`options-grid${!isRoomBased ? ' options-grid--direct' : ''}`}>
                     {visible.map(opt => (
                       <OptionCard
                         key={opt.option_id + (opt.location_id ?? '')}
@@ -608,10 +581,39 @@ export default function CategoryPage() {
         {/* ══ RIGHT — Floor plan + Cart ══ */}
         <aside className="right-panel">
 
-          {/* Floor plan (room-based only, hidden on Packages/Bathroom tabs) */}
-          {isRoomBased && !isPackageTab && !isBathroomTab && (
+          {/* Floor plan — packages tab: floor switcher tabs */}
+          {isPackageTab && (
             <div className="floorplan-section">
-              <p className="right-section-label">Floor Plan — {selectedFloor || '–'}</p>
+              <p className="right-section-label">Floor Plan</p>
+              <div className="pkg-floor-tabs">
+                {['Ground Floor', 'First Floor', 'Second Floor'].map(f => (
+                  <button
+                    key={f}
+                    className={`pkg-floor-tab ${pkgFloor === f ? 'active' : ''}`}
+                    onClick={() => setPkgFloor(f)}
+                  >
+                    {f.replace(' Floor', '')}
+                  </button>
+                ))}
+              </div>
+              {(() => {
+                const url = floorPlanUrl(villa, pkgFloor)
+                return url
+                  ? (
+                    <div className="floorplan-img-wrap" title="Click to enlarge" onClick={() => setLightboxUrl(url)}>
+                      <img src={url} alt={`${pkgFloor} plan`} className="floorplan-img" />
+                      <span className="floorplan-zoom-hint">🔍 Click to enlarge</span>
+                    </div>
+                  )
+                  : <div className="floorplan-placeholder">Floor plan not available</div>
+              })()}
+            </div>
+          )}
+
+          {/* Floor plan — room-based tabs (non-package) */}
+          {isRoomBased && !isPackageTab && selectedFloor && (
+            <div className="floorplan-section">
+              <p className="right-section-label">Floor Plan — {selectedFloor}</p>
               {(() => {
                 const url = floorPlanUrl(villa, selectedFloor)
                 return url
@@ -627,7 +629,7 @@ export default function CategoryPage() {
           )}
 
           {/* Cart */}
-          <div className={`cart-section ${(!isRoomBased || isPackageTab || isBathroomTab) ? 'cart-section--full' : ''}`}>
+          <div className={`cart-section ${!isRoomBased ? 'cart-section--full' : ''}`}>
             <div className="cart-header">
               <ShoppingCart size={16} />
               <span>Your Selections</span>
@@ -852,7 +854,7 @@ function OptionCard({
   locationMap: Record<string, Room>
   onImageClick?: (url: string) => void
 }) {
-  if (isPackage) return <PackageCard opt={opt} selectedType={selectedType} onSelect={onSelect} locationMap={locationMap} />
+  if (isPackage) return <PackageCard opt={opt} selectedType={selectedType} onSelect={onSelect} locationMap={locationMap} onImageClick={onImageClick} />
 
   // has_upgrade=false → filtered out before reaching here, but guard anyway
   if (!opt.has_upgrade) return null
@@ -1037,15 +1039,21 @@ function OptionCard({
 
 /* ── Package card (flooring packages) ─────────── */
 function PackageCard({
-  opt, selectedType, onSelect, locationMap,
+  opt, selectedType, onSelect, locationMap, onImageClick,
 }: {
   opt: Option
   selectedType?: string
   onSelect: (opt: Option, type: 'standard' | 'upgrade') => void
   locationMap: Record<string, Room>
+  onImageClick?: (url: string) => void
 }) {
-  const [expanded, setExpanded] = useState(false)
-  const imageUrl = PACKAGE_IMAGES[opt.option_id]
+  const standardList = opt.images?.standard_list ?? []
+  const upgradeImg   = imgUrl(opt.images?.upgrade)
+
+  // Collect unique standard specs for display (may vary by room)
+  const uniqueSpecs = Array.from(
+    new Set((opt.rooms_covered ?? []).map(r => r.standard_spec).filter(Boolean))
+  )
 
   return (
     <div className={`pkg-card ${selectedType ? 'selected' : ''}`}>
@@ -1055,6 +1063,11 @@ function PackageCard({
         <span className="pkg-name">{opt.option_name ?? opt.description}</span>
         {selectedType && <span className="pkg-check">✓ Selected</span>}
       </div>
+
+      {/* ── Description (areas covered) ── */}
+      {opt.description && (
+        <p className="pkg-desc">{opt.description}</p>
+      )}
 
       {/* ── Rooms covered chips ── */}
       {(opt.rooms_covered ?? []).length > 0 && (
@@ -1067,50 +1080,67 @@ function PackageCard({
         </div>
       )}
 
-      {/* ── Spec comparison row ── */}
-      <div className="pkg-specs">
-        <div className="pkg-spec-col">
-          <span className="pkg-spec-label">Standard</span>
-          <span className="pkg-spec-val">{opt.rooms_covered?.[0]?.standard_spec ?? '–'}</span>
+      {/* ── Images: standard finishes + upgrade ── */}
+      <div className="pkg-images-row">
+        {/* Standard: one thumb per distinct finish */}
+        <div className="pkg-images-col">
+          <span className="pkg-img-section-label">Standard</span>
+          <div className="pkg-std-imgs">
+            {standardList.length > 0
+              ? standardList.map((img, i) => {
+                  const url = imgUrl(img.path)
+                  return (
+                    <div key={i} className="pkg-img-wrap" onClick={() => url && onImageClick?.(url)}>
+                      <img
+                        src={url ?? ''}
+                        alt={img.label}
+                        onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="90"><rect width="120" height="90" fill="%23f5f4f2"/><text x="60" y="50" text-anchor="middle" fill="%23bbb" font-size="11">No image</text></svg>' }}
+                      />
+                      <span className="pkg-img-label">{img.label}</span>
+                      <span className="pkg-img-zoom">🔍</span>
+                    </div>
+                  )
+                })
+              : uniqueSpecs.map((spec, i) => (
+                  <div key={i} className="pkg-spec-pill">{spec}</div>
+                ))
+            }
+          </div>
         </div>
-        <div className="pkg-arrow">→</div>
-        <div className="pkg-spec-col">
-          <span className="pkg-spec-label">Upgrade</span>
-          <span className="pkg-spec-val">{opt.rooms_covered?.[0]?.upgrade_spec ?? '–'}</span>
+
+        <div className="pkg-images-arrow">→</div>
+
+        {/* Upgrade: single image */}
+        <div className="pkg-images-col">
+          <span className="pkg-img-section-label">Upgrade</span>
+          <div className="pkg-upg-img">
+            {upgradeImg
+              ? (
+                <div className="pkg-img-wrap" onClick={() => onImageClick?.(upgradeImg)}>
+                  <img
+                    src={upgradeImg}
+                    alt="Upgrade"
+                    onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="90"><rect width="120" height="90" fill="%23fff3f0"/><text x="60" y="50" text-anchor="middle" fill="%23F05E3E" font-size="11">No image</text></svg>' }}
+                  />
+                  <span className="pkg-img-label">{opt.rooms_covered?.[0]?.upgrade_spec ?? 'Upgrade'}</span>
+                  <span className="pkg-img-zoom">🔍</span>
+                </div>
+              )
+              : <div className="pkg-spec-pill">{opt.rooms_covered?.[0]?.upgrade_spec ?? '–'}</div>
+            }
+          </div>
         </div>
       </div>
 
-      {/* ── Expanded floor plan image ── */}
-      {expanded && (
-        <div className="pkg-details">
-          {imageUrl
-            ? <img src={imageUrl} alt={`${opt.option_name} floor plan`} className="pkg-floorplan-img" />
-            : <div className="pkg-no-image">No floor plan available for this package</div>
-          }
-        </div>
-      )}
-
-      {/* ── Action row: price + view details + select ── */}
+      {/* ── Action row: price + select ── */}
       <div className="pkg-actions">
         <span className="opt-price">{formatPrice(opt)}</span>
-
-        <div className="pkg-action-btns">
-          {imageUrl && (
-            <button
-              className="pkg-details-btn"
-              onClick={() => setExpanded(prev => !prev)}
-            >
-              {expanded ? 'Hide Details ↑' : 'View Details ↓'}
-            </button>
-          )}
-
-          <button
-            className={`pkg-select-btn ${selectedType ? 'pkg-select-btn--selected' : ''}`}
-            onClick={() => onSelect(opt, 'upgrade')}
-          >
-            {selectedType ? '✓ Selected' : 'Select Package'}
-          </button>
-        </div>
+        <button
+          className={`pkg-select-btn ${selectedType ? 'pkg-select-btn--selected' : ''}`}
+          onClick={() => onSelect(opt, 'upgrade')}
+        >
+          {selectedType ? '✓ Selected' : 'Select Package'}
+        </button>
       </div>
     </div>
   )
