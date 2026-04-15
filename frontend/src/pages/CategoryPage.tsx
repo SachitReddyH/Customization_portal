@@ -986,8 +986,8 @@ function OptionCard({
             {opt.room_code && <span className="opt-card-code">{opt.room_code}</span>}
           </div>
 
-          {opt.description && (
-            <p className="opt-horiz-desc">{opt.description}</p>
+          {(opt.detailed_spec ?? opt.description) && (
+            <p className="opt-horiz-desc">{opt.detailed_spec ?? opt.description}</p>
           )}
 
           <div className="opt-horiz-footer">

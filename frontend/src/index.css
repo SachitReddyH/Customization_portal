@@ -839,7 +839,7 @@ body {
   overflow: hidden;
   cursor: pointer;
   transition: box-shadow 0.2s, border-color 0.2s;
-  height: 220px;
+  min-height: 220px;
   align-items: stretch;
   width: 100%;
 }
