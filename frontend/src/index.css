@@ -764,6 +764,22 @@ body {
   width: 100%;
 }
 
+/* ── Sub-group headings (e.g. Kitchen / Home Theatre) ── */
+.opt-subgroup {
+  display: contents;
+}
+.opt-subgroup-heading {
+  width: 100%;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #888;
+  padding: 18px 0 6px;
+  border-bottom: 1px solid #e8e4df;
+  margin-bottom: 4px;
+}
+
 /* ── Option Card ─────────────────────────────────── */
 .opt-card {
   background: #fff;

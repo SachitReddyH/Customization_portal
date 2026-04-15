@@ -57,6 +57,12 @@ const SUB_SECTIONS: Record<string, { id: string; label: string }[]> = {
   CAT003: [{ id: 'sanitaryware', label: 'Sanitaryware' }, { id: 'cp_fittings', label: 'CP Fittings' }],
 }
 
+// Display labels for sub_section groups within direct (non-room) categories
+const SUB_GROUP_LABELS: Record<string, string> = {
+  kitchen:      'Kitchen',
+  home_theatre: 'Home Theatre / Private Office',
+}
+
 /* ── Price helper ───────────────────────────────── */
 const formatPrice = (opt: Option) => {
   if (opt.price_status === 'fixed' && opt.price_inr)
@@ -411,6 +417,18 @@ export default function CategoryPage() {
         const updated = await removeSelection({ option_id: opt.option_id, location_id: opt.location_id })
         setSelections(updated.selections ?? [])
       } else {
+        // Mutual exclusivity: selecting a kitchen space option removes the other kitchen option
+        if (opt.sub_section === 'kitchen') {
+          const rival = selections.find(s =>
+            s.category_id === opt.category_id &&
+            s.sub_section === 'kitchen' &&
+            s.option_id !== opt.option_id
+          )
+          if (rival) {
+            await removeSelection({ option_id: rival.option_id, location_id: rival.location_id })
+          }
+        }
+
         const updated = await upsertSelection({
           category_id: opt.category_id,
           sub_section: opt.sub_section,
@@ -568,6 +586,46 @@ export default function CategoryPage() {
                         : 'No options available'}
                     </div>
                   )
+                // Group by sub_section if options carry sub_section values
+                const hasSubGroups = !isRoomBased && !isPackageTab &&
+                  visible.some(o => o.sub_section && SUB_GROUP_LABELS[o.sub_section])
+
+                if (hasSubGroups) {
+                  // Preserve MongoDB order; deduplicate group keys
+                  const groupOrder: string[] = []
+                  const grouped: Record<string, typeof visible> = {}
+                  for (const opt of visible) {
+                    const grp = (opt.sub_section && SUB_GROUP_LABELS[opt.sub_section])
+                      ? opt.sub_section
+                      : '__other'
+                    if (!grouped[grp]) { grouped[grp] = []; groupOrder.push(grp) }
+                    grouped[grp].push(opt)
+                  }
+                  return (
+                    <div className={`options-grid options-grid--direct`}>
+                      {groupOrder.map(grp => (
+                        <div key={grp} className="opt-subgroup">
+                          {grp !== '__other' && (
+                            <h3 className="opt-subgroup-heading">{SUB_GROUP_LABELS[grp]}</h3>
+                          )}
+                          {grouped[grp].map(opt => (
+                            <OptionCard
+                              key={opt.option_id + (opt.location_id ?? '')}
+                              opt={opt}
+                              selectedType={getSelectionType(opt.option_id, opt.location_id)}
+                              onSelect={handleSelect}
+                              isPackage={false}
+                              coveredByPackage={undefined}
+                              locationMap={locationMap}
+                              onImageClick={url => setLightboxUrl(url)}
+                            />
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  )
+                }
+
                 return (
                   <div className={`options-grid${!isRoomBased ? ' options-grid--direct' : ''}`}>
                     {visible.map(opt => (
