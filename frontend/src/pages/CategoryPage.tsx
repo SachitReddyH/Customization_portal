@@ -1064,11 +1064,6 @@ function PackageCard({
         {selectedType && <span className="pkg-check">✓ Selected</span>}
       </div>
 
-      {/* ── Description (areas covered) ── */}
-      {opt.description && (
-        <p className="pkg-desc">{opt.description}</p>
-      )}
-
       {/* ── Rooms covered chips ── */}
       {(opt.rooms_covered ?? []).length > 0 && (
         <div className="pkg-rooms">

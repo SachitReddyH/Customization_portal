@@ -2,8 +2,14 @@ from pydantic import BaseModel
 from typing import Optional, List, Literal
 
 
+class StandardImage(BaseModel):
+    path: str
+    label: str
+
+
 class OptionImages(BaseModel):
     standard: Optional[str] = "/static/options/placeholder/standard.png"
+    standard_list: Optional[List[StandardImage]] = None
     upgrade: Optional[str] = "/static/options/placeholder/upgrade.png"
 
 
