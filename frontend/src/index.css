@@ -748,7 +748,12 @@ body {
   display: flex;
   flex-direction: column;
   gap: 32px;
-  align-items: stretch;
+  align-items: flex-start;
+}
+
+/* Each card fills the full column width */
+.options-grid > * {
+  width: 100%;
 }
 
 /* When no floor sidebar — centre cards with a comfortable max width */
@@ -1081,6 +1086,9 @@ body {
   background: #fff;
   box-shadow: 0 2px 14px rgba(0,0,0,0.05);
   transition: box-shadow 0.2s, transform 0.2s;
+  flex-shrink: 0;
+  width: 100%;
+  align-self: flex-start;
 }
 .opt-card--comparison:hover {
   box-shadow: 0 6px 24px rgba(0,0,0,0.09);
