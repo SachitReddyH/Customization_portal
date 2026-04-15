@@ -839,7 +839,7 @@ body {
   overflow: hidden;
   cursor: pointer;
   transition: box-shadow 0.2s, border-color 0.2s;
-  min-height: 180px;
+  height: 220px;
   align-items: stretch;
   width: 100%;
 }
@@ -902,20 +902,12 @@ body {
   margin: 0;
 }
 
-.opt-horiz-desc-wrap {
-  margin-bottom: 8px;
-}
-
 .opt-horiz-desc {
   font-family: var(--font-body);
   font-size: 13px;
   color: #777;
   line-height: 1.6;
-  margin: 0 0 4px;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+  margin: 8px 0 0;
 }
 
 .opt-horiz-viewmore {
@@ -938,6 +930,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-top: auto;
   padding-top: 14px;
   border-top: 1px solid #f0eeec;
   flex-shrink: 0;
