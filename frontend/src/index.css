@@ -766,18 +766,19 @@ body {
 
 /* ── Sub-group headings (e.g. Kitchen / Home Theatre) ── */
 .opt-subgroup {
-  display: contents;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
 }
 .opt-subgroup-heading {
-  width: 100%;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #888;
-  padding: 18px 0 6px;
+  padding-bottom: 8px;
   border-bottom: 1px solid #e8e4df;
-  margin-bottom: 4px;
 }
 
 /* ── Option Card ─────────────────────────────────── */
@@ -838,8 +839,9 @@ body {
   overflow: hidden;
   cursor: pointer;
   transition: box-shadow 0.2s, border-color 0.2s;
-  height: 220px;
+  min-height: 180px;
   align-items: stretch;
+  width: 100%;
 }
 .opt-card--horizontal:hover {
   box-shadow: 0 6px 24px rgba(0,0,0,0.10);
@@ -901,9 +903,7 @@ body {
 }
 
 .opt-horiz-desc-wrap {
-  flex: 1;
-  overflow: hidden;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .opt-horiz-desc {
