@@ -11,6 +11,7 @@ class OptionImages(BaseModel):
     standard: Optional[str] = "/static/options/placeholder/standard.png"
     standard_list: Optional[List[StandardImage]] = None
     upgrade: Optional[str] = "/static/options/placeholder/upgrade.png"
+    upgrade_list: Optional[List[StandardImage]] = None
 
 
 class RoomCovered(BaseModel):
