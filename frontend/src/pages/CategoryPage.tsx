@@ -980,6 +980,89 @@ function OptionCard({
   const stdList = opt.images?.standard_list ?? []
   const upgList = opt.images?.upgrade_list ?? []
 
+  // ── Multi-image comparison card (sanitaryware / rich-image options) ───
+  if (stdList.length > 0 || upgList.length > 0) {
+    const errStd = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="72"><rect width="80" height="72" fill="%23f0efed"/><text x="40" y="41" text-anchor="middle" fill="%23bbb" font-size="10">No image</text></svg>'
+    const errUpg = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="72"><rect width="80" height="72" fill="%23fff3f0"/><text x="40" y="41" text-anchor="middle" fill="%23F05E3E" font-size="10">No image</text></svg>'
+    return (
+      <div className={`opt-card opt-card--comparison ${selectedType ? 'opt-card--comparison-selected' : ''}`}>
+        {/* ── Header bar ── */}
+        <div className="cmp-header">
+          <span className="cmp-title">{opt.option_name ?? opt.space ?? opt.option_id}</span>
+          {opt.room_code && <span className="opt-card-code">{opt.room_code}</span>}
+        </div>
+
+        {/* ── Two-panel body ── */}
+        <div className="cmp-body">
+
+          {/* Standard panel */}
+          <div
+            className={`cmp-panel cmp-panel--std ${selectedType === 'standard' ? 'cmp-panel--active' : ''}`}
+            onClick={() => onSelect(opt, 'standard')}
+          >
+            <div className="cmp-panel-badge cmp-panel-badge--std">Standard</div>
+            <div className="cmp-img-grid cmp-img-grid--std">
+              {stdList.map((img, i) => {
+                const u = imgUrl(img.path)
+                return (
+                  <div key={i} className="cmp-img-tile" onClick={e => { if (u && onImageClick) { e.stopPropagation(); onImageClick(u) } }}>
+                    <img src={u ?? ''} alt={img.label} onError={e => { (e.target as HTMLImageElement).src = errStd }} />
+                    <span className="cmp-img-label">{img.label}</span>
+                  </div>
+                )
+              })}
+            </div>
+            <p className="cmp-spec-text">{opt.standard_spec}</p>
+            <button
+              className={`cmp-btn cmp-btn--std ${selectedType === 'standard' ? 'cmp-btn--active' : ''}`}
+              onClick={e => { e.stopPropagation(); onSelect(opt, 'standard') }}
+            >
+              {selectedType === 'standard' ? '✓ Keeping Standard' : 'Keep Standard'}
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="cmp-divider">
+            <span className="cmp-vs">vs</span>
+          </div>
+
+          {/* Upgrade panel */}
+          <div
+            className={`cmp-panel cmp-panel--upg ${selectedType === 'upgrade' ? 'cmp-panel--active' : ''}`}
+            onClick={() => onSelect(opt, 'upgrade')}
+          >
+            <div className="cmp-panel-badge cmp-panel-badge--upg">Upgrade</div>
+            <div className="cmp-img-grid cmp-img-grid--upg">
+              {upgList.map((img, i) => {
+                const u = imgUrl(img.path)
+                return (
+                  <div key={i} className="cmp-img-tile" onClick={e => { if (u && onImageClick) { e.stopPropagation(); onImageClick(u) } }}>
+                    <img src={u ?? ''} alt={img.label} onError={e => { (e.target as HTMLImageElement).src = errUpg }} />
+                    <span className="cmp-img-label">{img.label}</span>
+                  </div>
+                )
+              })}
+            </div>
+            <p className="cmp-spec-text">{opt.upgrade_spec}</p>
+            <button
+              className={`cmp-btn cmp-btn--upg ${selectedType === 'upgrade' ? 'cmp-btn--active' : ''}`}
+              onClick={e => { e.stopPropagation(); onSelect(opt, 'upgrade') }}
+            >
+              {selectedType === 'upgrade' ? '✓ Selected' : 'Select Upgrade'}
+            </button>
+          </div>
+        </div>
+
+        {/* ── Footer: price ── */}
+        <div className="cmp-footer">
+          <span className="opt-price">{formatPrice(opt)}</span>
+          {opt.price_unit && <span className="opt-unit">/ {opt.price_unit}</span>}
+        </div>
+      </div>
+    )
+  }
+
+  // ── Plain standard / upgrade split card (single image each) ──────────
   return (
     <div className="opt-card">
       <div className="opt-card-header">
@@ -991,39 +1074,18 @@ function OptionCard({
       </div>
 
       <div className={`opt-specs ${upgradeOnly ? 'opt-specs--single' : ''}`}>
-
-        {/* Standard card */}
         {hasStandard && (
           <div
             className={`spec-card ${selectedType === 'standard' ? 'selected' : ''}`}
             onClick={() => onSelect(opt, 'standard')}
           >
-            {stdList.length > 0
-              ? (
-                <div className="spec-img-grid">
-                  {stdList.map((img, i) => {
-                    const u = imgUrl(img.path)
-                    return (
-                      <div key={i} className="spec-img-grid-item" onClick={e => { if (u && onImageClick) { e.stopPropagation(); onImageClick(u) } }}>
-                        <img src={u ?? ''} alt={img.label}
-                          onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="70"><rect width="80" height="70" fill="%23f5f5f5"/><text x="40" y="40" text-anchor="middle" fill="%23aaa" font-size="10">No img</text></svg>' }}
-                        />
-                        <span className="spec-img-grid-label">{img.label}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              )
-              : (
-                <div className="spec-img-wrap">
-                  <img src={imgUrl(opt.images?.standard) ?? '/placeholder.png'} alt="standard"
-                    style={{ cursor: onImageClick && opt.images?.standard ? 'zoom-in' : 'default' }}
-                    onClick={e => { const u = imgUrl(opt.images?.standard); if (u && onImageClick) { e.stopPropagation(); onImageClick(u) } }}
-                    onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80"><rect width="100" height="80" fill="%23f5f5f5"/><text x="50" y="45" text-anchor="middle" fill="%23aaa" font-size="11">Standard</text></svg>' }}
-                  />
-                </div>
-              )
-            }
+            <div className="spec-img-wrap">
+              <img src={imgUrl(opt.images?.standard) ?? '/placeholder.png'} alt="standard"
+                style={{ cursor: onImageClick && opt.images?.standard ? 'zoom-in' : 'default' }}
+                onClick={e => { const u = imgUrl(opt.images?.standard); if (u && onImageClick) { e.stopPropagation(); onImageClick(u) } }}
+                onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80"><rect width="100" height="80" fill="%23f5f5f5"/><text x="50" y="45" text-anchor="middle" fill="%23aaa" font-size="11">Standard</text></svg>' }}
+              />
+            </div>
             <p className="spec-label">Standard</p>
             <p className="spec-desc">{opt.standard_spec}</p>
             <div className={`spec-check ${selectedType === 'standard' ? 'active' : ''}`}>
@@ -1032,36 +1094,16 @@ function OptionCard({
           </div>
         )}
 
-        {/* Upgrade card */}
         <div
           className={`spec-card spec-card--upgrade ${selectedType === 'upgrade' ? 'selected' : ''}`}
           onClick={() => onSelect(opt, 'upgrade')}
         >
-          {upgList.length > 0
-            ? (
-              <div className="spec-img-grid">
-                {upgList.map((img, i) => {
-                  const u = imgUrl(img.path)
-                  return (
-                    <div key={i} className="spec-img-grid-item" onClick={e => { if (u && onImageClick) { e.stopPropagation(); onImageClick(u) } }}>
-                      <img src={u ?? ''} alt={img.label}
-                        onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="70"><rect width="80" height="70" fill="%23fff3f0"/><text x="40" y="40" text-anchor="middle" fill="%23F05E3E" font-size="10">No img</text></svg>' }}
-                      />
-                      <span className="spec-img-grid-label">{img.label}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            )
-            : (
-              <div className="spec-img-wrap" onClick={e => { const u = imgUrl(opt.images?.upgrade); if (u && onImageClick) { e.stopPropagation(); onImageClick(u) } }}>
-                <img src={imgUrl(opt.images?.upgrade) ?? '/placeholder.png'} alt="upgrade"
-                  onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80"><rect width="100" height="80" fill="%23fff3f0"/><text x="50" y="45" text-anchor="middle" fill="%23F05E3E" font-size="11">Upgrade</text></svg>' }}
-                />
-                <span className="spec-img-zoom-hint">🔍 Click to enlarge</span>
-              </div>
-            )
-          }
+          <div className="spec-img-wrap" onClick={e => { const u = imgUrl(opt.images?.upgrade); if (u && onImageClick) { e.stopPropagation(); onImageClick(u) } }}>
+            <img src={imgUrl(opt.images?.upgrade) ?? '/placeholder.png'} alt="upgrade"
+              onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80"><rect width="100" height="80" fill="%23fff3f0"/><text x="50" y="45" text-anchor="middle" fill="%23F05E3E" font-size="11">Upgrade</text></svg>' }}
+            />
+            <span className="spec-img-zoom-hint">🔍 Click to enlarge</span>
+          </div>
           <p className="spec-label upgrade-label">Upgrade</p>
           <p className="spec-desc">{opt.upgrade_spec ?? opt.description ?? '–'}</p>
           <div className={`spec-check upgrade ${selectedType === 'upgrade' ? 'active' : ''}`}>
