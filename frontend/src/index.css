@@ -747,7 +747,7 @@ body {
   padding: 12px 24px 24px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 32px;
   align-items: stretch;
 }
 
@@ -1210,7 +1210,7 @@ body {
 
 .pkg-name {
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--dark);
 }
