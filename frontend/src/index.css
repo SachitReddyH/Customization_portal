@@ -1258,7 +1258,6 @@ body {
 }
 .cmp-img-grid--std {
   grid-template-columns: 1fr;
-  justify-items: center;
 }
 .cmp-img-grid--upg {
   grid-template-columns: 1fr 1fr;
