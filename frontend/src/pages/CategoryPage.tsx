@@ -1252,7 +1252,7 @@ function VrfCard({
   return (
     <div className={`vrf-card ${selectedType ? 'vrf-card--selected' : ''}`}>
 
-      {/* ── Top: first two images side by side ── */}
+      {/* ── Top: images 0 and 2 side by side ── */}
       <div className="vrf-img-pair">
         {img0 && (
           <div className="vrf-img-pair-item" onClick={() => onImageClick?.(img0)}>
@@ -1260,9 +1260,9 @@ function VrfCard({
             <span className="spec-img-zoom-hint">🔍 Enlarge</span>
           </div>
         )}
-        {img1 && (
-          <div className="vrf-img-pair-item" onClick={() => onImageClick?.(img1)}>
-            <img src={img1} alt={imgList[1]?.label ?? ''} />
+        {img2 && (
+          <div className="vrf-img-pair-item" onClick={() => onImageClick?.(img2)}>
+            <img src={img2} alt={imgList[2]?.label ?? ''} />
             <span className="spec-img-zoom-hint">🔍 Enlarge</span>
           </div>
         )}
@@ -1294,11 +1294,11 @@ function VrfCard({
           </div>
         )}
 
-        {/* Third image — VRF vs VRV diagram */}
-        {img2 && (
-          <div className="vrf-info-img" onClick={() => onImageClick?.(img2)}>
-            <img src={img2} alt={imgList[2]?.label ?? 'VRF Diagram'} />
-            {imgList[2]?.label && <p className="vrf-info-img-label">{imgList[2].label}</p>}
+        {/* VRF vs VRV differences diagram */}
+        {img1 && (
+          <div className="vrf-info-img" onClick={() => onImageClick?.(img1)}>
+            <img src={img1} alt={imgList[1]?.label ?? 'VRF Diagram'} />
+            {imgList[1]?.label && <p className="vrf-info-img-label">{imgList[1].label}</p>}
           </div>
         )}
 
