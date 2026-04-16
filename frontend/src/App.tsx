@@ -18,6 +18,7 @@ function AppContent() {
   const isHub = location.pathname === '/hub'
 
   const [videoSrc, setVideoSrc] = useState<string>(_cachedVideoSrc ?? '/villa_banner.mp4')
+  const [videoReady, setVideoReady] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   // Start fetching the blob as early as possible (app load, not hub mount)
@@ -33,11 +34,19 @@ function AppContent() {
       .catch(() => {})
   }, [])
 
-  // Restart video from the beginning every time the user arrives at /hub
+  // On every /hub visit: seek to 0 first, reveal only after seek completes
   useEffect(() => {
-    if (isHub && videoRef.current) {
-      videoRef.current.currentTime = 0
+    if (!isHub) {
+      setVideoReady(false)
+      return
     }
+    const video = videoRef.current
+    if (!video) { setVideoReady(true); return }
+
+    const onSeeked = () => setVideoReady(true)
+    video.addEventListener('seeked', onSeeked, { once: true })
+    video.currentTime = 0
+    return () => video.removeEventListener('seeked', onSeeked)
   }, [isHub])
 
   return (
@@ -45,7 +54,7 @@ function AppContent() {
       {/* Persistent video — always mounted so the decoder never restarts */}
       <video
         ref={videoRef}
-        className={`app-bg-video ${isHub ? 'app-bg-video--visible' : ''}`}
+        className={`app-bg-video ${videoReady ? 'app-bg-video--visible' : ''}`}
         src={videoSrc}
         autoPlay
         muted
