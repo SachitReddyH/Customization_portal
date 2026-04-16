@@ -223,6 +223,22 @@ body {
   overflow: hidden;
 }
 
+/* App-level persistent video (always mounted, shown only on /hub) */
+.app-bg-video {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  opacity: 0;
+  pointer-events: none;
+  /* keep playing silently on other routes so decoder stays warm */
+}
+.app-bg-video--visible {
+  opacity: 1;
+}
+
 .hub-video {
   position: absolute;
   inset: 0;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutGrid, Layers, Bath, ArrowUpSquare,
@@ -84,9 +84,6 @@ const MOCK_GALLERY: MockGroup[] = [
 const imgSrc = (file: string) =>
   `/mockvillaimages/${encodeURIComponent(file)}`
 
-/* ── Video blob cache (survives SPA navigations) ── */
-let _cachedVideoSrc: string | null = null
-
 /* ════════════════════════════════════════════════ */
 
 export default function CustomisationHub() {
@@ -101,21 +98,6 @@ export default function CustomisationHub() {
 
   const userName = localStorage.getItem('user_name') ?? ''
 
-  // ── Video blob caching ──────────────────────────
-  const [videoSrc, setVideoSrc] = useState<string>(_cachedVideoSrc ?? '/villa_banner.mp4')
-  const videoRef = useRef<HTMLVideoElement>(null)
-
-  useEffect(() => {
-    if (_cachedVideoSrc) return // already cached — nothing to do
-    fetch('/villa_banner.mp4')
-      .then(r => r.blob())
-      .then(blob => {
-        const url = URL.createObjectURL(blob)
-        _cachedVideoSrc = url
-        setVideoSrc(url)
-      })
-      .catch(() => {}) // silently fall back to direct src
-  }, [])
 
   const [villa, setVilla] = useState<any>(null)
   useEffect(() => {
@@ -133,9 +115,6 @@ export default function CustomisationHub() {
 
   return (
     <div className="hub-page">
-
-      {/* ── Background video ── */}
-      <video ref={videoRef} className="hub-video" src={videoSrc} autoPlay muted loop playsInline preload="auto" />
 
       {/* White frosted overlay */}
       <div className={`hub-video-overlay ${expanded ? 'active' : ''}`} />
