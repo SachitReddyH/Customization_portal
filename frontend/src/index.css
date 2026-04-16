@@ -2214,48 +2214,63 @@ body {
 .vrf-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
 .vrf-card--selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(240,94,62,0.15); }
 
-/* Gallery */
-.vrf-gallery {
+/* Top image pair */
+.vrf-img-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   width: 100%;
-  background: #f7f5f2;
+  height: 260px;
+  overflow: hidden;
+  border-radius: 14px 14px 0 0;
 }
-.vrf-main-img {
+.vrf-img-pair-item {
   position: relative;
-  width: 100%;
+  overflow: hidden;
   cursor: zoom-in;
 }
-.vrf-main-img img {
+.vrf-img-pair-item:first-child { border-right: 2px solid #f7f6f4; }
+.vrf-img-pair-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+.vrf-img-pair-item:hover img { transform: scale(1.03); }
+.vrf-img-pair-item .spec-img-zoom-hint {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+}
+
+/* Info image (third — diagram) */
+.vrf-info-img {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #ece8e2;
+  cursor: zoom-in;
+}
+.vrf-info-img img {
   width: 100%;
   height: auto;
   display: block;
-  object-fit: contain;
 }
-.vrf-thumbs {
-  display: flex;
-  gap: 8px;
-  padding: 10px 16px;
-  background: #f0ede8;
+.vrf-info-img-label {
+  font-size: 11.5px;
+  color: #888;
+  text-align: center;
+  padding: 7px 0 8px;
+  margin: 0;
+  background: #faf9f7;
+  font-style: italic;
 }
-.vrf-thumb {
-  width: 72px;
-  height: 52px;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition: border-color 0.15s;
-  flex-shrink: 0;
-}
-.vrf-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.vrf-thumb--active { border-color: var(--accent); }
-.vrf-thumb:hover:not(.vrf-thumb--active) { border-color: #ccc; }
 
 /* Content */
 .vrf-content {
-  padding: 24px 28px 22px;
+  padding: 28px 32px 26px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 26px;
 }
 .vrf-name {
   font-family: 'Playfair Display', Georgia, serif;

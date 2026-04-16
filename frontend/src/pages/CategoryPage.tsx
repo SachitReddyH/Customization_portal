@@ -1230,9 +1230,10 @@ function VrfCard({
   onSelect: (opt: Option, type: 'standard' | 'upgrade') => void
   onImageClick?: (url: string) => void
 }) {
-  const [activeImg, setActiveImg] = useState(0)
   const imgList = opt.images?.upgrade_list ?? []
-  const mainImg = imgList[activeImg] ? imgUrl(imgList[activeImg].path) : imgUrl(opt.images?.upgrade)
+  const img0 = imgList[0] ? imgUrl(imgList[0].path) : null
+  const img1 = imgList[1] ? imgUrl(imgList[1].path) : null
+  const img2 = imgList[2] ? imgUrl(imgList[2].path) : null
 
   const splitPoint = (pt: string) => {
     const cut = pt.indexOf(' \u2013 ')
@@ -1251,23 +1252,18 @@ function VrfCard({
   return (
     <div className={`vrf-card ${selectedType ? 'vrf-card--selected' : ''}`}>
 
-      {/* ── Image gallery ── */}
-      <div className="vrf-gallery">
-        <div className="vrf-main-img" onClick={() => mainImg && onImageClick?.(mainImg)}>
-          <img src={mainImg ?? '/placeholder.png'} alt={opt.option_name ?? 'VRF'} />
-          {mainImg && <span className="spec-img-zoom-hint">🔍 Enlarge</span>}
-        </div>
-        {imgList.length > 1 && (
-          <div className="vrf-thumbs">
-            {imgList.map((img, i) => (
-              <div
-                key={i}
-                className={`vrf-thumb ${activeImg === i ? 'vrf-thumb--active' : ''}`}
-                onClick={() => setActiveImg(i)}
-              >
-                <img src={imgUrl(img.path) ?? ''} alt={img.label} />
-              </div>
-            ))}
+      {/* ── Top: first two images side by side ── */}
+      <div className="vrf-img-pair">
+        {img0 && (
+          <div className="vrf-img-pair-item" onClick={() => onImageClick?.(img0)}>
+            <img src={img0} alt={imgList[0]?.label ?? ''} />
+            <span className="spec-img-zoom-hint">🔍 Enlarge</span>
+          </div>
+        )}
+        {img1 && (
+          <div className="vrf-img-pair-item" onClick={() => onImageClick?.(img1)}>
+            <img src={img1} alt={imgList[1]?.label ?? ''} />
+            <span className="spec-img-zoom-hint">🔍 Enlarge</span>
           </div>
         )}
       </div>
@@ -1295,6 +1291,14 @@ function VrfCard({
                 )
               })}
             </ul>
+          </div>
+        )}
+
+        {/* Third image — VRF vs VRV diagram */}
+        {img2 && (
+          <div className="vrf-info-img" onClick={() => onImageClick?.(img2)}>
+            <img src={img2} alt={imgList[2]?.label ?? 'VRF Diagram'} />
+            {imgList[2]?.label && <p className="vrf-info-img-label">{imgList[2].label}</p>}
           </div>
         )}
 
