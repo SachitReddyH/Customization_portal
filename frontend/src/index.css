@@ -2249,6 +2249,8 @@ body {
   overflow: hidden;
   border: 1px solid #ece8e2;
   cursor: zoom-in;
+  max-width: 65%;
+  margin: 0 auto;
 }
 .vrf-info-img img {
   width: 100%;
