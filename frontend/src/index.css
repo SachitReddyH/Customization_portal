@@ -2315,6 +2315,49 @@ body {
   border-color: var(--accent);
 }
 
+/* ── Hub villa info bar ──────────────────────────── */
+.hub-infobar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 28px;
+  height: 64px;           /* matches hub-topbar height */
+  pointer-events: none;
+
+  /* start hidden — same translate as .card */
+  opacity: 0;
+  transform: translateY(60px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.hub-infobar--visible {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 100ms;  /* slightly after first card */
+}
+
+.hub-infobar-item {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #444;
+}
+.hub-infobar-name {
+  color: var(--accent);
+}
+.hub-infobar-sep {
+  font-size: 14px;
+  color: #bbb;
+  line-height: 1;
+}
+
 /* ══════════════════════════════════════════════════
    MOCK VILLA GALLERY MODAL
 ══════════════════════════════════════════════════ */

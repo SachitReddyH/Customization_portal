@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutGrid, Layers, Bath, ArrowUpSquare,
   Leaf, Wifi, Wind, Tv2, LogOut, Images, X,
 } from 'lucide-react'
+import { getMyVilla } from '../services/api'
 
 const CATEGORIES = [
   { id: 'CAT001', name: 'Space Customisations',    tagline: 'Spaces that adapt to you',                             icon: LayoutGrid    },
@@ -97,6 +98,11 @@ export default function CustomisationHub() {
 
   const userName = localStorage.getItem('user_name') ?? ''
 
+  const [villa, setVilla] = useState<any>(null)
+  useEffect(() => {
+    getMyVilla().then((villas: any[]) => { if (villas?.length) setVilla(villas[0]) }).catch(() => {})
+  }, [])
+
   const handleCustomise = () => {
     if (!expanded) {
       setExpanded(true)
@@ -115,7 +121,7 @@ export default function CustomisationHub() {
       {/* White frosted overlay */}
       <div className={`hub-video-overlay ${expanded ? 'active' : ''}`} />
 
-      {/* ── Top-right: mock villa button + user + logout ── */}
+      {/* ── Top-right: mock villa button + logout ── */}
       <div className={`hub-topbar ${expanded ? 'hub-topbar--dark' : ''}`}>
         <button
           className="hub-topbar-gallery"
@@ -125,11 +131,24 @@ export default function CustomisationHub() {
           <Images size={15} />
           <span>Mock Villa</span>
         </button>
-        <span className="hub-topbar-name">{userName}</span>
         <button className="hub-topbar-logout" onClick={handleLogout} title="Log out">
           <LogOut size={15} />
           <span>Logout</span>
         </button>
+      </div>
+
+      {/* ── Villa info bar — slides in with cards ── */}
+      <div className={`hub-infobar ${expanded ? 'hub-infobar--visible' : ''}`}
+           style={{ transitionDelay: expanded && !settled ? '0ms' : '0ms' }}>
+        <span className="hub-infobar-item hub-infobar-name">{userName}</span>
+        {villa && (<>
+          <span className="hub-infobar-sep">·</span>
+          <span className="hub-infobar-item">Villa {villa.villa_number}</span>
+          <span className="hub-infobar-sep">·</span>
+          <span className="hub-infobar-item">{villa.facing} Facing</span>
+          <span className="hub-infobar-sep">·</span>
+          <span className="hub-infobar-item">{villa.plot_size ?? (villa.plot_area_sqft ? `${villa.plot_area_sqft} sq ft` : null)}</span>
+        </>)}
       </div>
 
       {/* ── Hero ── */}
