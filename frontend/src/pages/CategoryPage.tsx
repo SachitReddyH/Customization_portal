@@ -1298,7 +1298,6 @@ function VrfCard({
         {img1 && (
           <div className="vrf-info-img" onClick={() => onImageClick?.(img1)}>
             <img src={img1} alt={imgList[1]?.label ?? 'VRF Diagram'} />
-            {imgList[1]?.label && <p className="vrf-info-img-label">{imgList[1].label}</p>}
           </div>
         )}
 
