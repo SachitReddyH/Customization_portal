@@ -33,6 +33,8 @@ interface Option {
   images: { standard?: string; standard_list?: { path: string; label: string }[]; upgrade?: string; upgrade_list?: { path: string; label: string }[] }
   floor_plan_image?: string
   option_type?: string
+  vrf_benefits?: string[]
+  vrf_tech_specs?: string[]
 }
 
 interface SelectionItem {
@@ -963,6 +965,18 @@ function OptionCard({
     )
   }
 
+  // ── VRF card (CAT007 rich layout) ────────────────────────────────────────
+  if (upgradeOnly && opt.category_id === 'CAT007') {
+    return (
+      <VrfCard
+        opt={opt}
+        selectedType={selectedType}
+        onSelect={onSelect}
+        onImageClick={onImageClick}
+      />
+    )
+  }
+
   // ── Horizontal card (upgradeOnly: single image, no standard alternative) ──
   if (upgradeOnly) {
     const imgSrcUrl = imgUrl(opt.images?.upgrade)
@@ -1203,6 +1217,115 @@ function OptionCard({
         </div>
       </div>
 
+    </div>
+  )
+}
+
+/* ── VRF card (CAT007 rich layout) ────────────── */
+function VrfCard({
+  opt, selectedType, onSelect, onImageClick,
+}: {
+  opt: Option
+  selectedType?: string
+  onSelect: (opt: Option, type: 'standard' | 'upgrade') => void
+  onImageClick?: (url: string) => void
+}) {
+  const [activeImg, setActiveImg] = useState(0)
+  const imgList = opt.images?.upgrade_list ?? []
+  const mainImg = imgList[activeImg] ? imgUrl(imgList[activeImg].path) : imgUrl(opt.images?.upgrade)
+
+  const splitPoint = (pt: string) => {
+    const cut = pt.indexOf(' \u2013 ')
+    if (cut > 0) return { title: pt.slice(0, cut), detail: pt.slice(cut + 3) }
+    const cut2 = pt.indexOf(' \u2014 ')
+    if (cut2 > 0) return { title: pt.slice(0, cut2), detail: pt.slice(cut2 + 3) }
+    return { title: pt, detail: '' }
+  }
+
+  const splitSpec = (s: string) => {
+    const cut = s.indexOf(': ')
+    if (cut > 0) return { key: s.slice(0, cut), val: s.slice(cut + 2) }
+    return { key: s, val: '' }
+  }
+
+  return (
+    <div className={`vrf-card ${selectedType ? 'vrf-card--selected' : ''}`}>
+
+      {/* ── Image gallery ── */}
+      <div className="vrf-gallery">
+        <div className="vrf-main-img" onClick={() => mainImg && onImageClick?.(mainImg)}>
+          <img src={mainImg ?? '/placeholder.png'} alt={opt.option_name ?? 'VRF'} />
+          {mainImg && <span className="spec-img-zoom-hint">🔍 Enlarge</span>}
+        </div>
+        {imgList.length > 1 && (
+          <div className="vrf-thumbs">
+            {imgList.map((img, i) => (
+              <div
+                key={i}
+                className={`vrf-thumb ${activeImg === i ? 'vrf-thumb--active' : ''}`}
+                onClick={() => setActiveImg(i)}
+              >
+                <img src={imgUrl(img.path) ?? ''} alt={img.label} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Content ── */}
+      <div className="vrf-content">
+
+        {/* Headline */}
+        <h2 className="vrf-name">{opt.option_name}</h2>
+        {opt.description && <p className="vrf-headline">{opt.description}</p>}
+        {opt.detailed_spec && <p className="vrf-intro">{opt.detailed_spec}</p>}
+
+        {/* What Makes It Different */}
+        {(opt.vrf_benefits ?? []).length > 0 && (
+          <div className="vrf-section">
+            <h4 className="vrf-section-title">What Makes It Different</h4>
+            <ul className="vrf-benefits">
+              {(opt.vrf_benefits ?? []).map((pt, i) => {
+                const { title, detail } = splitPoint(pt)
+                return (
+                  <li key={i} className="vrf-benefit-item">
+                    <span className="vrf-benefit-title">{title}</span>
+                    {detail && <span className="vrf-benefit-detail"> — {detail}</span>}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
+
+        {/* Technical Specifications */}
+        {(opt.vrf_tech_specs ?? []).length > 0 && (
+          <div className="vrf-section">
+            <h4 className="vrf-section-title">Technical Specifications</h4>
+            <div className="vrf-specs-grid">
+              {(opt.vrf_tech_specs ?? []).map((s, i) => {
+                const { key, val } = splitSpec(s)
+                return (
+                  <div key={i} className="vrf-spec-row">
+                    <span className="vrf-spec-key">{key}</span>
+                    <span className="vrf-spec-val">{val}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Select button */}
+        <div className="vrf-footer">
+          <button
+            className={`vrf-select-btn ${selectedType ? 'vrf-select-btn--selected' : ''}`}
+            onClick={() => onSelect(opt, 'upgrade')}
+          >
+            {selectedType ? '✓ Selected' : 'Select Upgrade'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

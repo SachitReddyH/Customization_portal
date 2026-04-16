@@ -2198,6 +2198,133 @@ body {
   animation: slideUp 0.2s ease;
 }
 
+/* ══════════════════════════════════════════════════
+   VRF CARD (CAT007)
+══════════════════════════════════════════════════ */
+.vrf-card {
+  background: #fff;
+  border-radius: 16px;
+  border: 1.5px solid #e8e3db;
+  overflow: hidden;
+  width: 100%;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.vrf-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+.vrf-card--selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(240,94,62,0.15); }
+
+/* Gallery */
+.vrf-gallery {
+  width: 100%;
+  background: #f7f5f2;
+}
+.vrf-main-img {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  overflow: hidden;
+  cursor: zoom-in;
+}
+.vrf-main-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.vrf-thumbs {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #f0ede8;
+}
+.vrf-thumb {
+  width: 72px;
+  height: 52px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  flex-shrink: 0;
+}
+.vrf-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.vrf-thumb--active { border-color: var(--accent); }
+.vrf-thumb:hover:not(.vrf-thumb--active) { border-color: #ccc; }
+
+/* Content */
+.vrf-content {
+  padding: 24px 28px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.vrf-name {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+.vrf-headline {
+  font-size: 15px;
+  font-style: italic;
+  color: var(--accent);
+  margin: -10px 0 0;
+  font-weight: 500;
+}
+.vrf-intro {
+  font-size: 13.5px;
+  color: #555;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* Sections */
+.vrf-section { display: flex; flex-direction: column; gap: 10px; }
+.vrf-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #999;
+  border-bottom: 1px solid #ece8e2;
+  padding-bottom: 6px;
+  margin: 0;
+}
+
+/* Benefits */
+.vrf-benefits { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 7px; }
+.vrf-benefit-item { font-size: 13px; color: #444; display: flex; gap: 8px; align-items: baseline; }
+.vrf-benefit-item::before { content: '•'; color: var(--accent); flex-shrink: 0; }
+.vrf-benefit-title { font-weight: 600; color: #222; }
+.vrf-benefit-detail { color: #666; font-weight: 400; }
+
+/* Tech specs */
+.vrf-specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 20px;
+}
+.vrf-spec-row { display: flex; flex-direction: column; gap: 1px; }
+.vrf-spec-key { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.04em; }
+.vrf-spec-val { font-size: 12.5px; color: #333; }
+
+/* Footer */
+.vrf-footer { display: flex; justify-content: flex-end; padding-top: 4px; }
+.vrf-select-btn {
+  padding: 10px 28px;
+  border-radius: 8px;
+  border: 1.5px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.vrf-select-btn:hover { background: var(--accent); color: #fff; }
+.vrf-select-btn--selected { background: var(--accent); color: #fff; }
+
 /* ── Package card — expanded details ─────────────── */
 .pkg-details {
   margin-top: 14px;
