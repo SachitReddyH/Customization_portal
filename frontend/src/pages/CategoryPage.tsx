@@ -753,9 +753,6 @@ export default function CategoryPage() {
                                 <span className={`cart-item-type ${sel.selection_type}`}>
                                   {sel.selection_type === 'upgrade' ? 'Upgrade' : 'Standard'}
                                 </span>
-                                <span className="cart-item-price">
-                                  {opt ? formatPrice(opt) : '–'}
-                                </span>
                               </div>
                               <button
                                 className="cart-item-remove"
@@ -957,7 +954,6 @@ function OptionCard({
       <div className="opt-card opt-card--pkg-covered">
         <div className="opt-card-header">
           <span className="opt-card-name">{opt.option_name ?? opt.space ?? opt.option_id}</span>
-          {opt.room_code && <span className="opt-card-code">{opt.room_code}</span>}
         </div>
         <div className="pkg-covered-banner">
           <span className="pkg-covered-check">✓</span>
@@ -971,9 +967,6 @@ function OptionCard({
             {opt.upgrade_spec && <><br /><em>Upgrade:</em> {opt.upgrade_spec}</>}
           </p>
         )}
-        <div className="opt-price-row">
-          <span className="pkg-covered-price-note">Price included in package</span>
-        </div>
       </div>
     )
   }
@@ -1036,7 +1029,6 @@ function OptionCard({
           <div className="opt-horiz-body">
             <div className="opt-horiz-top">
               <h3 className="opt-horiz-name">{opt.option_name ?? opt.space ?? opt.option_id}</h3>
-              {opt.room_code && <span className="opt-card-code">{opt.room_code}</span>}
             </div>
 
             {isPointCat && allPoints.length > 0 ? (
@@ -1063,7 +1055,6 @@ function OptionCard({
             )}
 
             <div className="opt-horiz-footer">
-              <span className="opt-price">{formatPrice(opt)}</span>
               <button
                 className={`opt-horiz-btn ${selectedType ? 'opt-horiz-btn--selected' : ''}`}
                 onClick={e => { e.stopPropagation(); onSelect(opt, 'upgrade') }}
@@ -1114,7 +1105,6 @@ function OptionCard({
         {/* ── Header bar ── */}
         <div className="cmp-header">
           <span className="cmp-title">{opt.option_name ?? opt.space ?? opt.option_id}</span>
-          {opt.room_code && <span className="opt-card-code">{opt.room_code}</span>}
         </div>
 
         {/* ── Two-panel body ── */}
@@ -1178,11 +1168,6 @@ function OptionCard({
           </div>
         </div>
 
-        {/* ── Footer: price ── */}
-        <div className="cmp-footer">
-          <span className="opt-price">{formatPrice(opt)}</span>
-          {opt.price_unit && <span className="opt-unit">/ {opt.price_unit}</span>}
-        </div>
       </div>
     )
   }
@@ -1195,7 +1180,6 @@ function OptionCard({
         {opt.package_tier && opt.package_tier !== opt.option_name && (
           <span className="opt-card-tier">{opt.package_tier}</span>
         )}
-        {opt.room_code && !opt.package_tier && <span className="opt-card-code">{opt.room_code}</span>}
       </div>
 
       <div className={`opt-specs ${upgradeOnly ? 'opt-specs--single' : ''}`}>
@@ -1237,10 +1221,6 @@ function OptionCard({
         </div>
       </div>
 
-      <div className="opt-price-row">
-        <span className="opt-price">{formatPrice(opt)}</span>
-        {opt.price_unit && <span className="opt-unit">/ {opt.price_unit}</span>}
-      </div>
     </div>
   )
 }
@@ -1350,9 +1330,8 @@ function PackageCard({
         </div>
       )}
 
-      {/* ── Action row: price + view plan + select ── */}
+      {/* ── Action row: view plan + select ── */}
       <div className="pkg-actions">
-        <span className="opt-price">{formatPrice(opt)}</span>
         <div className="pkg-action-btns">
           {floorPlanImg && (
             <button
