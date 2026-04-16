@@ -2207,6 +2207,7 @@ body {
   border: 1.5px solid #e8e3db;
   overflow: hidden;
   width: 100%;
+  flex-shrink: 0;
   cursor: pointer;
   transition: box-shadow 0.2s;
 }
@@ -2221,14 +2222,13 @@ body {
 .vrf-main-img {
   position: relative;
   width: 100%;
-  height: 280px;
-  overflow: hidden;
   cursor: zoom-in;
 }
 .vrf-main-img img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  display: block;
+  object-fit: contain;
 }
 .vrf-thumbs {
   display: flex;
