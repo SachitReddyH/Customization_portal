@@ -2330,15 +2330,16 @@ body {
   height: 64px;           /* matches hub-topbar height */
   pointer-events: none;
 
-  /* slide in from left */
+  /* start centred content at the left edge */
+  transform: translateX(-50vw);
   opacity: 0;
-  transform: translateX(-60px);
-  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: transform 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              opacity 0.5s ease;
 }
 .hub-infobar--visible {
-  opacity: 1;
   transform: translateX(0);
-  transition-delay: 300ms;
+  opacity: 1;
+  transition-delay: 250ms;
 }
 
 .hub-infobar-chip {
