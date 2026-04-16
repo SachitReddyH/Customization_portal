@@ -995,8 +995,8 @@ function OptionCard({
     }
 
     const allPoints     = isPointCat && opt.detailed_spec ? parsePoints(opt.detailed_spec) : []
-    const previewPoints = showAllPts ? allPoints : allPoints.slice(0, 3)
-    const hasMore       = !showAllPts && allPoints.length > 3
+    const previewPoints = showAllPts ? allPoints : allPoints.slice(0, 4)
+    const hasMore       = !showAllPts && allPoints.length > 4
 
     return (
       <>
