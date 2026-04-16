@@ -2325,37 +2325,50 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 20px;
   padding: 0 28px;
   height: 64px;           /* matches hub-topbar height */
   pointer-events: none;
 
-  /* start hidden — same translate as .card */
-  opacity: 0;
-  transform: translateY(60px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  /* start fully below viewport — identical to .card */
+  transform: translateY(100vh);
+  transition: transform 0.85s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 .hub-infobar--visible {
-  opacity: 1;
   transform: translateY(0);
-  transition-delay: 100ms;  /* slightly after first card */
+  transition-delay: 80ms;   /* just before first card wave */
 }
 
-.hub-infobar-item {
+.hub-infobar-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.hub-infobar-label {
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #aaa;
+}
+.hub-infobar-value {
   font-family: var(--font-body);
   font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.09em;
+  font-weight: 700;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: #444;
+  color: #333;
 }
 .hub-infobar-name {
   color: var(--accent);
 }
 .hub-infobar-sep {
-  font-size: 14px;
-  color: #bbb;
+  font-size: 18px;
+  color: #ddd;
   line-height: 1;
+  padding-top: 6px;
 }
 
 /* ══════════════════════════════════════════════════

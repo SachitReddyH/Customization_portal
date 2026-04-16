@@ -138,16 +138,29 @@ export default function CustomisationHub() {
       </div>
 
       {/* ── Villa info bar — slides in with cards ── */}
-      <div className={`hub-infobar ${expanded ? 'hub-infobar--visible' : ''}`}
-           style={{ transitionDelay: expanded && !settled ? '0ms' : '0ms' }}>
-        <span className="hub-infobar-item hub-infobar-name">{userName}</span>
+      <div className={`hub-infobar ${expanded ? 'hub-infobar--visible' : ''}`}>
+        <div className="hub-infobar-chip">
+          <span className="hub-infobar-label">Name</span>
+          <span className="hub-infobar-value hub-infobar-name">{userName}</span>
+        </div>
         {villa && (<>
           <span className="hub-infobar-sep">·</span>
-          <span className="hub-infobar-item">Villa {villa.villa_number}</span>
+          <div className="hub-infobar-chip">
+            <span className="hub-infobar-label">Villa</span>
+            <span className="hub-infobar-value">{villa.villa_number}</span>
+          </div>
           <span className="hub-infobar-sep">·</span>
-          <span className="hub-infobar-item">{villa.facing} Facing</span>
+          <div className="hub-infobar-chip">
+            <span className="hub-infobar-label">Facing</span>
+            <span className="hub-infobar-value">{villa.facing}</span>
+          </div>
           <span className="hub-infobar-sep">·</span>
-          <span className="hub-infobar-item">{villa.plot_size ?? (villa.plot_area_sqft ? `${villa.plot_area_sqft} sq ft` : null)}</span>
+          <div className="hub-infobar-chip">
+            <span className="hub-infobar-label">Size</span>
+            <span className="hub-infobar-value">
+              {[villa.plot_size, villa.plot_area_sqft ? `${villa.plot_area_sqft} sq ft` : null].filter(Boolean).join(' / ')}
+            </span>
+          </div>
         </>)}
       </div>
 
