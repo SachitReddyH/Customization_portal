@@ -110,6 +110,27 @@ async def remove_selection(payload: SelectionRemove, user=Depends(get_current_us
     return _fmt(result)
 
 
+@router.delete("/clear", response_model=CustomerSelectionsResponse)
+async def clear_selections(user=Depends(get_current_user)):
+    """Remove all selections for the current customer."""
+    db = get_db()
+    customer_id = user["_id"]
+    doc = await db.customer_selections.find_one({"customer_id": customer_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="No selections found")
+
+    if doc.get("status") == "submitted":
+        raise HTTPException(status_code=400, detail="Selections already submitted.")
+
+    now = datetime.now(timezone.utc)
+    result = await db.customer_selections.find_one_and_update(
+        {"customer_id": customer_id},
+        {"$set": {"selections": [], "last_updated": now}},
+        return_document=True,
+    )
+    return _fmt(result)
+
+
 @router.post("/submit", response_model=CustomerSelectionsResponse)
 async def submit_selections(user=Depends(get_current_user)):
     """Customer submits selections for quote review."""

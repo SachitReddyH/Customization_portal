@@ -84,6 +84,9 @@ export const removeSelection = (data: {
   location_id?: string
 }) => api.delete('/selections/remove', { data }).then(r => r.data)
 
+export const clearAllSelections = () =>
+  api.delete('/selections/clear').then(r => r.data)
+
 /* ── Admin ────────────────────────────────────── */
 export const getDashboard = () =>
   api.get('/admin/dashboard').then(r => r.data)

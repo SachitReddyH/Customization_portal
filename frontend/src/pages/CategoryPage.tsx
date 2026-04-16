@@ -4,7 +4,7 @@ import { ArrowLeft, X, ChevronDown, ChevronRight, ShoppingCart, Images } from 'l
 import {
   getCategory, getCategories, getFloors, getRooms, getRoomOptions,
   getDirectOptions, getFlooringPackages,
-  getMyVilla, getMySelections, upsertSelection, removeSelection,
+  getMyVilla, getMySelections, upsertSelection, removeSelection, clearAllSelections,
   getMyQuotes, requestQuote,
   BASE,
 } from '../services/api'
@@ -461,6 +461,13 @@ export default function CategoryPage() {
     } catch (e) { console.error(e) }
   }
 
+  const handleClearCart = async () => {
+    try {
+      const updated = await clearAllSelections()
+      setSelections(updated.selections ?? [])
+    } catch (e) { console.error(e) }
+  }
+
   const handleRequestQuote = async () => {
     setQuoteSubmitting(true)
     setQuoteError('')
@@ -717,6 +724,11 @@ export default function CategoryPage() {
               <ShoppingCart size={16} />
               <span>Your Selections</span>
               <span className="cart-count">{selections.length}</span>
+              {selections.length > 0 && (
+                <button className="cart-clear-btn" onClick={handleClearCart}>
+                  Clear all
+                </button>
+              )}
             </div>
 
             {selections.length === 0
