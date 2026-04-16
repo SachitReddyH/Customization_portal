@@ -1119,12 +1119,6 @@ function OptionCard({
               })}
             </div>
             <p className="cmp-spec-text">{opt.standard_spec}</p>
-            <button
-              className={`cmp-btn cmp-btn--std ${selectedType === 'standard' ? 'cmp-btn--active' : ''}`}
-              onClick={e => { e.stopPropagation(); onSelect(opt, 'standard') }}
-            >
-              {selectedType === 'standard' ? '✓ Keeping Standard' : 'Keep Standard'}
-            </button>
           </div>
 
           {/* Divider */}
@@ -1188,9 +1182,6 @@ function OptionCard({
             </div>
             <p className="spec-label">Standard</p>
             <p className="spec-desc">{opt.standard_spec}</p>
-            <div className={`spec-check ${selectedType === 'standard' ? 'active' : ''}`}>
-              {selectedType === 'standard' ? '✓ Selected' : 'Keep Standard'}
-            </div>
           </div>
         )}
 
