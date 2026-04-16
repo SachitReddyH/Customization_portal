@@ -70,6 +70,10 @@ class OptionBase(BaseModel):
     sort_order: int = 1
     is_active: bool = True
 
+    # VRF/VRV specific fields (CAT007)
+    vrf_benefits: Optional[List[str]] = None
+    vrf_tech_specs: Optional[List[str]] = None
+
 
 class OptionResponse(OptionBase):
     id: str
