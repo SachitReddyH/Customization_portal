@@ -72,6 +72,11 @@ body {
   cursor: pointer;
   text-decoration: none;
 }
+.navbar-logo-img {
+  height: 36px;
+  width: auto;
+  display: block;
+}
 .navbar-logo-text {
   font-family: var(--font-body);
   font-weight: 700;

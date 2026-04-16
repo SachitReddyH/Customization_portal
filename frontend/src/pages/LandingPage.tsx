@@ -52,8 +52,7 @@ export default function LandingPage() {
         {/* Navbar sits inside left panel */}
         <nav className={`navbar-split ${scrolled ? 'scrolled' : ''}`}>
           <div className="navbar-logo">
-            <span className="navbar-logo-text">CAPSTONE LIFE</span>
-            <span className="navbar-logo-dot" />
+            <img src="/capstonelife-logo.svg" alt="Capstone Life" className="navbar-logo-img" />
           </div>
         </nav>
 

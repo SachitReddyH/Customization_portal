@@ -34,9 +34,7 @@ export default function AdminLayout() {
       {/* ── Sidebar ── */}
       <aside className="admin-sidebar">
         <div className="admin-logo-section">
-          <div className="admin-logo-text">
-            CAPSTONE LIFE<span className="admin-logo-dot" />
-          </div>
+          <img src="/capstonelife-logo.svg" alt="Capstone Life" className="admin-logo-img" />
           <span className="admin-role-badge">Admin</span>
         </div>
 

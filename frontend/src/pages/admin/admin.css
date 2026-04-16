@@ -49,6 +49,12 @@
   border-bottom: 1px solid var(--border);
 }
 
+.admin-logo-img {
+  height: 32px;
+  width: auto;
+  display: block;
+  margin-bottom: 4px;
+}
 .admin-logo-text {
   font-size: 14px;
   font-weight: 800;
