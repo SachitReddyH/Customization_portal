@@ -64,14 +64,6 @@ const SUB_GROUP_LABELS: Record<string, string> = {
   home_theatre: 'Home Theatre / Private Office',
 }
 
-/* ── Price helper ───────────────────────────────── */
-const formatPrice = (opt: Option) => {
-  if (opt.price_status === 'fixed' && opt.price_inr)
-    return `₹${opt.price_inr.toLocaleString('en-IN')}`
-  if (opt.price_status === 'on_request') return 'Price on Request'
-  return 'TBD'
-}
-
 /* ── Floor plan URL helper ──────────────────────── */
 const floorPlanUrl = (villa: any, floor: string) => {
   if (!villa) return null
