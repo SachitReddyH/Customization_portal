@@ -848,6 +848,7 @@ body {
   height: auto !important;
   min-height: 220px;
   overflow: visible !important;
+  flex-shrink: 0;
 }
 /* Re-clip just the image corners so they stay rounded */
 .opt-card--horizontal--autoht .opt-horiz-img {
