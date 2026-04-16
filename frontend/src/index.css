@@ -2330,13 +2330,15 @@ body {
   height: 64px;           /* matches hub-topbar height */
   pointer-events: none;
 
-  /* start fully below viewport — identical to .card */
-  transform: translateY(100vh);
-  transition: transform 0.85s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  /* slide in from left */
+  opacity: 0;
+  transform: translateX(-60px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 .hub-infobar--visible {
-  transform: translateY(0);
-  transition-delay: 80ms;   /* just before first card wave */
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 300ms;
 }
 
 .hub-infobar-chip {
