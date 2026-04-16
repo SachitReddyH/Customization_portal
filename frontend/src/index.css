@@ -2629,7 +2629,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #aaa;
+  color: #333;
 }
 .hub-infobar-value {
   font-family: var(--font-body);
@@ -2637,14 +2637,15 @@ body {
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: #333;
+  color: var(--accent);
 }
 .hub-infobar-name {
   color: var(--accent);
 }
 .hub-infobar-sep {
-  font-size: 18px;
-  color: #ddd;
+  font-size: 16px;
+  font-weight: 300;
+  color: #bbb;
   line-height: 1;
   padding-top: 6px;
 }

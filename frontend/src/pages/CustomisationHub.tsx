@@ -142,17 +142,17 @@ export default function CustomisationHub() {
           <span className="hub-infobar-value hub-infobar-name">{userName}</span>
         </div>
         {villa && (<>
-          <span className="hub-infobar-sep">·</span>
+          <span className="hub-infobar-sep">|</span>
           <div className="hub-infobar-chip">
             <span className="hub-infobar-label">Villa</span>
             <span className="hub-infobar-value">{villa.villa_number}</span>
           </div>
-          <span className="hub-infobar-sep">·</span>
+          <span className="hub-infobar-sep">|</span>
           <div className="hub-infobar-chip">
             <span className="hub-infobar-label">Facing</span>
             <span className="hub-infobar-value">{villa.facing}</span>
           </div>
-          <span className="hub-infobar-sep">·</span>
+          <span className="hub-infobar-sep">|</span>
           <div className="hub-infobar-chip">
             <span className="hub-infobar-label">Size</span>
             <span className="hub-infobar-value">
