@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import LandingPage from './pages/LandingPage'
 import CustomisationHub from './pages/CustomisationHub'
@@ -18,6 +18,7 @@ function AppContent() {
   const isHub = location.pathname === '/hub'
 
   const [videoSrc, setVideoSrc] = useState<string>(_cachedVideoSrc ?? '/villa_banner.mp4')
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   // Start fetching the blob as early as possible (app load, not hub mount)
   useEffect(() => {
@@ -32,10 +33,18 @@ function AppContent() {
       .catch(() => {})
   }, [])
 
+  // Restart video from the beginning every time the user arrives at /hub
+  useEffect(() => {
+    if (isHub && videoRef.current) {
+      videoRef.current.currentTime = 0
+    }
+  }, [isHub])
+
   return (
     <>
       {/* Persistent video — always mounted so the decoder never restarts */}
       <video
+        ref={videoRef}
         className={`app-bg-video ${isHub ? 'app-bg-video--visible' : ''}`}
         src={videoSrc}
         autoPlay
