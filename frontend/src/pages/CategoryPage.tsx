@@ -982,46 +982,122 @@ function OptionCard({
   if (upgradeOnly) {
     const imgSrcUrl = imgUrl(opt.images?.upgrade)
 
+    // Categories that render description as bullet points
+    const POINT_CATS    = new Set(['CAT004', 'CAT005', 'CAT006'])
+    const FULL_PT_CATS  = new Set(['CAT004'])          // Lift: show ALL bullets
+    // CAT005/CAT006: show first 3 + ellipsis + "View details" popup
+
+    const isPointCat   = POINT_CATS.has(opt.category_id)
+    const showAllPts   = FULL_PT_CATS.has(opt.category_id)
+    const [detailsOpen, setDetailsOpen] = useState(false)
+
+    // Parse detailed_spec into an array of strings
+    const parsePoints = (text: string): string[] => {
+      const lines = text.split('\n').map(s => s.trim()).filter(Boolean)
+      // Numbered list  "1. foo"
+      if (lines.filter(l => /^\d+\./.test(l)).length >= 2) {
+        return lines.map(l => l.replace(/^\d+\.\s*/, ''))
+      }
+      return lines
+    }
+    // Strip "Title – detail" down to just "Title" for in-card preview
+    const pointTitle = (pt: string) => {
+      const cut = pt.indexOf(' \u2013 ')   // en-dash
+      if (cut > 0) return pt.slice(0, cut)
+      const cut2 = pt.indexOf(' \u2014 ')  // em-dash
+      if (cut2 > 0) return pt.slice(0, cut2)
+      return pt
+    }
+
+    const allPoints     = isPointCat && opt.detailed_spec ? parsePoints(opt.detailed_spec) : []
+    const previewPoints = showAllPts ? allPoints : allPoints.slice(0, 3)
+    const hasMore       = !showAllPts && allPoints.length > 3
+
     return (
-      <div
-        className={`opt-card opt-card--horizontal ${selectedType ? 'opt-card--horizontal-selected' : ''}`}
-        onClick={() => onSelect(opt, 'upgrade')}
-      >
-        {/* Left: image */}
+      <>
         <div
-          className="opt-horiz-img"
-          onClick={e => { if (imgSrcUrl && onImageClick) { e.stopPropagation(); onImageClick(imgSrcUrl) } }}
+          className={`opt-card opt-card--horizontal ${selectedType ? 'opt-card--horizontal-selected' : ''}`}
+          onClick={() => onSelect(opt, 'upgrade')}
         >
-          <img
-            src={imgSrcUrl ?? '/placeholder.png'}
-            alt={opt.option_name ?? ''}
-            onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="160"><rect width="200" height="160" fill="%23f5f4f2"/><text x="100" y="85" text-anchor="middle" fill="%23ccc" font-size="13">No image</text></svg>' }}
-          />
-          {imgSrcUrl && <span className="spec-img-zoom-hint">🔍 Enlarge</span>}
-        </div>
-
-        {/* Right: details */}
-        <div className="opt-horiz-body">
-          <div className="opt-horiz-top">
-            <h3 className="opt-horiz-name">{opt.option_name ?? opt.space ?? opt.option_id}</h3>
-            {opt.room_code && <span className="opt-card-code">{opt.room_code}</span>}
+          {/* Left: image */}
+          <div
+            className="opt-horiz-img"
+            onClick={e => { if (imgSrcUrl && onImageClick) { e.stopPropagation(); onImageClick(imgSrcUrl) } }}
+          >
+            <img
+              src={imgSrcUrl ?? '/placeholder.png'}
+              alt={opt.option_name ?? ''}
+              onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="160"><rect width="200" height="160" fill="%23f5f4f2"/><text x="100" y="85" text-anchor="middle" fill="%23ccc" font-size="13">No image</text></svg>' }}
+            />
+            {imgSrcUrl && <span className="spec-img-zoom-hint">🔍 Enlarge</span>}
           </div>
 
-          {(opt.detailed_spec ?? opt.description) && (
-            <p className="opt-horiz-desc">{opt.detailed_spec ?? opt.description}</p>
-          )}
+          {/* Right: details */}
+          <div className="opt-horiz-body">
+            <div className="opt-horiz-top">
+              <h3 className="opt-horiz-name">{opt.option_name ?? opt.space ?? opt.option_id}</h3>
+              {opt.room_code && <span className="opt-card-code">{opt.room_code}</span>}
+            </div>
 
-          <div className="opt-horiz-footer">
-            <span className="opt-price">{formatPrice(opt)}</span>
-            <button
-              className={`opt-horiz-btn ${selectedType ? 'opt-horiz-btn--selected' : ''}`}
-              onClick={e => { e.stopPropagation(); onSelect(opt, 'upgrade') }}
-            >
-              {selectedType ? '✓ Selected' : 'Select'}
-            </button>
+            {isPointCat && allPoints.length > 0 ? (
+              <ul className="opt-point-list">
+                {previewPoints.map((pt, i) => (
+                  <li key={i} className="opt-point-item">{pointTitle(pt)}</li>
+                ))}
+                {hasMore && (
+                  <li className="opt-point-more">
+                    <span className="opt-point-ellipsis">• • •</span>
+                    <button
+                      className="opt-point-viewmore"
+                      onClick={e => { e.stopPropagation(); setDetailsOpen(true) }}
+                    >
+                      View details
+                    </button>
+                  </li>
+                )}
+              </ul>
+            ) : (
+              (opt.detailed_spec ?? opt.description) && (
+                <p className="opt-horiz-desc">{opt.detailed_spec ?? opt.description}</p>
+              )
+            )}
+
+            <div className="opt-horiz-footer">
+              <span className="opt-price">{formatPrice(opt)}</span>
+              <button
+                className={`opt-horiz-btn ${selectedType ? 'opt-horiz-btn--selected' : ''}`}
+                onClick={e => { e.stopPropagation(); onSelect(opt, 'upgrade') }}
+              >
+                {selectedType ? '✓ Selected' : 'Select'}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+
+        {/* Full details popup (CAT005 / CAT006) */}
+        {detailsOpen && (
+          <div className="desc-modal-overlay" onClick={() => setDetailsOpen(false)}>
+            <div className="desc-modal" onClick={e => e.stopPropagation()}>
+              <div className="desc-modal-header">
+                <h3 className="desc-modal-title">{opt.option_name ?? opt.space}</h3>
+                <button className="desc-modal-close" onClick={() => setDetailsOpen(false)}><X size={20} /></button>
+              </div>
+              <div className="desc-modal-body">
+                <ul className="opt-point-list opt-point-list--full">
+                  {allPoints.map((pt, i) => (
+                    <li key={i} className="opt-point-item">
+                      <span className="opt-point-title">{pointTitle(pt)}</span>
+                      {pt !== pointTitle(pt) && (
+                        <span className="opt-point-detail"> — {pt.slice(pointTitle(pt).length + 3)}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     )
   }
 
