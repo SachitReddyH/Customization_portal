@@ -1366,6 +1366,7 @@ function PackageCard({
       {/* ── Rooms covered chips ── */}
       {(opt.rooms_covered ?? []).length > 0 && (
         <div className="pkg-rooms">
+          <span className="pkg-rooms-label">Areas covered:</span>
           {(opt.rooms_covered ?? []).map((r, i) => (
             <span key={i} className="pkg-room-chip">
               {locationMap[r.location_id]?.space ?? r.space ?? r.location_id}
