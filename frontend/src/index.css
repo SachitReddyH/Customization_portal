@@ -1258,7 +1258,7 @@ body {
 }
 .cmp-img-grid--std {
   grid-template-columns: 1fr;
-  max-width: 75%;
+  width: 75%;
   margin: 0 auto;
 }
 .cmp-img-grid--upg {
