@@ -53,6 +53,7 @@ const FLOOR_SUFFIX: Record<string, string> = {
 const SUB_SECTIONS: Record<string, { id: string; label: string }[]> = {
   CAT002: [
     { id: 'package', label: 'Packages' },
+    { id: 'addon',   label: 'Add-Ons'  },
   ],
   CAT003: [{ id: 'sanitaryware', label: 'Sanitaryware' }, { id: 'cp_fittings', label: 'CP Fittings' }],
 }
@@ -212,6 +213,7 @@ export default function CategoryPage() {
 
   const isRoomBased  = ROOM_BASED.includes(categoryId!)
   const isPackageTab = activeTab === 'package'
+  const isAddonTab   = activeTab === 'addon'
 
   // Map of location_id → package name for rooms covered by a selected package
   const packageCoveredRooms = useMemo<Record<string, string>>(() => {
@@ -328,7 +330,7 @@ export default function CategoryPage() {
 
   /* ── Load options for room ──────────────────────── */
   useEffect(() => {
-    if (!isRoomBased || !selectedRoom || isPackageTab) return
+    if (!isRoomBased || !selectedRoom || isPackageTab || isAddonTab) return
     setOptionsLoading(true)
     const sub = activeTab || undefined
     getRoomOptions(categoryId!, selectedRoom.location_id, sub)
@@ -360,6 +362,23 @@ export default function CategoryPage() {
       .catch(console.error)
       .finally(() => setOptionsLoading(false))
   }, [isPackageTab])
+
+  /* ── Load add-ons (flooring add-ons tab) ──────── */
+  useEffect(() => {
+    if (!isAddonTab) return
+    setOptionsLoading(true)
+    getDirectOptions(categoryId!, 'addon')
+      .then((opts: Option[]) => {
+        setOptions(opts)
+        setOptionMap(prev => {
+          const next = { ...prev }
+          opts.forEach(o => { next[o.option_id] = o })
+          return next
+        })
+      })
+      .catch(console.error)
+      .finally(() => setOptionsLoading(false))
+  }, [isAddonTab])
 
   const loadDirectOptions = async (catId: string) => {
     setOptionsLoading(true)
@@ -491,8 +510,8 @@ export default function CategoryPage() {
       {/* ── Content ── */}
       <div className="cat-content">
 
-        {/* ══ LEFT — Floor sidebar (hidden on Packages tab) ══ */}
-        {isRoomBased && !isPackageTab && (
+        {/* ══ LEFT — Floor sidebar (hidden on Packages + Add-Ons tabs) ══ */}
+        {isRoomBased && !isPackageTab && !isAddonTab && (
           <aside className="floor-sidebar">
             <p className="sidebar-heading">Floors & Rooms</p>
 
@@ -542,7 +561,7 @@ export default function CategoryPage() {
         )}
 
         {/* ══ MIDDLE — Options panel ══ */}
-        <main className={`options-panel ${(!isRoomBased || isPackageTab) ? 'options-panel--wide' : ''}`}>
+        <main className={`options-panel ${(!isRoomBased || isPackageTab || isAddonTab) ? 'options-panel--wide' : ''}`}>
 
           {/* Sub-section tabs */}
           {tabs.length > 0 && (
@@ -564,6 +583,8 @@ export default function CategoryPage() {
             <div className="options-heading">
               {isPackageTab
                 ? <span className="options-room">Flooring Packages</span>
+                : isAddonTab
+                ? <span className="options-room">Add-Ons</span>
                 : selectedRoom
                 ? <><span className="options-room">{selectedRoom.space}</span><span className="options-floor">{selectedRoom.floor}</span></>
                 : null
@@ -574,14 +595,14 @@ export default function CategoryPage() {
           {optionsLoading
             ? <div className="options-loading">Loading…</div>
             : (() => {
-                // For packages show all; for regular options hide anything with no upgrade
-                const visible = isPackageTab
+                // For packages/addons show all; for regular options hide anything with no upgrade
+                const visible = (isPackageTab || isAddonTab)
                   ? options
                   : options.filter(opt => opt.has_upgrade)
                 if (visible.length === 0)
                   return (
                     <div className="options-empty">
-                      {isRoomBased && !isPackageTab && !selectedRoom
+                      {isRoomBased && !isPackageTab && !isAddonTab && !selectedRoom
                         ? 'Select a room from the left'
                         : 'No options available'}
                     </div>
@@ -697,7 +718,7 @@ export default function CategoryPage() {
           )}
 
           {/* Cart */}
-          <div className={`cart-section ${!isRoomBased ? 'cart-section--full' : ''}`}>
+          <div className={`cart-section ${(!isRoomBased || isPackageTab || isAddonTab) ? 'cart-section--full' : ''}`}>
             <div className="cart-header">
               <ShoppingCart size={16} />
               <span>Your Selections</span>
