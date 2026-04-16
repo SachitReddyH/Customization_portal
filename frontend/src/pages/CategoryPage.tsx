@@ -1030,7 +1030,6 @@ function OptionCard({
                 ))}
                 {hasMore && (
                   <li className="opt-point-more">
-                    <span className="opt-point-ellipsis">• • •</span>
                     <button
                       className="opt-point-viewmore"
                       onClick={e => { e.stopPropagation(); setDetailsOpen(true) }}
