@@ -1016,7 +1016,7 @@ function OptionCard({
     return (
       <>
         <div
-          className={`opt-card opt-card--horizontal ${selectedType ? 'opt-card--horizontal-selected' : ''}`}
+          className={`opt-card opt-card--horizontal ${showAllPts ? 'opt-card--horizontal--autoht' : ''} ${selectedType ? 'opt-card--horizontal-selected' : ''}`}
           onClick={() => onSelect(opt, 'upgrade')}
         >
           {/* Left: image */}
