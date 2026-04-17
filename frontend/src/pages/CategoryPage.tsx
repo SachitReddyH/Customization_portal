@@ -1124,6 +1124,13 @@ function OptionCard({
           <span className="cmp-title">{opt.option_name ?? opt.space ?? opt.option_id}</span>
         </div>
 
+        {/* ── Labels row (above panels) ── */}
+        <div className="cmp-labels-row">
+          <div className="cmp-labels-std">Standard</div>
+          <div className="cmp-labels-gap" />
+          <div className="cmp-labels-upg">Upgrade</div>
+        </div>
+
         {/* ── Two-panel body ── */}
         <div className="cmp-body">
 
@@ -1132,7 +1139,6 @@ function OptionCard({
             className={`cmp-panel cmp-panel--std ${selectedType === 'standard' ? 'cmp-panel--active' : ''}`}
             onClick={() => onSelect(opt, 'standard')}
           >
-            <div className="cmp-panel-badge cmp-panel-badge--std">Standard</div>
             <div className="cmp-img-grid cmp-img-grid--std">
               {stdList.map((img, i) => {
                 const u = imgUrl(img.path)
@@ -1160,7 +1166,6 @@ function OptionCard({
             className={`cmp-panel cmp-panel--upg ${selectedType === 'upgrade' ? 'cmp-panel--active' : ''}`}
             onClick={() => onSelect(opt, 'upgrade')}
           >
-            <div className="cmp-panel-badge cmp-panel-badge--upg">Upgrade</div>
             <div className="cmp-img-grid cmp-img-grid--upg">
               {upgList.map((img, i) => {
                 const u = imgUrl(img.path)

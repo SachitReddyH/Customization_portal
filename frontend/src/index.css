@@ -1250,25 +1250,31 @@ body {
   background: #fff7f4;
 }
 
-/* Badge: STANDARD / UPGRADE */
-.cmp-panel-badge {
-  display: inline-flex;
-  align-items: center;
+/* Labels row above the two panels */
+.cmp-labels-row {
+  display: flex;
+  align-items: flex-end;
+  padding: 12px 0 0;
+}
+.cmp-labels-std,
+.cmp-labels-upg {
   font-family: var(--font-body);
   font-size: 18px;
   font-weight: 900;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: 0;
-  background: none;
-  border-radius: 0;
-  align-self: flex-start;
-}
-.cmp-panel-badge--std {
   color: #555;
+  padding: 0 16px 6px;
 }
-.cmp-panel-badge--upg {
-  color: #555;
+.cmp-labels-std {
+  flex: 0 0 42%;
+}
+.cmp-labels-gap {
+  width: 52px;
+  flex-shrink: 0;
+}
+.cmp-labels-upg {
+  flex: 1;
 }
 
 /* Image grid */
@@ -1615,16 +1621,16 @@ body {
   padding: 14px 12px;
 }
 
-/* Standard col: narrower fixed width, standard background */
+/* Standard col: narrower fixed width */
 .pkg-images-col:first-child {
   flex: 0 0 34%;
-  background: #f8f7f5;
+  background: #fff;
 }
 
-/* Upgrade col: takes remaining space, upgrade background */
+/* Upgrade col: takes remaining space */
 .pkg-images-col:last-child {
   flex: 1;
-  background: #fffcfa;
+  background: #fff;
 }
 
 .pkg-img-section-label {
@@ -1719,7 +1725,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(to right, #f8f7f5, #fffcfa);
+  background: #fff;
   padding: 14px 0;
   align-self: stretch;
 }
