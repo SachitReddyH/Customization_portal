@@ -564,7 +564,7 @@ body {
    LEFT — Floor Sidebar
 ══════════════════════════════════════════════════ */
 .floor-sidebar {
-  width: 210px;
+  width: 280px;
   flex-shrink: 0;
   background: #fff;
   border-right: 1px solid #ece9e4;
