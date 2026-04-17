@@ -1415,9 +1415,9 @@ function PackageCard({
         </div>
 
         <div className="pkg-images-arrow">
-          <svg width="52" height="16" viewBox="0 0 52 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <line x1="0" y1="8" x2="44" y2="8" stroke="#F05E40" strokeWidth="2.2"/>
-            <polyline points="36,2 50,8 36,14" fill="none" stroke="#F05E40" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round"/>
+          <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <polyline points="4,8 16,22 4,36" fill="none" stroke="#F05E40" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round"/>
+            <polyline points="20,8 32,22 20,36" fill="none" stroke="#F05E40" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round"/>
           </svg>
         </div>
 
