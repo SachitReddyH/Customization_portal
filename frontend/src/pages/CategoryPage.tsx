@@ -709,34 +709,7 @@ export default function CategoryPage() {
         {/* ══ RIGHT — Floor plan + Cart ══ */}
         <aside className="right-panel">
 
-          {/* Floor plan — packages tab: floor switcher tabs */}
-          {isPackageTab && (
-            <div className="floorplan-section">
-              <p className="right-section-label">Floor Plan</p>
-              <div className="pkg-floor-tabs">
-                {['Ground Floor', 'First Floor', 'Second Floor'].map(f => (
-                  <button
-                    key={f}
-                    className={`pkg-floor-tab ${pkgFloor === f ? 'active' : ''}`}
-                    onClick={() => setPkgFloor(f)}
-                  >
-                    {f.replace(' Floor', '')}
-                  </button>
-                ))}
-              </div>
-              {(() => {
-                const url = floorPlanUrl(villa, pkgFloor)
-                return url
-                  ? (
-                    <div className="floorplan-img-wrap" title="Click to enlarge" onClick={() => setLightboxUrl(url)}>
-                      <img src={url} alt={`${pkgFloor} plan`} className="floorplan-img" />
-                      <span className="floorplan-zoom-hint">🔍 Click to enlarge</span>
-                    </div>
-                  )
-                  : <div className="floorplan-placeholder">Floor plan not available</div>
-              })()}
-            </div>
-          )}
+          {/* Floor plan removed from packages tab — shown inline in each card */}
 
           {/* Floor plan — room-based tabs (non-package, non-bathroom) */}
           {isRoomBased && !isPackageTab && selectedFloor && categoryId !== 'CAT003' && (
@@ -1489,7 +1462,14 @@ function PackageCard({
         </div>
       </div>
 
-      {/* ── Expandable floor plan ── */}
+      {/* ── Floor plan note + expandable plan ── */}
+      {floorPlanImg && (
+        <div className="pkg-floorplan-note">
+          <span className="pkg-floorplan-note-dot" />
+          Areas highlighted in red on the floor plan indicate the rooms included in this package.
+        </div>
+      )}
+
       {floorPlanImg && planExpanded && (
         <div className="pkg-floorplan-expand">
           <img
