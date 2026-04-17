@@ -214,9 +214,6 @@ export default function CategoryPage() {
 
   // Floor plan lightbox
   const [lightboxUrl, setLightboxUrl] = useState('')
-  // Floor plan tab for packages panel
-  const [pkgFloor, setPkgFloor] = useState('First Floor')
-
   // Quote request
   const [pendingQuote, setPendingQuote] = useState<any>(null)   // the pending quote object
   const [quoteModalOpen, setQuoteModalOpen] = useState(false)
