@@ -582,6 +582,47 @@ body {
   padding: 0 20px 14px;
 }
 
+.sidebar-floorplan {
+  padding: 12px 12px 16px;
+  border-top: 1px solid #ece9e4;
+  margin-top: 8px;
+}
+.sidebar-floorplan-label {
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #aaa;
+  margin: 0 0 6px;
+}
+.sidebar-floorplan-wrap {
+  position: relative;
+  cursor: zoom-in;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e5e0d9;
+}
+.sidebar-floorplan-img {
+  width: 100%;
+  display: block;
+  transition: transform 0.2s;
+}
+.sidebar-floorplan-wrap:hover .sidebar-floorplan-img {
+  transform: scale(1.03);
+}
+.sidebar-floorplan-hint {
+  position: absolute;
+  bottom: 6px;
+  right: 8px;
+  font-size: 10px;
+  color: #fff;
+  background: rgba(0,0,0,0.45);
+  border-radius: 4px;
+  padding: 2px 6px;
+  pointer-events: none;
+}
+
 .sidebar-status {
   font-family: var(--font-body);
   font-size: 12px;

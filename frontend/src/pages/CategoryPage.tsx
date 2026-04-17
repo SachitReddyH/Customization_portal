@@ -79,6 +79,30 @@ const floorPlanUrl = (villa: any, floor: string) => {
   return `${BASE}/static/floor_plans/${key}_${suffix}.png`
 }
 
+/* ── Bathroom highlighted floor plan URL helper ─── */
+const BATHROOM_ROOM_KEY: Record<string, string> = {
+  'master': 'masterbedroom',
+  'bedroom 1': 'bedroom1',
+  'bedroom 2': 'bedroom2',
+  'bedroom 3': 'bedroom3',
+}
+
+const bathroomFloorPlanUrl = (villa: any, roomSpace: string) => {
+  if (!villa || !roomSpace) return null
+  const t = villa.villa_type?.toLowerCase().replace(/\s+/g, '') // 'type1'
+  const f = villa.facing?.toLowerCase()                          // 'east'/'west'
+  const valid = ['type1_east', 'type2_west']
+  const key = `${t}_${f}`
+  if (!valid.includes(key)) return null
+  const lower = roomSpace.toLowerCase()
+  let imgKey: string | null = null
+  for (const [match, file] of Object.entries(BATHROOM_ROOM_KEY)) {
+    if (lower.includes(match)) { imgKey = file; break }
+  }
+  if (!imgKey) return null
+  return `${BASE}/static/floor_plans/bathroom/${key}/${imgKey}.png`
+}
+
 /* ── Mock villa gallery data ─────────────────────── */
 interface MockImage { file: string; label: string }
 interface MockGroup { group: string; images: MockImage[] }
@@ -558,6 +582,20 @@ export default function CategoryPage() {
                 )}
               </div>
             ))}
+
+            {/* Bathroom highlighted floor plan — shown in sidebar when a room is selected */}
+            {categoryId === 'CAT003' && selectedRoom && (() => {
+              const url = bathroomFloorPlanUrl(villa, selectedRoom.space)
+              return url ? (
+                <div className="sidebar-floorplan">
+                  <p className="sidebar-floorplan-label">Floor Plan</p>
+                  <div className="sidebar-floorplan-wrap" onClick={() => setLightboxUrl(url)} title="Click to enlarge">
+                    <img src={url} alt={`${selectedRoom.space} floor plan`} className="sidebar-floorplan-img" />
+                    <span className="sidebar-floorplan-hint">🔍 Enlarge</span>
+                  </div>
+                </div>
+              ) : null
+            })()}
           </aside>
         )}
 
@@ -700,8 +738,8 @@ export default function CategoryPage() {
             </div>
           )}
 
-          {/* Floor plan — room-based tabs (non-package) */}
-          {isRoomBased && !isPackageTab && selectedFloor && (
+          {/* Floor plan — room-based tabs (non-package, non-bathroom) */}
+          {isRoomBased && !isPackageTab && selectedFloor && categoryId !== 'CAT003' && (
             <div className="floorplan-section">
               <p className="right-section-label">Floor Plan — {selectedFloor}</p>
               {(() => {
