@@ -1414,7 +1414,7 @@ function PackageCard({
           </div>
         </div>
 
-        <div className="pkg-images-arrow">→</div>
+        <div className="pkg-images-arrow">⟶</div>
 
         {/* Upgrade: single image */}
         <div className="pkg-images-col">
