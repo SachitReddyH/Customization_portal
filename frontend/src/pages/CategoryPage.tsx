@@ -580,22 +580,22 @@ export default function CategoryPage() {
                     ))}
                   </div>
                 )}
+
+                {/* Bathroom floor plan — shown below this floor's rooms when a room on this floor is selected */}
+                {categoryId === 'CAT003' && expandedFloors.has(floor) && selectedRoom?.floor === floor && (() => {
+                  const url = bathroomFloorPlanUrl(villa, selectedRoom.space)
+                  return url ? (
+                    <div className="sidebar-floorplan">
+                      <p className="sidebar-floorplan-label">Floor Plan</p>
+                      <div className="sidebar-floorplan-wrap" onClick={() => setLightboxUrl(url)} title="Click to enlarge">
+                        <img src={url} alt={`${selectedRoom.space} floor plan`} className="sidebar-floorplan-img" />
+                        <span className="sidebar-floorplan-hint">🔍 Enlarge</span>
+                      </div>
+                    </div>
+                  ) : null
+                })()}
               </div>
             ))}
-
-            {/* Bathroom highlighted floor plan — shown in sidebar when a room is selected */}
-            {categoryId === 'CAT003' && selectedRoom && (() => {
-              const url = bathroomFloorPlanUrl(villa, selectedRoom.space)
-              return url ? (
-                <div className="sidebar-floorplan">
-                  <p className="sidebar-floorplan-label">Floor Plan</p>
-                  <div className="sidebar-floorplan-wrap" onClick={() => setLightboxUrl(url)} title="Click to enlarge">
-                    <img src={url} alt={`${selectedRoom.space} floor plan`} className="sidebar-floorplan-img" />
-                    <span className="sidebar-floorplan-hint">🔍 Enlarge</span>
-                  </div>
-                </div>
-              ) : null
-            })()}
           </aside>
         )}
 
