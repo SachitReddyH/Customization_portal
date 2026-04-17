@@ -1627,11 +1627,11 @@ body {
 
 .pkg-img-section-label {
   font-family: var(--font-body);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #aaa;
+  color: #555;
   display: block;
 }
 
