@@ -278,6 +278,7 @@ body {
   line-height: 1.08;
   text-align: center;
   letter-spacing: 0.02em;
+  color: #fff;
   animation: heroFadeWhite 3s ease-out 2s both;
 }
 
