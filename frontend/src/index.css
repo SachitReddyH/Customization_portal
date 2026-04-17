@@ -1259,17 +1259,16 @@ body {
   font-weight: 900;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: 4px 14px;
-  border-radius: 20px;
+  padding: 0;
+  background: none;
+  border-radius: 0;
   align-self: flex-start;
 }
 .cmp-panel-badge--std {
-  background: #e4e0db;
   color: #555;
 }
 .cmp-panel-badge--upg {
-  background: var(--accent);
-  color: #fff;
+  color: #555;
 }
 
 /* Image grid */
@@ -1600,12 +1599,12 @@ body {
 /* ── Package image row: standard finishes + upgrade ── */
 .pkg-images-row {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 0;
   margin-bottom: 14px;
-  background: #f9f7f5;
   border-radius: 10px;
-  padding: 12px 10px;
+  overflow: hidden;
+  border: 1px solid #ece8e2;
 }
 
 .pkg-images-col {
@@ -1613,16 +1612,19 @@ body {
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+  padding: 14px 12px;
 }
 
-/* Standard col: narrower fixed width */
+/* Standard col: narrower fixed width, standard background */
 .pkg-images-col:first-child {
   flex: 0 0 34%;
+  background: #f8f7f5;
 }
 
-/* Upgrade col: takes remaining space */
+/* Upgrade col: takes remaining space, upgrade background */
 .pkg-images-col:last-child {
   flex: 1;
+  background: #fffcfa;
 }
 
 .pkg-img-section-label {
@@ -1713,10 +1715,13 @@ body {
 .pkg-images-arrow {
   flex-shrink: 0;
   align-self: center;
-  min-width: 72px;
+  width: 64px;
   display: flex;
   justify-content: center;
   align-items: center;
+  background: linear-gradient(to right, #f8f7f5, #fffcfa);
+  padding: 14px 0;
+  align-self: stretch;
 }
 
 /* ══════════════════════════════════════════════════
