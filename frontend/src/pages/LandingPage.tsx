@@ -1,22 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { login } from '../services/api'
 
 export default function LandingPage() {
   const navigate = useNavigate()
-  const [scrolled, setScrolled] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   // No auto-redirect — always show the login form so the browser back button works naturally
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10)
-    window.addEventListener('scroll', onScroll)
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
