@@ -1711,15 +1711,12 @@ body {
 }
 
 .pkg-images-arrow {
-  font-size: 32px;
-  color: var(--accent);
   flex-shrink: 0;
   align-self: center;
-  font-weight: 900;
   min-width: 72px;
-  text-align: center;
-  letter-spacing: -4px;
-  -webkit-text-stroke: 1.5px var(--accent);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* ══════════════════════════════════════════════════

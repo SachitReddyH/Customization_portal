@@ -1414,7 +1414,12 @@ function PackageCard({
           </div>
         </div>
 
-        <div className="pkg-images-arrow">⟶</div>
+        <div className="pkg-images-arrow">
+          <svg width="52" height="16" viewBox="0 0 52 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="0" y1="8" x2="44" y2="8" stroke="#F05E40" strokeWidth="2.2"/>
+            <polyline points="36,2 50,8 36,14" fill="none" stroke="#F05E40" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round"/>
+          </svg>
+        </div>
 
         {/* Upgrade: single image */}
         <div className="pkg-images-col">
