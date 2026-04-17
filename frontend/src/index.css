@@ -564,7 +564,7 @@ body {
    LEFT — Floor Sidebar
 ══════════════════════════════════════════════════ */
 .floor-sidebar {
-  width: 280px;
+  width: 340px;
   flex-shrink: 0;
   background: #fff;
   border-right: 1px solid #ece9e4;
@@ -583,7 +583,7 @@ body {
 }
 
 .sidebar-floorplan {
-  padding: 12px 12px 16px;
+  padding: 10px 0 0;
   border-top: 1px solid #ece9e4;
   margin-top: 8px;
 }
@@ -595,13 +595,12 @@ body {
   text-transform: uppercase;
   color: #aaa;
   margin: 0 0 6px;
+  padding: 0 12px;
 }
 .sidebar-floorplan-wrap {
   position: relative;
   cursor: zoom-in;
-  border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #e5e0d9;
 }
 .sidebar-floorplan-img {
   width: 100%;
