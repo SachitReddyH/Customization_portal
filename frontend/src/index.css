@@ -1265,7 +1265,7 @@ body {
 }
 .cmp-panel-badge--std {
   background: #e4e0db;
-  color: #888;
+  color: #555;
 }
 .cmp-panel-badge--upg {
   background: var(--accent);
@@ -1571,10 +1571,10 @@ body {
 .pkg-rooms-label {
   font-family: var(--font-body);
   font-size: 11px;
-  font-weight: 600;
-  color: #999;
+  font-weight: 800;
+  color: #555;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   white-space: nowrap;
   margin-right: 2px;
 }
