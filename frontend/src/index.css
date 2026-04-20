@@ -1580,15 +1580,12 @@ body {
 }
 
 .pkg-check {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  background: none;
+  letter-spacing: 0.04em;
 }
 
 .pkg-rooms {
