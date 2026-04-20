@@ -1459,24 +1459,22 @@ function PackageCard({
         </div>
       </div>
 
-      {/* ── Floor plan note + expandable plan ── */}
-      {floorPlanImg && (
-        <div className="pkg-floorplan-note">
-          <span className="pkg-floorplan-note-dot" />
-          Areas highlighted in red on the floor plan indicate the rooms included in this package.
-        </div>
-      )}
-
       {floorPlanImg && planExpanded && (
-        <div className="pkg-floorplan-expand">
-          <img
-            src={floorPlanImg}
-            alt={`${opt.option_name} floor plan`}
-            className="pkg-floorplan-img"
-            onClick={() => onImageClick?.(floorPlanImg)}
-            title="Click to enlarge"
-          />
-        </div>
+        <>
+          <div className="pkg-floorplan-note">
+            <span className="pkg-floorplan-note-dot" />
+            Areas highlighted in red on the floor plan indicate the rooms included in this package.
+          </div>
+          <div className="pkg-floorplan-expand">
+            <img
+              src={floorPlanImg}
+              alt={`${opt.option_name} floor plan`}
+              className="pkg-floorplan-img"
+              onClick={() => onImageClick?.(floorPlanImg)}
+              title="Click to enlarge"
+            />
+          </div>
+        </>
       )}
 
       {/* ── Action row: view plan + select ── */}
