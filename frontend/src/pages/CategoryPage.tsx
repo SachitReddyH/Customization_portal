@@ -962,6 +962,11 @@ function OptionCard({
   const hasStandard = Boolean(opt.standard_spec)
   const upgradeOnly = !hasStandard
 
+  // Pre-compute image lists early so we can gate the horizontal card branch
+  const stdListEarly = opt.images?.standard_list ?? []
+  const upgListEarly = opt.images?.upgrade_list ?? []
+  const hasImageLists = stdListEarly.length > 0 || upgListEarly.length > 0
+
   // ── Room is covered by a selected package ──────────────────────────────
   if (coveredByPackage) {
     return (
@@ -998,7 +1003,7 @@ function OptionCard({
   }
 
   // ── Horizontal card (upgradeOnly: single image, no standard alternative) ──
-  if (upgradeOnly) {
+  if (upgradeOnly && !hasImageLists) {
     const imgSrcUrl = imgUrl(opt.images?.upgrade)
 
     // Categories that render description as bullet points
@@ -1118,11 +1123,11 @@ function OptionCard({
   }
 
   // ── Standard / Upgrade split card ─────────────────────────────────────
-  const stdList = opt.images?.standard_list ?? []
-  const upgList = opt.images?.upgrade_list ?? []
+  const stdList = stdListEarly
+  const upgList = upgListEarly
 
   // ── Multi-image comparison card (sanitaryware / rich-image options) ───
-  if (stdList.length > 0 || upgList.length > 0) {
+  if (hasImageLists) {
     const errStd = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="72"><rect width="80" height="72" fill="%23f0efed"/><text x="40" y="41" text-anchor="middle" fill="%23bbb" font-size="10">No image</text></svg>'
     const errUpg = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="72"><rect width="80" height="72" fill="%23fff3f0"/><text x="40" y="41" text-anchor="middle" fill="%23F05E3E" font-size="10">No image</text></svg>'
     const stdViewOnly = opt.sub_section === 'kitchen'
