@@ -1275,6 +1275,19 @@ body {
 .cmp-panel--upg.cmp-panel--active {
   background: #fff7f4;
 }
+.cmp-panel--view-only {
+  cursor: default;
+  opacity: 0.82;
+}
+.cmp-view-only-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #aaa;
+  margin-top: 4px;
+}
 
 /* Labels row above the two panels */
 .cmp-labels-row {

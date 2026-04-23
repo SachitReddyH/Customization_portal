@@ -1125,6 +1125,7 @@ function OptionCard({
   if (stdList.length > 0 || upgList.length > 0) {
     const errStd = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="72"><rect width="80" height="72" fill="%23f0efed"/><text x="40" y="41" text-anchor="middle" fill="%23bbb" font-size="10">No image</text></svg>'
     const errUpg = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="72"><rect width="80" height="72" fill="%23fff3f0"/><text x="40" y="41" text-anchor="middle" fill="%23F05E3E" font-size="10">No image</text></svg>'
+    const stdViewOnly = opt.sub_section === 'kitchen'
     return (
       <div className={`opt-card opt-card--comparison ${selectedType ? 'opt-card--comparison-selected' : ''}`}>
         {/* ── Header bar ── */}
@@ -1142,10 +1143,10 @@ function OptionCard({
         {/* ── Two-panel body ── */}
         <div className="cmp-body">
 
-          {/* Standard panel */}
+          {/* Standard panel — view only for kitchen (not selectable) */}
           <div
-            className={`cmp-panel cmp-panel--std ${selectedType === 'standard' ? 'cmp-panel--active' : ''}`}
-            onClick={() => onSelect(opt, 'standard')}
+            className={`cmp-panel cmp-panel--std ${!stdViewOnly && selectedType === 'standard' ? 'cmp-panel--active' : ''} ${stdViewOnly ? 'cmp-panel--view-only' : ''}`}
+            onClick={stdViewOnly ? undefined : () => onSelect(opt, 'standard')}
           >
             <div className="cmp-img-grid cmp-img-grid--std">
               {stdList.map((img, i) => {
@@ -1159,6 +1160,7 @@ function OptionCard({
               })}
             </div>
             <p className="cmp-spec-text">{opt.standard_spec}</p>
+            {stdViewOnly && <span className="cmp-view-only-label">Current layout</span>}
           </div>
 
           {/* Divider */}

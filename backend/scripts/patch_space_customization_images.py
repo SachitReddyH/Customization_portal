@@ -21,6 +21,7 @@ db     = client[DB_NAME]
 BASE = "/static/options/CAT001"
 
 PATCHES = [
+    # Kitchen options — side by side comparison (standard not selectable)
     {
         "option_id": "OPT-SC-001",
         "images": {
@@ -41,13 +42,14 @@ PATCHES = [
         },
         "has_upgrade": True,
     },
+    # Home Theatre — single upgrade image only (no side by side)
     {
         "option_id": "OPT-SC-003",
         "images": {
             "standard":      f"{BASE}/std_home_theatre.png",
-            "standard_list": [{"path": f"{BASE}/std_home_theatre.png", "label": "Standard Home Theatre Layout"}],
+            "standard_list": [],
             "upgrade":       f"{BASE}/upg_home_theatre.png",
-            "upgrade_list":  [{"path": f"{BASE}/upg_home_theatre.png", "label": "Powder Room for Home Theatre / Private Office"}],
+            "upgrade_list":  [],
         },
         "has_upgrade": True,
     },
