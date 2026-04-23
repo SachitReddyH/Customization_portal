@@ -1,5 +1,5 @@
 """
-Patch: set upgrade images for Space Customization (CAT001) options.
+Patch: set standard + upgrade images for Space Customization (CAT001) options.
 
 Run from backend/ directory:
     python scripts/patch_space_customization_images.py
@@ -18,18 +18,45 @@ DB_NAME   = os.getenv("DATABASE_NAME", "capstone_portal")
 client = MongoClient(MONGO_URI, tlsAllowInvalidCertificates=True, serverSelectionTimeoutMS=10_000)
 db     = client[DB_NAME]
 
-images = {
-    "OPT-SC-001": "/static/options/CAT001/OPT-SC-001.png",
-    "OPT-SC-002": "/static/options/CAT001/OPT-SC-002.png",
-    "OPT-SC-003": "/static/options/CAT001/OPT-SC-003.png",
-}
+BASE = "/static/options/CAT001"
 
-for opt_id, path in images.items():
-    result = db.customization_options.update_one(
-        {"option_id": opt_id},
-        {"$set": {"images.upgrade": path, "images.standard": path}}
-    )
-    print(f"  {opt_id}: {'updated' if result.modified_count else 'not found'}")
+PATCHES = [
+    {
+        "option_id": "OPT-SC-001",
+        "images": {
+            "standard":      f"{BASE}/std_kitchen.png",
+            "standard_list": [{"path": f"{BASE}/std_kitchen.png", "label": "Standard Kitchen Layout"}],
+            "upgrade":       f"{BASE}/upg_gourmet_kitchen.png",
+            "upgrade_list":  [{"path": f"{BASE}/upg_gourmet_kitchen.png", "label": "Gourmet Kitchen with Dry & Wet Zones"}],
+        },
+        "has_upgrade": True,
+    },
+    {
+        "option_id": "OPT-SC-002",
+        "images": {
+            "standard":      f"{BASE}/std_kitchen.png",
+            "standard_list": [{"path": f"{BASE}/std_kitchen.png", "label": "Standard Kitchen Layout"}],
+            "upgrade":       f"{BASE}/upg_maids_kitchen.png",
+            "upgrade_list":  [{"path": f"{BASE}/upg_maids_kitchen.png", "label": "Kitchen with Maid's Room & Private Toilet"}],
+        },
+        "has_upgrade": True,
+    },
+    {
+        "option_id": "OPT-SC-003",
+        "images": {
+            "standard":      f"{BASE}/std_home_theatre.png",
+            "standard_list": [{"path": f"{BASE}/std_home_theatre.png", "label": "Standard Home Theatre Layout"}],
+            "upgrade":       f"{BASE}/upg_home_theatre.png",
+            "upgrade_list":  [{"path": f"{BASE}/upg_home_theatre.png", "label": "Powder Room for Home Theatre / Private Office"}],
+        },
+        "has_upgrade": True,
+    },
+]
+
+for p in PATCHES:
+    opt_id = p.pop("option_id")
+    r = db.customization_options.update_one({"option_id": opt_id}, {"$set": p})
+    print(f"  {opt_id}: {'updated' if r.modified_count else 'no change / not found'}")
 
 print("\nDone.")
 client.close()
