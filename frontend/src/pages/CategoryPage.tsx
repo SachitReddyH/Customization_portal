@@ -1146,7 +1146,7 @@ function OptionCard({
         </div>
 
         {/* ── Two-panel body ── */}
-        <div className="cmp-body">
+        <div className={`cmp-body ${stdViewOnly ? 'cmp-body--kitchen' : ''}`}>
 
           {/* Standard panel — view only for kitchen (not selectable) */}
           <div
