@@ -152,13 +152,6 @@ export default function CustomisationHub() {
             <span className="hub-infobar-label">Facing</span>
             <span className="hub-infobar-value">{villa.facing}</span>
           </div>
-          <span className="hub-infobar-sep">|</span>
-          <div className="hub-infobar-chip">
-            <span className="hub-infobar-label">Size</span>
-            <span className="hub-infobar-value">
-              {[villa.plot_size, villa.plot_area_sqft ? `${villa.plot_area_sqft} sq ft` : null].filter(Boolean).join(' / ')}
-            </span>
-          </div>
         </>)}
       </div>
 
