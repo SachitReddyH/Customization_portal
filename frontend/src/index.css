@@ -1494,6 +1494,151 @@ body {
   background: #fdfcfb;
 }
 
+/* ── Add-Ons dropdown (Bathtub / Jacuzzi) ─────────────────────── */
+.cmp-addons {
+  border-top: 1px solid #f0ece7;
+  background: #faf9f7;
+}
+
+.cmp-addons-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.cmp-addons-toggle:hover {
+  background: #f2efea;
+}
+.cmp-addons-toggle--open {
+  background: #f2efea;
+}
+
+.cmp-addons-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7a6f65;
+}
+
+.cmp-addons-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #F05E3E;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.cmp-addons-chevron {
+  color: #a09489;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.cmp-addons-toggle--open .cmp-addons-chevron {
+  transform: rotate(180deg);
+}
+
+.cmp-addons-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 4px 0 8px;
+}
+
+.cmp-addon-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  transition: background 0.15s;
+  border-top: 1px solid #f0ece7;
+}
+.cmp-addon-item:first-child { border-top: none; }
+.cmp-addon-item:hover { background: #f7f5f2; }
+.cmp-addon-item--selected { background: #fff7f5; }
+
+.cmp-addon-img {
+  width: 72px;
+  height: 60px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  cursor: zoom-in;
+  position: relative;
+  background: #fff;
+  border: 1px solid #ece9e4;
+}
+.cmp-addon-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.cmp-addon-img .spec-img-zoom-hint {
+  font-size: 9px;
+  padding: 2px 5px;
+}
+
+.cmp-addon-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cmp-addon-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3a3229;
+}
+.cmp-addon-note {
+  font-size: 11px;
+  color: #a09489;
+}
+
+.cmp-addon-btn {
+  flex-shrink: 0;
+  padding: 7px 16px;
+  border-radius: 6px;
+  border: 1.5px solid #d4cec7;
+  background: #fff;
+  color: #5a504a;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.cmp-addon-btn:hover {
+  border-color: #F05E3E;
+  color: #F05E3E;
+  background: #fff7f5;
+}
+.cmp-addon-btn--selected {
+  background: #F05E3E;
+  border-color: #F05E3E;
+  color: #fff;
+}
+.cmp-addon-btn--selected:hover {
+  background: #d94e30;
+  border-color: #d94e30;
+  color: #fff;
+}
+
 .spec-img-wrap {
   width: 100%;
   height: 220px;

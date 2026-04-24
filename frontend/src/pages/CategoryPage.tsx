@@ -170,6 +170,9 @@ const imgUrl = (path?: string | null) => {
   return path
 }
 
+// Items in upgrade_list that should be treated as add-ons, not upgrade alternatives
+const ADDON_LABELS = new Set(['Bathtub', 'Jacuzzi'])
+
 /* ══════════════════════════════════════════════════
    MAIN COMPONENT
 ══════════════════════════════════════════════════ */
@@ -675,6 +678,12 @@ export default function CategoryPage() {
                               coveredByPackage={undefined}
                               locationMap={locationMap}
                               onImageClick={url => setLightboxUrl(url)}
+                              selections={selections}
+                              onRegisterOpts={opts => setOptionMap(prev => {
+                                const next = { ...prev }
+                                opts.forEach(o => { next[o.option_id] = o })
+                                return next
+                              })}
                             />
                           ))}
                         </div>
@@ -695,6 +704,12 @@ export default function CategoryPage() {
                         coveredByPackage={opt.location_id ? packageCoveredRooms[opt.location_id] : undefined}
                         locationMap={locationMap}
                         onImageClick={url => setLightboxUrl(url)}
+                        selections={selections}
+                        onRegisterOpts={opts => setOptionMap(prev => {
+                          const next = { ...prev }
+                          opts.forEach(o => { next[o.option_id] = o })
+                          return next
+                        })}
                       />
                     ))}
                   </div>
@@ -945,6 +960,7 @@ export default function CategoryPage() {
 ══════════════════════════════════════════════════ */
 function OptionCard({
   opt, selectedType, onSelect, isPackage, coveredByPackage, locationMap, onImageClick,
+  selections, onRegisterOpts,
 }: {
   opt: Option
   selectedType?: string
@@ -953,6 +969,8 @@ function OptionCard({
   coveredByPackage?: string
   locationMap: Record<string, Room>
   onImageClick?: (url: string) => void
+  selections?: SelectionItem[]
+  onRegisterOpts?: (opts: Option[]) => void
 }) {
   if (isPackage) return <PackageCard opt={opt} selectedType={selectedType} onSelect={onSelect} locationMap={locationMap} onImageClick={onImageClick} />
 
@@ -1122,87 +1140,17 @@ function OptionCard({
     )
   }
 
-  // ── Standard / Upgrade split card ─────────────────────────────────────
-  const stdList = stdListEarly
-  const upgList = upgListEarly
-
   // ── Multi-image comparison card (sanitaryware / rich-image options) ───
   if (hasImageLists) {
-    const errStd = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="72"><rect width="80" height="72" fill="%23f0efed"/><text x="40" y="41" text-anchor="middle" fill="%23bbb" font-size="10">No image</text></svg>'
-    const errUpg = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="72"><rect width="80" height="72" fill="%23fff3f0"/><text x="40" y="41" text-anchor="middle" fill="%23F05E3E" font-size="10">No image</text></svg>'
-    const stdViewOnly = opt.sub_section === 'kitchen'
     return (
-      <div className={`opt-card opt-card--comparison ${selectedType ? 'opt-card--comparison-selected' : ''}`}>
-        {/* ── Header bar ── */}
-        <div className="cmp-header">
-          <span className="cmp-title">{opt.option_name ?? opt.space ?? opt.option_id}</span>
-        </div>
-
-        {/* ── Labels row (above panels) ── */}
-        <div className="cmp-labels-row">
-          <div className="cmp-labels-std">Standard</div>
-          <div className="cmp-labels-gap" />
-          <div className="cmp-labels-upg">Upgrade</div>
-        </div>
-
-        {/* ── Two-panel body ── */}
-        <div className={`cmp-body ${stdViewOnly ? 'cmp-body--kitchen' : ''}`}>
-
-          {/* Standard panel — view only for kitchen (not selectable) */}
-          <div
-            className={`cmp-panel cmp-panel--std ${!stdViewOnly && selectedType === 'standard' ? 'cmp-panel--active' : ''} ${stdViewOnly ? 'cmp-panel--view-only' : ''}`}
-            onClick={stdViewOnly ? undefined : () => onSelect(opt, 'standard')}
-          >
-            <div className="cmp-img-grid cmp-img-grid--std">
-              {stdList.map((img, i) => {
-                const u = imgUrl(img.path)
-                return (
-                  <div key={i} className="cmp-img-tile" onClick={e => { if (u && onImageClick) { e.stopPropagation(); onImageClick(u) } }}>
-                    <img src={u ?? ''} alt={img.label} onError={e => { (e.target as HTMLImageElement).src = errStd }} />
-                    <span className="cmp-img-label">{img.label}</span>
-                  </div>
-                )
-              })}
-            </div>
-            <p className="cmp-spec-text">{opt.standard_spec}</p>
-            {stdViewOnly && <span className="cmp-view-only-label">Current layout</span>}
-          </div>
-
-          {/* Divider */}
-          <div className="cmp-divider">
-            <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <polyline points="4,8 16,22 4,36" fill="none" stroke="#F05E40" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round"/>
-              <polyline points="20,8 32,22 20,36" fill="none" stroke="#F05E40" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round"/>
-            </svg>
-          </div>
-
-          {/* Upgrade panel */}
-          <div
-            className={`cmp-panel cmp-panel--upg ${selectedType === 'upgrade' ? 'cmp-panel--active' : ''}`}
-            onClick={() => onSelect(opt, 'upgrade')}
-          >
-            <div className="cmp-img-grid cmp-img-grid--upg">
-              {upgList.map((img, i) => {
-                const u = imgUrl(img.path)
-                return (
-                  <div key={i} className="cmp-img-tile" onClick={e => { if (u && onImageClick) { e.stopPropagation(); onImageClick(u) } }}>
-                    <img src={u ?? ''} alt={img.label} onError={e => { (e.target as HTMLImageElement).src = errUpg }} />
-                    <span className="cmp-img-label">{img.label}</span>
-                  </div>
-                )
-              })}
-            </div>
-            <p className="cmp-spec-text">{opt.upgrade_spec}</p>
-            <button
-              className={`cmp-btn cmp-btn--upg ${selectedType === 'upgrade' ? 'cmp-btn--active' : ''}`}
-              onClick={e => { e.stopPropagation(); onSelect(opt, 'upgrade') }}
-            >
-              {selectedType === 'upgrade' ? '✓ Selected' : 'Select Upgrade'}
-            </button>
-          </div>
-        </div>
-
-      </div>
+      <ComparisonCard
+        opt={opt}
+        selectedType={selectedType}
+        onSelect={onSelect}
+        onImageClick={onImageClick}
+        selections={selections}
+        onRegisterOpts={onRegisterOpts}
+      />
     )
   }
 
@@ -1252,6 +1200,176 @@ function OptionCard({
         </div>
       </div>
 
+    </div>
+  )
+}
+
+/* ── Comparison card (sanitaryware / multi-image) ──────────────────── */
+function ComparisonCard({
+  opt, selectedType, onSelect, onImageClick, selections, onRegisterOpts,
+}: {
+  opt: Option
+  selectedType?: string
+  onSelect: (opt: Option, type: 'standard' | 'upgrade') => void
+  onImageClick?: (url: string) => void
+  selections?: SelectionItem[]
+  onRegisterOpts?: (opts: Option[]) => void
+}) {
+  const stdList = opt.images?.standard_list ?? []
+  const fullUpgList = opt.images?.upgrade_list ?? []
+
+  // Separate add-on items (Bathtub, Jacuzzi) from main upgrade items
+  const addonImgs  = fullUpgList.filter(img => ADDON_LABELS.has(img.label))
+  const upgList    = fullUpgList.filter(img => !ADDON_LABELS.has(img.label))
+
+  const [addonsOpen, setAddonsOpen] = useState(false)
+
+  // Build synthetic Option objects for each addon so they can be cart-tracked
+  const addonOpts = useMemo<Option[]>(() =>
+    addonImgs.map(img => ({
+      id: `${opt.option_id}-ADN-${img.label.toUpperCase()}`,
+      option_id: `${opt.option_id}-ADN-${img.label.toUpperCase()}`,
+      category_id: opt.category_id,
+      sub_section: opt.sub_section,
+      location_id: opt.location_id,
+      option_name: img.label,
+      has_upgrade: true,
+      price_status: opt.price_status,
+      images: { upgrade: img.path },
+    })),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [opt.option_id])
+
+  // Register synthetic addon opts in parent's optionMap (for cart display)
+  useEffect(() => {
+    if (addonOpts.length > 0) onRegisterOpts?.(addonOpts)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opt.option_id])
+
+  const errStd = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="72"><rect width="80" height="72" fill="%23f0efed"/><text x="40" y="41" text-anchor="middle" fill="%23bbb" font-size="10">No image</text></svg>'
+  const errUpg = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="72"><rect width="80" height="72" fill="%23fff3f0"/><text x="40" y="41" text-anchor="middle" fill="%23F05E3E" font-size="10">No image</text></svg>'
+  const stdViewOnly = opt.sub_section === 'kitchen'
+
+  return (
+    <div className={`opt-card opt-card--comparison ${selectedType ? 'opt-card--comparison-selected' : ''}`}>
+      {/* ── Header bar ── */}
+      <div className="cmp-header">
+        <span className="cmp-title">{opt.option_name ?? opt.space ?? opt.option_id}</span>
+      </div>
+
+      {/* ── Labels row (above panels) ── */}
+      <div className="cmp-labels-row">
+        <div className="cmp-labels-std">Standard</div>
+        <div className="cmp-labels-gap" />
+        <div className="cmp-labels-upg">Upgrade</div>
+      </div>
+
+      {/* ── Two-panel body ── */}
+      <div className={`cmp-body ${stdViewOnly ? 'cmp-body--kitchen' : ''}`}>
+
+        {/* Standard panel */}
+        <div
+          className={`cmp-panel cmp-panel--std ${!stdViewOnly && selectedType === 'standard' ? 'cmp-panel--active' : ''} ${stdViewOnly ? 'cmp-panel--view-only' : ''}`}
+          onClick={stdViewOnly ? undefined : () => onSelect(opt, 'standard')}
+        >
+          <div className="cmp-img-grid cmp-img-grid--std">
+            {stdList.map((img, i) => {
+              const u = imgUrl(img.path)
+              return (
+                <div key={i} className="cmp-img-tile" onClick={e => { if (u && onImageClick) { e.stopPropagation(); onImageClick(u) } }}>
+                  <img src={u ?? ''} alt={img.label} onError={e => { (e.target as HTMLImageElement).src = errStd }} />
+                  <span className="cmp-img-label">{img.label}</span>
+                </div>
+              )
+            })}
+          </div>
+          <p className="cmp-spec-text">{opt.standard_spec}</p>
+          {stdViewOnly && <span className="cmp-view-only-label">Current layout</span>}
+        </div>
+
+        {/* Divider */}
+        <div className="cmp-divider">
+          <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <polyline points="4,8 16,22 4,36" fill="none" stroke="#F05E40" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round"/>
+            <polyline points="20,8 32,22 20,36" fill="none" stroke="#F05E40" strokeWidth="5" strokeLinejoin="round" strokeLinecap="round"/>
+          </svg>
+        </div>
+
+        {/* Upgrade panel */}
+        <div
+          className={`cmp-panel cmp-panel--upg ${selectedType === 'upgrade' ? 'cmp-panel--active' : ''}`}
+          onClick={() => onSelect(opt, 'upgrade')}
+        >
+          <div className="cmp-img-grid cmp-img-grid--upg">
+            {upgList.map((img, i) => {
+              const u = imgUrl(img.path)
+              return (
+                <div key={i} className="cmp-img-tile" onClick={e => { if (u && onImageClick) { e.stopPropagation(); onImageClick(u) } }}>
+                  <img src={u ?? ''} alt={img.label} onError={e => { (e.target as HTMLImageElement).src = errUpg }} />
+                  <span className="cmp-img-label">{img.label}</span>
+                </div>
+              )
+            })}
+          </div>
+          <p className="cmp-spec-text">{opt.upgrade_spec}</p>
+          <button
+            className={`cmp-btn cmp-btn--upg ${selectedType === 'upgrade' ? 'cmp-btn--active' : ''}`}
+            onClick={e => { e.stopPropagation(); onSelect(opt, 'upgrade') }}
+          >
+            {selectedType === 'upgrade' ? '✓ Selected' : 'Select Upgrade'}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Add-Ons dropdown (Bathtub / Jacuzzi) ── */}
+      {addonImgs.length > 0 && (
+        <div className="cmp-addons">
+          <button
+            className={`cmp-addons-toggle ${addonsOpen ? 'cmp-addons-toggle--open' : ''}`}
+            onClick={() => setAddonsOpen(prev => !prev)}
+          >
+            <span className="cmp-addons-toggle-label">
+              Add-Ons Available
+              <span className="cmp-addons-badge">{addonImgs.length}</span>
+            </span>
+            <ChevronDown size={15} className="cmp-addons-chevron" />
+          </button>
+
+          {addonsOpen && (
+            <div className="cmp-addons-body">
+              {addonOpts.map((addonOpt, i) => {
+                const img = addonImgs[i]
+                const u = imgUrl(img.path)
+                const isAddonSel = (selections ?? []).some(
+                  s => s.option_id === addonOpt.option_id && s.location_id === addonOpt.location_id
+                )
+                return (
+                  <div key={addonOpt.option_id} className={`cmp-addon-item ${isAddonSel ? 'cmp-addon-item--selected' : ''}`}>
+                    {u && (
+                      <div className="cmp-addon-img" onClick={() => onImageClick?.(u)}>
+                        <img src={u} alt={img.label}
+                          onError={e => { (e.target as HTMLImageElement).src = errUpg }}
+                        />
+                        <span className="spec-img-zoom-hint">🔍</span>
+                      </div>
+                    )}
+                    <div className="cmp-addon-info">
+                      <span className="cmp-addon-name">{img.label}</span>
+                      <span className="cmp-addon-note">Optional add-on</span>
+                    </div>
+                    <button
+                      className={`cmp-addon-btn ${isAddonSel ? 'cmp-addon-btn--selected' : ''}`}
+                      onClick={() => onSelect(addonOpt, 'upgrade')}
+                    >
+                      {isAddonSel ? '✓ Added' : '+ Add'}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
