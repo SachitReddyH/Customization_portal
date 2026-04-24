@@ -173,6 +173,33 @@ const imgUrl = (path?: string | null) => {
 // Items in upgrade_list that should be treated as add-ons, not upgrade alternatives
 const ADDON_LABELS = new Set(['Bathtub', 'Jacuzzi'])
 
+// Static addon definitions per sanitaryware series (keyed by lowercase upgrade_spec prefix)
+// These are shown as collapsible add-ons under each series card
+const BASE_CAT003 = '/static/options/CAT003'
+const SERIES_ADDONS: Record<string, { label: string; path: string }[]> = {
+  'happy d2': [
+    { label: 'Bathtub', path: `${BASE_CAT003}/happyd2_bathtub.png`  },
+    { label: 'Jacuzzi', path: `${BASE_CAT003}/happyd2_jacuzzi.jpeg` },
+  ],
+  'qatego': [
+    { label: 'Bathtub', path: `${BASE_CAT003}/qatego_bathtub.png` },
+  ],
+  'zencha': [
+    { label: 'Bathtub', path: `${BASE_CAT003}/zencha_bathtub.png`  },
+    { label: 'Jacuzzi', path: `${BASE_CAT003}/zencha_jacuzzi.png`  },
+  ],
+}
+
+/** Return addon definitions for a sanitaryware series card, or [] if not applicable. */
+function getSeriesAddons(opt: Option): { label: string; path: string }[] {
+  if (opt.category_id !== 'CAT003' || opt.sub_section !== 'sanitaryware') return []
+  const spec = (opt.upgrade_spec ?? opt.option_name ?? '').toLowerCase()
+  for (const [key, addons] of Object.entries(SERIES_ADDONS)) {
+    if (spec.includes(key)) return addons
+  }
+  return []
+}
+
 /* ══════════════════════════════════════════════════
    MAIN COMPONENT
 ══════════════════════════════════════════════════ */
@@ -1216,11 +1243,13 @@ function ComparisonCard({
   onRegisterOpts?: (opts: Option[]) => void
 }) {
   const stdList = opt.images?.standard_list ?? []
-  const fullUpgList = opt.images?.upgrade_list ?? []
+  // Filter out addon items from upgrade list (if they happen to be in DB upgrade_list)
+  const upgList = (opt.images?.upgrade_list ?? []).filter(img => !ADDON_LABELS.has(img.label))
 
-  // Separate add-on items (Bathtub, Jacuzzi) from main upgrade items
-  const addonImgs  = fullUpgList.filter(img => ADDON_LABELS.has(img.label))
-  const upgList    = fullUpgList.filter(img => !ADDON_LABELS.has(img.label))
+  // Addon definitions: prefer items in upgrade_list with addon labels,
+  // fallback to static per-series definitions so they always show even if DB doesn't have them
+  const dbAddonImgs = (opt.images?.upgrade_list ?? []).filter(img => ADDON_LABELS.has(img.label))
+  const addonImgs   = dbAddonImgs.length > 0 ? dbAddonImgs : getSeriesAddons(opt)
 
   const [addonsOpen, setAddonsOpen] = useState(false)
 
