@@ -34,19 +34,17 @@ function AppContent() {
       .catch(() => {})
   }, [])
 
-  // On every /hub visit: seek to 0 first, reveal only after seek completes
+  // Show video on hub, hide on other pages
   useEffect(() => {
-    if (!isHub) {
-      setVideoReady(false)
-      return
-    }
+    if (!isHub) { setVideoReady(false); return }
     const video = videoRef.current
     if (!video) { setVideoReady(true); return }
-
-    const onSeeked = () => setVideoReady(true)
-    video.addEventListener('seeked', onSeeked, { once: true })
     video.currentTime = 0
-    return () => video.removeEventListener('seeked', onSeeked)
+    // canplay fires as soon as browser can start playing
+    if (video.readyState >= 2) { setVideoReady(true); return }
+    const onReady = () => setVideoReady(true)
+    video.addEventListener('canplay', onReady, { once: true })
+    return () => video.removeEventListener('canplay', onReady)
   }, [isHub])
 
   return (
