@@ -7,11 +7,18 @@ class StandardImage(BaseModel):
     label: str
 
 
+class AddonImage(BaseModel):
+    path: str
+    label: str
+    option_id: str
+
+
 class OptionImages(BaseModel):
     standard: Optional[str] = "/static/options/placeholder/standard.png"
     standard_list: Optional[List[StandardImage]] = None
     upgrade: Optional[str] = "/static/options/placeholder/upgrade.png"
     upgrade_list: Optional[List[StandardImage]] = None
+    addon_list: Optional[List[AddonImage]] = None
 
 
 class RoomCovered(BaseModel):
