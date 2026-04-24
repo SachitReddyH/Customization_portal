@@ -41,6 +41,8 @@ desktop.ini
 # ── Large media — tracked via Git LFS instead ────
 *.mov
 *.avi
+backend/static/villa_banner.mp4
+capstone-villa-msr-banner-updated.mp4
 
 # ── Floor package source images (serving copies are in backend/static/) ──
 floorpackageimages/
