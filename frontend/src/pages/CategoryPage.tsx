@@ -30,7 +30,13 @@ interface Option {
   package_tier?: string
   description?: string
   detailed_spec?: string
-  images: { standard?: string; standard_list?: { path: string; label: string }[]; upgrade?: string; upgrade_list?: { path: string; label: string }[] }
+  images: {
+    standard?: string
+    standard_list?: { path: string; label: string }[]
+    upgrade?: string
+    upgrade_list?: { path: string; label: string }[]
+    addon_list?: { path: string; label: string; option_id: string }[]
+  }
   floor_plan_image?: string
   option_type?: string
   vrf_benefits?: string[]
@@ -353,7 +359,19 @@ export default function CategoryPage() {
         setOptions(opts)
         setOptionMap(prev => {
           const next = { ...prev }
-          opts.forEach((o: Option) => { next[o.option_id] = o })
+          opts.forEach((o: Option) => {
+            next[o.option_id] = o
+            // Build synthetic optionMap entries for add-ons so the cart can show their names
+            ;(o.images?.addon_list ?? []).forEach(addon => {
+              next[addon.option_id] = {
+                ...o,
+                id: addon.option_id,
+                option_id: addon.option_id,
+                option_name: addon.label,
+                images: { upgrade: addon.path },
+              } as Option
+            })
+          })
           return next
         })
       })
@@ -670,6 +688,7 @@ export default function CategoryPage() {
                               key={opt.option_id + (opt.location_id ?? '')}
                               opt={opt}
                               selectedType={getSelectionType(opt.option_id, opt.location_id)}
+                              addonSelectedTypes={(opt.images?.addon_list ?? []).reduce((acc, a) => { acc[a.option_id] = getSelectionType(a.option_id, opt.location_id); return acc }, {} as Record<string, string | undefined>)}
                               onSelect={handleSelect}
                               isPackage={false}
                               coveredByPackage={undefined}
@@ -690,6 +709,7 @@ export default function CategoryPage() {
                         key={opt.option_id + (opt.location_id ?? '')}
                         opt={opt}
                         selectedType={getSelectionType(opt.option_id, opt.location_id)}
+                        addonSelectedTypes={(opt.images?.addon_list ?? []).reduce((acc, a) => { acc[a.option_id] = getSelectionType(a.option_id, opt.location_id); return acc }, {} as Record<string, string | undefined>)}
                         onSelect={handleSelect}
                         isPackage={isPackageTab}
                         coveredByPackage={opt.location_id ? packageCoveredRooms[opt.location_id] : undefined}
@@ -944,10 +964,11 @@ export default function CategoryPage() {
    OPTION CARD
 ══════════════════════════════════════════════════ */
 function OptionCard({
-  opt, selectedType, onSelect, isPackage, coveredByPackage, locationMap, onImageClick,
+  opt, selectedType, addonSelectedTypes, onSelect, isPackage, coveredByPackage, locationMap, onImageClick,
 }: {
   opt: Option
   selectedType?: string
+  addonSelectedTypes?: Record<string, string | undefined>
   onSelect: (opt: Option, type: 'standard' | 'upgrade') => void
   isPackage: boolean
   coveredByPackage?: string
@@ -1131,6 +1152,20 @@ function OptionCard({
     const errStd = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="72"><rect width="80" height="72" fill="%23f0efed"/><text x="40" y="41" text-anchor="middle" fill="%23bbb" font-size="10">No image</text></svg>'
     const errUpg = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="72"><rect width="80" height="72" fill="%23fff3f0"/><text x="40" y="41" text-anchor="middle" fill="%23F05E3E" font-size="10">No image</text></svg>'
     const stdViewOnly = opt.sub_section === 'kitchen'
+    const addonList = opt.images?.addon_list ?? []
+
+    // Build synthetic option for an addon and call onSelect
+    const selectAddon = (addon: { path: string; label: string; option_id: string }) => {
+      const synth: Option = {
+        ...opt,
+        id: addon.option_id,
+        option_id: addon.option_id,
+        option_name: addon.label,
+        images: { upgrade: addon.path },
+      }
+      onSelect(synth, 'upgrade')
+    }
+
     return (
       <div className={`opt-card opt-card--comparison ${selectedType ? 'opt-card--comparison-selected' : ''}`}>
         {/* ── Header bar ── */}
@@ -1201,6 +1236,43 @@ function OptionCard({
             </button>
           </div>
         </div>
+
+        {/* ── Add-Ons section ── */}
+        {addonList.length > 0 && (
+          <div className="cmp-addons">
+            <div className="cmp-addons-heading">
+              <span className="cmp-addons-label">Add-Ons</span>
+              <span className="cmp-addons-sub">Optional — select independently</span>
+            </div>
+            <div className="cmp-addons-grid">
+              {addonList.map(addon => {
+                const addonSel = addonSelectedTypes?.[addon.option_id]
+                const u = imgUrl(addon.path)
+                return (
+                  <div
+                    key={addon.option_id}
+                    className={`cmp-addon-item ${addonSel ? 'cmp-addon-item--selected' : ''}`}
+                    onClick={() => selectAddon(addon)}
+                  >
+                    <div className="cmp-addon-img" onClick={e => { if (u && onImageClick) { e.stopPropagation(); onImageClick(u) } }}>
+                      <img src={u ?? ''} alt={addon.label}
+                        onError={e => { (e.target as HTMLImageElement).src = errUpg }}
+                      />
+                      {u && <span className="spec-img-zoom-hint">🔍</span>}
+                    </div>
+                    <p className="cmp-addon-name">{addon.label}</p>
+                    <button
+                      className={`cmp-addon-btn ${addonSel ? 'cmp-addon-btn--selected' : ''}`}
+                      onClick={e => { e.stopPropagation(); selectAddon(addon) }}
+                    >
+                      {addonSel ? '✓ Added' : '+ Add'}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
       </div>
     )
