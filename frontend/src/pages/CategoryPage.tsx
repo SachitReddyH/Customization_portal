@@ -30,7 +30,7 @@ interface Option {
   package_tier?: string
   description?: string
   detailed_spec?: string
-  images: { standard?: string; standard_list?: { path: string; label: string }[]; upgrade?: string; upgrade_list?: { path: string; label: string }[] }
+  images: { standard?: string; standard_list?: { path: string; label: string }[]; upgrade?: string; upgrade_list?: { path: string; label: string }[]; addon_list?: { path: string; label: string; option_id?: string }[] }
   floor_plan_image?: string
   option_type?: string
   vrf_benefits?: string[]
@@ -1243,29 +1243,34 @@ function ComparisonCard({
   onRegisterOpts?: (opts: Option[]) => void
 }) {
   const stdList = opt.images?.standard_list ?? []
-  // Filter out addon items from upgrade list (if they happen to be in DB upgrade_list)
+  // Filter out addon items from upgrade list (safety — in case they end up there)
   const upgList = (opt.images?.upgrade_list ?? []).filter(img => !ADDON_LABELS.has(img.label))
 
-  // Addon definitions: prefer items in upgrade_list with addon labels,
-  // fallback to static per-series definitions so they always show even if DB doesn't have them
-  const dbAddonImgs = (opt.images?.upgrade_list ?? []).filter(img => ADDON_LABELS.has(img.label))
-  const addonImgs   = dbAddonImgs.length > 0 ? dbAddonImgs : getSeriesAddons(opt)
+  // Addon definitions: 1) addon_list from API (stored in DB), 2) fallback to static series map
+  const addonImgs: { path: string; label: string; option_id?: string }[] =
+    (opt.images?.addon_list?.length ?? 0) > 0
+      ? (opt.images!.addon_list!)
+      : getSeriesAddons(opt)
 
   const [addonsOpen, setAddonsOpen] = useState(false)
 
   // Build synthetic Option objects for each addon so they can be cart-tracked
+  // Use the option_id stored in DB addon_list if available, otherwise generate one
   const addonOpts = useMemo<Option[]>(() =>
-    addonImgs.map(img => ({
-      id: `${opt.option_id}-ADN-${img.label.toUpperCase()}`,
-      option_id: `${opt.option_id}-ADN-${img.label.toUpperCase()}`,
-      category_id: opt.category_id,
-      sub_section: opt.sub_section,
-      location_id: opt.location_id,
-      option_name: img.label,
-      has_upgrade: true,
-      price_status: opt.price_status,
-      images: { upgrade: img.path },
-    })),
+    addonImgs.map(img => {
+      const syntheticId = (img as any).option_id ?? `${opt.option_id}-ADN-${img.label.toUpperCase()}`
+      return {
+        id: syntheticId,
+        option_id: syntheticId,
+        category_id: opt.category_id,
+        sub_section: opt.sub_section,
+        location_id: opt.location_id,
+        option_name: img.label,
+        has_upgrade: true,
+        price_status: opt.price_status,
+        images: { upgrade: img.path },
+      }
+    }),
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [opt.option_id])
 
