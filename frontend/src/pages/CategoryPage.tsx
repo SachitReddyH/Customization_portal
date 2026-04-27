@@ -478,8 +478,27 @@ export default function CategoryPage() {
 
     try {
       if (alreadySelected) {
-        const updated = await removeSelection({ option_id: opt.option_id, location_id: opt.location_id })
-        setSelections(updated.selections ?? [])
+        // When de-selecting a sanitaryware series upgrade, also remove its add-ons
+        const isSanitaryUpgrade =
+          opt.category_id === 'CAT003' &&
+          opt.sub_section === 'sanitaryware' &&
+          type === 'upgrade' &&
+          !opt.option_id.includes('-ADN-')
+
+        let updatedSelections = (await removeSelection({ option_id: opt.option_id, location_id: opt.location_id })).selections ?? []
+
+        if (isSanitaryUpgrade) {
+          // Remove any add-ons that belong to this series (same location, option_id starts with this opt's id)
+          const addonSels = updatedSelections.filter(
+            (s: SelectionItem) => s.option_id.startsWith(`${opt.option_id}-ADN-`) && s.location_id === opt.location_id
+          )
+          for (const addon of addonSels) {
+            const r = await removeSelection({ option_id: addon.option_id, location_id: addon.location_id })
+            updatedSelections = r.selections ?? []
+          }
+        }
+
+        setSelections(updatedSelections)
       } else {
         // Mutual exclusivity: selecting a kitchen space option removes the other kitchen option
         if (opt.sub_section === 'kitchen') {
@@ -490,6 +509,24 @@ export default function CategoryPage() {
           )
           if (rival) {
             await removeSelection({ option_id: rival.option_id, location_id: rival.location_id })
+          }
+        }
+
+        // When switching to a different sanitaryware series, remove add-ons from the old series
+        if (opt.category_id === 'CAT003' && opt.sub_section === 'sanitaryware' && !opt.option_id.includes('-ADN-')) {
+          const oldSeries = selections.find(
+            s => s.category_id === 'CAT003' &&
+              s.sub_section === 'sanitaryware' &&
+              s.location_id === opt.location_id &&
+              !s.option_id.includes('-ADN-')
+          )
+          if (oldSeries && oldSeries.option_id !== opt.option_id) {
+            const addonSels = selections.filter(
+              s => s.option_id.startsWith(`${oldSeries.option_id}-ADN-`) && s.location_id === opt.location_id
+            )
+            for (const addon of addonSels) {
+              await removeSelection({ option_id: addon.option_id, location_id: addon.location_id })
+            }
           }
         }
 
@@ -1254,6 +1291,9 @@ function ComparisonCard({
 
   const [addonsOpen, setAddonsOpen] = useState(false)
 
+  // Series short name for display (e.g. "Happy D2 Series" → "Happy D2")
+  const seriesShort = (opt.upgrade_spec ?? opt.option_name ?? '').replace(/ series$/i, '').trim()
+
   // Build synthetic Option objects for each addon so they can be cart-tracked
   // Use the option_id stored in DB addon_list if available, otherwise generate one
   const addonOpts = useMemo<Option[]>(() =>
@@ -1265,7 +1305,8 @@ function ComparisonCard({
         category_id: opt.category_id,
         sub_section: opt.sub_section,
         location_id: opt.location_id,
-        option_name: img.label,
+        // Include series name so cart can differentiate across series
+        option_name: `${img.label} — ${seriesShort}`,
         has_upgrade: true,
         price_status: opt.price_status,
         images: { upgrade: img.path },
@@ -1371,29 +1412,40 @@ function ComparisonCard({
 
           {addonsOpen && (
             <div className="cmp-addons-body">
+              {/* Gate: series upgrade must be selected first */}
+              {selectedType !== 'upgrade' && (
+                <div className="cmp-addons-gate">
+                  Select the <strong>{seriesShort}</strong> upgrade above to unlock add-ons
+                </div>
+              )}
               {addonOpts.map((addonOpt, i) => {
                 const img = addonImgs[i]
                 const u = imgUrl(img.path)
                 const isAddonSel = (selections ?? []).some(
                   s => s.option_id === addonOpt.option_id && s.location_id === addonOpt.location_id
                 )
+                const locked = selectedType !== 'upgrade'
                 return (
-                  <div key={addonOpt.option_id} className={`cmp-addon-item ${isAddonSel ? 'cmp-addon-item--selected' : ''}`}>
+                  <div
+                    key={addonOpt.option_id}
+                    className={`cmp-addon-item ${isAddonSel ? 'cmp-addon-item--selected' : ''} ${locked ? 'cmp-addon-item--locked' : ''}`}
+                  >
                     {u && (
-                      <div className="cmp-addon-img" onClick={() => onImageClick?.(u)}>
+                      <div className="cmp-addon-img" onClick={() => !locked && onImageClick?.(u)}>
                         <img src={u} alt={img.label}
                           onError={e => { (e.target as HTMLImageElement).src = errUpg }}
                         />
-                        <span className="spec-img-zoom-hint">🔍</span>
+                        {!locked && <span className="spec-img-zoom-hint">🔍</span>}
                       </div>
                     )}
                     <div className="cmp-addon-info">
                       <span className="cmp-addon-name">{img.label}</span>
-                      <span className="cmp-addon-note">Optional add-on</span>
+                      <span className="cmp-addon-note">{locked ? `Requires ${seriesShort} upgrade` : 'Optional add-on'}</span>
                     </div>
                     <button
-                      className={`cmp-addon-btn ${isAddonSel ? 'cmp-addon-btn--selected' : ''}`}
-                      onClick={() => onSelect(addonOpt, 'upgrade')}
+                      className={`cmp-addon-btn ${isAddonSel ? 'cmp-addon-btn--selected' : ''} ${locked ? 'cmp-addon-btn--locked' : ''}`}
+                      disabled={locked}
+                      onClick={() => !locked && onSelect(addonOpt, 'upgrade')}
                     >
                       {isAddonSel ? '✓ Added' : '+ Add'}
                     </button>
