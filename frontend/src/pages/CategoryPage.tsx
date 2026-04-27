@@ -476,69 +476,84 @@ export default function CategoryPage() {
   const handleSelect = async (opt: Option, type: 'standard' | 'upgrade') => {
     const alreadySelected = isSelected(opt.option_id, opt.location_id, type)
 
+    // Helper: is this a sanitaryware series (not an add-on)?
+    const isSanitarySeries = (optionId: string) =>
+      opt.category_id === 'CAT003' && opt.sub_section === 'sanitaryware' && !optionId.includes('-ADN-')
+
     try {
+      // ── REMOVING a selection ─────────────────────────────────────────────
       if (alreadySelected) {
-        // When de-selecting a sanitaryware series upgrade, also remove its add-ons
-        const isSanitaryUpgrade =
-          opt.category_id === 'CAT003' &&
-          opt.sub_section === 'sanitaryware' &&
-          type === 'upgrade' &&
-          !opt.option_id.includes('-ADN-')
+        // Step 1: remove the item itself
+        let live = (await removeSelection({ option_id: opt.option_id, location_id: opt.location_id })).selections ?? []
 
-        let updatedSelections = (await removeSelection({ option_id: opt.option_id, location_id: opt.location_id })).selections ?? []
-
-        if (isSanitaryUpgrade) {
-          // Remove any add-ons that belong to this series (same location, option_id starts with this opt's id)
-          const addonSels = updatedSelections.filter(
+        // Step 2: if it was a series upgrade, also remove its add-ons
+        if (isSanitarySeries(opt.option_id)) {
+          const addonsToRemove = live.filter(
             (s: SelectionItem) => s.option_id.startsWith(`${opt.option_id}-ADN-`) && s.location_id === opt.location_id
           )
-          for (const addon of addonSels) {
+          for (const addon of addonsToRemove) {
             const r = await removeSelection({ option_id: addon.option_id, location_id: addon.location_id })
-            updatedSelections = r.selections ?? []
+            live = r.selections ?? []
           }
         }
 
-        setSelections(updatedSelections)
-      } else {
-        // Mutual exclusivity: selecting a kitchen space option removes the other kitchen option
-        if (opt.sub_section === 'kitchen') {
-          const rival = selections.find(s =>
-            s.category_id === opt.category_id &&
-            s.sub_section === 'kitchen' &&
-            s.option_id !== opt.option_id
-          )
-          if (rival) {
-            await removeSelection({ option_id: rival.option_id, location_id: rival.location_id })
-          }
-        }
-
-        // When switching to a different sanitaryware series, remove add-ons from the old series
-        if (opt.category_id === 'CAT003' && opt.sub_section === 'sanitaryware' && !opt.option_id.includes('-ADN-')) {
-          const oldSeries = selections.find(
-            s => s.category_id === 'CAT003' &&
-              s.sub_section === 'sanitaryware' &&
-              s.location_id === opt.location_id &&
-              !s.option_id.includes('-ADN-')
-          )
-          if (oldSeries && oldSeries.option_id !== opt.option_id) {
-            const addonSels = selections.filter(
-              s => s.option_id.startsWith(`${oldSeries.option_id}-ADN-`) && s.location_id === opt.location_id
-            )
-            for (const addon of addonSels) {
-              await removeSelection({ option_id: addon.option_id, location_id: addon.location_id })
-            }
-          }
-        }
-
-        const updated = await upsertSelection({
-          category_id: opt.category_id,
-          sub_section: opt.sub_section,
-          option_id: opt.option_id,
-          location_id: opt.location_id,
-          selection_type: type,
-        })
-        setSelections(updated.selections ?? [])
+        setSelections(live)
+        return
       }
+
+      // ── ADDING a selection ───────────────────────────────────────────────
+      // Track live selections through each sequential API call
+      let live: SelectionItem[] = [...selections]
+
+      // Kitchen mutual exclusivity
+      if (opt.sub_section === 'kitchen') {
+        const rival = live.find(s =>
+          s.category_id === opt.category_id &&
+          s.sub_section === 'kitchen' &&
+          s.option_id !== opt.option_id
+        )
+        if (rival) {
+          const r = await removeSelection({ option_id: rival.option_id, location_id: rival.location_id })
+          live = r.selections ?? []
+        }
+      }
+
+      // Sanitaryware: only one series per bathroom — remove old series + its add-ons
+      if (isSanitarySeries(opt.option_id)) {
+        // Find any other series already selected for this same room
+        const oldSeries = live.find(s =>
+          s.category_id === 'CAT003' &&
+          s.sub_section === 'sanitaryware' &&
+          s.location_id === opt.location_id &&
+          !s.option_id.includes('-ADN-') &&
+          s.option_id !== opt.option_id
+        )
+        if (oldSeries) {
+          // Remove old series upgrade
+          const r1 = await removeSelection({ option_id: oldSeries.option_id, location_id: oldSeries.location_id })
+          live = r1.selections ?? []
+
+          // Remove all add-ons that belong to the old series
+          const oldAddons = live.filter(
+            (s: SelectionItem) => s.option_id.startsWith(`${oldSeries.option_id}-ADN-`) && s.location_id === opt.location_id
+          )
+          for (const addon of oldAddons) {
+            const r = await removeSelection({ option_id: addon.option_id, location_id: addon.location_id })
+            live = r.selections ?? []
+          }
+        }
+      }
+
+      // Finally, add the new selection
+      const updated = await upsertSelection({
+        category_id: opt.category_id,
+        sub_section: opt.sub_section,
+        option_id: opt.option_id,
+        location_id: opt.location_id,
+        selection_type: type,
+      })
+      setSelections(updated.selections ?? [])
+
     } catch (e) { console.error(e) }
   }
 
