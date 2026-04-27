@@ -6,9 +6,16 @@ export const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 const api = axios.create({ baseURL: BASE })
 
+// Token helpers — admin uses sessionStorage (per-tab), customer uses localStorage (persistent)
+export const getToken  = () => sessionStorage.getItem('access_token') || localStorage.getItem('access_token')
+export const clearAuth = () => {
+  if (sessionStorage.getItem('access_token')) sessionStorage.clear()
+  else localStorage.clear()
+}
+
 // Attach JWT token to every request
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token')
+  const token = getToken()
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
@@ -18,7 +25,7 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.clear()
+      clearAuth()
       window.location.href = '/'
     }
     return Promise.reject(err)

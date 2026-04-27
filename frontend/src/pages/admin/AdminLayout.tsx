@@ -21,10 +21,10 @@ function getPageTitle(pathname: string): string {
 export default function AdminLayout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const userName = localStorage.getItem('user_name') || 'Admin'
+  const userName = sessionStorage.getItem('user_name') || 'Admin'
 
   const handleLogout = () => {
-    localStorage.clear()
+    sessionStorage.clear()
     navigate('/')
   }
 
