@@ -1376,6 +1376,12 @@ body {
 .cmp-img-grid--upg {
   grid-template-columns: 1fr 1fr;
 }
+.cmp-img-grid--upg.cmp-img-grid--single {
+  grid-template-columns: 1fr;
+  width: 75%;
+  max-width: 75%;
+  align-self: center;
+}
 
 .cmp-img-tile {
   border-radius: 8px;
