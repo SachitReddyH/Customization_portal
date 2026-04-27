@@ -29,20 +29,48 @@ async def _enrich(db, quote: dict) -> dict:
     return quote
 
 
+import re as _re
+
+_ADDON_LABELS = {"BAT": "Bathtub", "JAC": "Jacuzzi"}
+
+def _decode_addon_id(option_id: str, parent_opt) -> str:
+    """Return a human-readable name for synthetic addon option_ids like OPT-BP-001-ADN-BAT."""
+    m = _re.match(r'^(.+)-ADN-([A-Z]+)$', option_id)
+    if not m:
+        return None
+    label = _ADDON_LABELS.get(m.group(2), m.group(2))
+    if parent_opt:
+        series = (parent_opt.get("upgrade_spec") or parent_opt.get("option_name") or "")
+        series = _re.sub(r'\s+[Ss]eries$', '', series).strip()
+        return f"{label} — {series}" if series else label
+    return label
+
+
 async def _build_snapshot(db, user) -> list:
     """Fetch & enrich the customer's current selections into a snapshot list."""
     selections_doc = await db.customer_selections.find_one({"customer_id": user["_id"]})
     raw = selections_doc.get("selections", []) if selections_doc else []
     enriched = []
     for sel in raw:
-        opt = await db.customization_options.find_one({"option_id": sel.get("option_id")})
+        option_id = sel.get("option_id", "")
+        opt = await db.customization_options.find_one({"option_id": option_id})
         cat = await db.categories.find_one({"category_id": sel.get("category_id")})
+
+        # Resolve option name: real option → addon decode → raw id
+        if opt:
+            resolved_name = opt.get("option_name") or opt.get("space") or opt.get("description") or option_id
+        else:
+            # Try decoding synthetic addon id (e.g. OPT-BP-001-ADN-BAT)
+            m = _re.match(r'^(.+)-ADN-([A-Z]+)$', option_id)
+            if m:
+                parent_opt = await db.customization_options.find_one({"option_id": m.group(1)})
+                resolved_name = _decode_addon_id(option_id, parent_opt) or option_id
+            else:
+                resolved_name = option_id
+
         enriched.append({
             **sel,
-            "option_name": (
-                (opt.get("option_name") or opt.get("space") or opt.get("description") or sel.get("option_id"))
-                if opt else sel.get("option_id")
-            ),
+            "option_name": resolved_name,
             "category_name": cat.get("name") if cat else sel.get("category_id"),
         })
     return enriched

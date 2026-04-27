@@ -107,11 +107,25 @@ export default function AdminCustomerDetail() {
   const getCategoryName = (categoryId: string) =>
     categories.find(c => c.category_id === categoryId)?.name || categoryId
 
-  // option_id is like "OPT-FL-001", match against option_id field
+  // option_id is like "OPT-FL-001", match against option_id field.
+  // Also handles synthetic addon IDs like OPT-BP-001-ADN-BAT.
   const getOptionName = (categoryId: string, optionId: string) => {
     const opts = optionsMap[categoryId] || []
     const opt = opts.find(o => o.option_id === optionId)
-    return opt?.option_name || opt?.space || optionId
+    if (opt) return opt.option_name || opt.space || optionId
+
+    // Synthetic addon: e.g. OPT-BP-001-ADN-BAT → "Bathtub — Happy D2"
+    const adnMatch = optionId.match(/^(.+)-ADN-([A-Z]+)$/)
+    if (adnMatch) {
+      const [, parentId, code] = adnMatch
+      const label = code === 'BAT' ? 'Bathtub' : code === 'JAC' ? 'Jacuzzi' : code
+      const parent = opts.find(o => o.option_id === parentId)
+      const series = parent
+        ? ` — ${(parent.option_name ?? '').replace(/ series$/i, '').trim()}`
+        : ''
+      return `${label}${series}`
+    }
+    return optionId
   }
 
   const getVilla = (villaId?: string): Villa | undefined =>

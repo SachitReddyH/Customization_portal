@@ -190,6 +190,28 @@ const SERIES_ADDONS: Record<string, { label: string; path: string }[]> = {
   ],
 }
 
+/** Decode a synthetic addon option_id (e.g. OPT-BP-001-ADN-BAT) into a readable name.
+ *  Optionally looks up the parent in optionMap to append the series name. */
+function resolveOptionName(
+  optionId: string,
+  optionMap: Record<string, Option>
+): string {
+  const opt = optionMap[optionId]
+  if (opt) return opt.option_name ?? opt.space ?? opt.description ?? optionId
+
+  const adnMatch = optionId.match(/^(.+)-ADN-([A-Z]+)$/)
+  if (adnMatch) {
+    const [, parentId, code] = adnMatch
+    const label = code === 'BAT' ? 'Bathtub' : code === 'JAC' ? 'Jacuzzi' : code
+    const parent = optionMap[parentId]
+    const series = parent
+      ? ` — ${(parent.upgrade_spec ?? parent.option_name ?? '').replace(/ series$/i, '').trim()}`
+      : ''
+    return `${label}${series}`
+  }
+  return optionId
+}
+
 /** Return addon definitions for a sanitaryware series card, or [] if not applicable. */
 function getSeriesAddons(opt: Option): { label: string; path: string }[] {
   if (opt.category_id !== 'CAT003' || opt.sub_section !== 'sanitaryware') return []
@@ -850,7 +872,7 @@ export default function CategoryPage() {
                         </div>
                         {items.map((sel, i) => {
                           const opt = optionMap[sel.option_id]
-                          const name = opt?.option_name ?? opt?.space ?? opt?.description ?? sel.option_id
+                          const name = resolveOptionName(sel.option_id, optionMap)
                           return (
                             <div key={i} className="cart-item">
                               <div className="cart-item-info">

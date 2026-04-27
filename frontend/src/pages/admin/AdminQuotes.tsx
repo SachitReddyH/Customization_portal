@@ -17,6 +17,19 @@ interface Quote {
   selection_snapshot?: any[]
 }
 
+/** Resolve a snapshot entry's display name.
+ *  Handles real option names, synthetic addon IDs (OPT-BP-001-ADN-BAT), etc. */
+function resolveSnapshotName(s: any): string {
+  if (s.option_name) return s.option_name
+  const id: string = s.option_id ?? ''
+  const adnMatch = id.match(/^(.+)-ADN-([A-Z]+)$/)
+  if (adnMatch) {
+    const code = adnMatch[2]
+    return code === 'BAT' ? 'Bathtub' : code === 'JAC' ? 'Jacuzzi' : code
+  }
+  return id
+}
+
 interface EditState {
   status: string
   admin_notes: string
@@ -174,7 +187,7 @@ export default function AdminQuotes() {
                             <p className="quote-snapshot-cat">{cat}</p>
                             {items.map((s: any, i: number) => (
                               <div key={i} className="quote-snapshot-row">
-                                <span className="quote-snapshot-name">{s.option_name ?? s.option_id}</span>
+                                <span className="quote-snapshot-name">{resolveSnapshotName(s)}</span>
                                 <span className={`quote-snapshot-type ${s.selection_type}`}>
                                   {s.selection_type === 'upgrade' ? 'Upgrade' : 'Standard'}
                                 </span>
