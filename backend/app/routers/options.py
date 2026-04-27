@@ -118,6 +118,23 @@ async def get_rooms_in_floor(
     return {"rooms": rooms}
 
 
+@router.get("/locations/all")
+async def get_all_locations(user=Depends(get_current_user)):
+    """Returns all locations with their display names. Used by admin to resolve location codes."""
+    db = get_db()
+    cursor = db.locations.find({}, {"location_id": 1, "floor": 1, "space": 1, "room_code": 1})
+    docs = await cursor.to_list(length=None)
+    return [
+        {
+            "location_id": d.get("location_id"),
+            "floor":       d.get("floor"),
+            "space":       d.get("space"),
+            "room_code":   d.get("room_code"),
+        }
+        for d in docs
+    ]
+
+
 @router.get("/{category_id}/rooms/{location_id}", response_model=List[OptionResponse])
 async def get_options_for_room(
     category_id: str,

@@ -48,6 +48,10 @@ export const getCategories = () =>
 export const getCategory = (id: string) =>
   api.get(`/categories/${id}`).then(r => r.data)
 
+/* ── Locations (all rooms across all categories) ─ */
+export const getAllLocations = () =>
+  api.get('/options/locations/all').then(r => r.data as { location_id: string; floor?: string; space?: string; room_code?: string }[])
+
 /* ── Options — room-based navigation ─────────── */
 export const getFloors = (categoryId: string) =>
   api.get(`/options/${categoryId}/floors`).then(r => r.data)

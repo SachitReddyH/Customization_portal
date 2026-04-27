@@ -5,6 +5,7 @@ import {
   getCustomerSelections,
   getCategories,
   listAllVillas,
+  getAllLocations,
 } from '../../services/api'
 import api from '../../services/api'
 
@@ -61,6 +62,7 @@ export default function AdminCustomerDetail() {
   const [data, setData] = useState<SelectionsResponse | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [optionsMap, setOptionsMap] = useState<Record<string, Option[]>>({})
+  const [locationNames, setLocationNames] = useState<Record<string, string>>({})
   const [villas, setVillas] = useState<Villa[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -72,14 +74,26 @@ export default function AdminCustomerDetail() {
       setLoading(true)
       setError('')
       try {
-        const [selResp, cats, vs] = await Promise.all([
+        const [selResp, cats, vs, locs] = await Promise.all([
           getCustomerSelections(customerId),
           getCategories(),
           listAllVillas(),
+          getAllLocations(),
         ])
         setData(selResp)
         setCategories(cats)
         setVillas(vs)
+        // Build location_id → display name map
+        const locMap: Record<string, string> = {}
+        locs.forEach((l: { location_id: string; floor?: string; space?: string }) => {
+          if (l.location_id) {
+            // Show "Space — Floor" e.g. "Toilet — Bedroom 1 — Ground Floor"
+            locMap[l.location_id] = l.space
+              ? (l.floor ? `${l.space} — ${l.floor}` : l.space)
+              : l.location_id
+          }
+        })
+        setLocationNames(locMap)
 
         // Fetch options for every category that appears in selections
         const catIds: string[] = Array.from(
@@ -223,7 +237,7 @@ export default function AdminCustomerDetail() {
                         {getOptionName(catId, sel.option_id)}
                       </td>
                       <td style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
-                        {sel.location_id || '—'}
+                        {sel.location_id ? (locationNames[sel.location_id] ?? sel.location_id) : '—'}
                       </td>
                       <td>
                         <span
