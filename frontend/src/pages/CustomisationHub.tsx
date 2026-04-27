@@ -199,6 +199,7 @@ export default function CustomisationHub() {
               <div>
                 <h2 className="mv-title">Mock Villa</h2>
                 <p className="mv-subtitle">Reference images across all floors</p>
+                <p className="mv-disclaimer">These images are for reference purposes only and do not represent the actual final product, finishes, or dimensions.</p>
               </div>
               <button className="mv-close" onClick={() => setGalleryOpen(false)}>
                 <X size={20} />

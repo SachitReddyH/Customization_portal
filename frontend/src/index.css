@@ -2984,6 +2984,13 @@ body {
   color: #888;
   margin: 0;
 }
+.mv-disclaimer {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: #aaa;
+  font-style: italic;
+  margin: 4px 0 0;
+}
 
 .mv-close {
   background: none;
