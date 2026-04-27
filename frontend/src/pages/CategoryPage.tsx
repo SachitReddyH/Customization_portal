@@ -780,6 +780,7 @@ export default function CategoryPage() {
                               locationMap={locationMap}
                               onImageClick={url => setLightboxUrl(url)}
                               selections={selections}
+                              upgradeLabel={categoryId === 'CAT001' ? 'Option' : 'Upgrade'}
                               onRegisterOpts={opts => setOptionMap(prev => {
                                 const next = { ...prev }
                                 opts.forEach(o => { next[o.option_id] = o })
@@ -806,6 +807,7 @@ export default function CategoryPage() {
                         locationMap={locationMap}
                         onImageClick={url => setLightboxUrl(url)}
                         selections={selections}
+                        upgradeLabel={categoryId === 'CAT001' ? 'Option' : 'Upgrade'}
                         onRegisterOpts={opts => setOptionMap(prev => {
                           const next = { ...prev }
                           opts.forEach(o => { next[o.option_id] = o })
@@ -881,7 +883,9 @@ export default function CategoryPage() {
                                   <span className="cart-item-room">{opt.space}</span>
                                 )}
                                 <span className={`cart-item-type ${sel.selection_type}`}>
-                                  {sel.selection_type === 'upgrade' ? 'Upgrade' : 'Standard'}
+                                  {sel.selection_type === 'upgrade'
+                                    ? (sel.category_id === 'CAT001' ? 'Option' : 'Upgrade')
+                                    : 'Standard'}
                                 </span>
                               </div>
                               <button
@@ -1061,7 +1065,7 @@ export default function CategoryPage() {
 ══════════════════════════════════════════════════ */
 function OptionCard({
   opt, selectedType, onSelect, isPackage, coveredByPackage, locationMap, onImageClick,
-  selections, onRegisterOpts,
+  selections, onRegisterOpts, upgradeLabel = 'Upgrade',
 }: {
   opt: Option
   selectedType?: string
@@ -1072,6 +1076,7 @@ function OptionCard({
   onImageClick?: (url: string) => void
   selections?: SelectionItem[]
   onRegisterOpts?: (opts: Option[]) => void
+  upgradeLabel?: string
 }) {
   if (isPackage) return <PackageCard opt={opt} selectedType={selectedType} onSelect={onSelect} locationMap={locationMap} onImageClick={onImageClick} />
 
@@ -1251,6 +1256,7 @@ function OptionCard({
         onImageClick={onImageClick}
         selections={selections}
         onRegisterOpts={onRegisterOpts}
+        upgradeLabel={upgradeLabel}
       />
     )
   }
@@ -1307,7 +1313,7 @@ function OptionCard({
 
 /* ── Comparison card (sanitaryware / multi-image) ──────────────────── */
 function ComparisonCard({
-  opt, selectedType, onSelect, onImageClick, selections, onRegisterOpts,
+  opt, selectedType, onSelect, onImageClick, selections, onRegisterOpts, upgradeLabel = 'Upgrade',
 }: {
   opt: Option
   selectedType?: string
@@ -1315,6 +1321,7 @@ function ComparisonCard({
   onImageClick?: (url: string) => void
   selections?: SelectionItem[]
   onRegisterOpts?: (opts: Option[]) => void
+  upgradeLabel?: string
 }) {
   const stdList = opt.images?.standard_list ?? []
   // Filter out addon items from upgrade list (safety — in case they end up there)
@@ -1373,7 +1380,7 @@ function ComparisonCard({
       <div className="cmp-labels-row">
         <div className="cmp-labels-std">Standard</div>
         <div className="cmp-labels-gap" />
-        <div className="cmp-labels-upg">Upgrade</div>
+        <div className="cmp-labels-upg">{upgradeLabel}</div>
       </div>
 
       {/* ── Two-panel body ── */}
@@ -1428,7 +1435,7 @@ function ComparisonCard({
             className={`cmp-btn cmp-btn--upg ${selectedType === 'upgrade' ? 'cmp-btn--active' : ''}`}
             onClick={e => { e.stopPropagation(); onSelect(opt, 'upgrade') }}
           >
-            {selectedType === 'upgrade' ? '✓ Selected' : 'Select Upgrade'}
+            {selectedType === 'upgrade' ? '✓ Selected' : `Select ${upgradeLabel}`}
           </button>
         </div>
       </div>
