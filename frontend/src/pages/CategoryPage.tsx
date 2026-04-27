@@ -1419,7 +1419,7 @@ function ComparisonCard({
           className={`cmp-panel cmp-panel--upg ${selectedType === 'upgrade' ? 'cmp-panel--active' : ''}`}
           onClick={() => onSelect(opt, 'upgrade')}
         >
-          <div className="cmp-img-grid cmp-img-grid--upg">
+          <div className={`cmp-img-grid cmp-img-grid--upg ${upgList.length === 1 ? 'cmp-img-grid--single' : ''}`}>
             {upgList.map((img, i) => {
               const u = imgUrl(img.path)
               return (
