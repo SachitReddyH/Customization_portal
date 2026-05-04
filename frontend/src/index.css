@@ -1324,6 +1324,7 @@ body {
   min-height: 260px;
   object-fit: contain;
   object-position: center;
+  padding: 0;
 }
 .cmp-body--kitchen .cmp-spec-text { display: none; }
 .cmp-body--kitchen .cmp-view-only-label {
@@ -1387,7 +1388,7 @@ body {
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid #e5e0d9;
-  background: #fff;
+  background: #f5f4f2;
   cursor: zoom-in;
   transition: box-shadow 0.15s;
 }
@@ -1396,10 +1397,13 @@ body {
 }
 .cmp-img-tile img {
   width: 100%;
-  height: 88px;
-  object-fit: cover;
+  height: 100px;
+  object-fit: contain;
+  object-position: center;
   display: block;
   transition: transform 0.22s;
+  padding: 6px;
+  box-sizing: border-box;
 }
 .cmp-img-tile:hover img {
   transform: scale(1.05);
