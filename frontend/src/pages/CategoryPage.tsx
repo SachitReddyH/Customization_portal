@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, X, ChevronDown, ChevronRight, ChevronLeft, ShoppingCart, Images } from 'lucide-react'
 import {
@@ -1541,12 +1542,11 @@ function ComparisonCard({
         </div>
       )}
 
-      {/* Fixed-position tooltip — never clipped by any ancestor */}
-      {tooltip && (
+      {/* Portal tooltip — rendered on document.body, immune to overflow:hidden and transform ancestors */}
+      {tooltip && createPortal(
         <div
           className="cmp-img-tooltip-fixed"
           style={{ left: tooltip.x, top: tooltip.y }}
-          onMouseEnter={hideTooltip}
         >
           <div className="cmp-img-tooltip-row">
             <span className="cmp-img-tooltip-key">Code</span>
@@ -1556,7 +1556,8 @@ function ComparisonCard({
             <span className="cmp-img-tooltip-key">Product</span>
             <span className="cmp-img-tooltip-val">{tooltip.product_name}</span>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
