@@ -1282,10 +1282,10 @@ body {
 .cmp-view-only-label {
   font-family: var(--font-body);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #aaa;
+  color: #666;
   margin-top: 4px;
 }
 
