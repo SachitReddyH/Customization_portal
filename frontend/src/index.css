@@ -3127,6 +3127,29 @@ body {
   cursor: default;
 }
 
+.mv-lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 50%;
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s, color 0.18s;
+  z-index: 10;
+}
+.mv-lightbox-nav:hover {
+  background: rgba(255,255,255,0.28);
+  color: #fff;
+}
+.mv-lightbox-nav--prev { left: 20px; }
+.mv-lightbox-nav--next { right: 20px; }
+
 .mv-lightbox-label {
   font-family: var(--font-body);
   font-size: 13px;
@@ -3135,4 +3158,11 @@ body {
   margin-top: 16px;
   letter-spacing: 0.06em;
   cursor: default;
+  text-align: center;
+}
+.mv-lightbox-counter {
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.4);
+  margin-left: 6px;
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, X, ChevronDown, ChevronRight, ShoppingCart, Images } from 'lucide-react'
+import { ArrowLeft, X, ChevronDown, ChevronRight, ChevronLeft, ShoppingCart, Images } from 'lucide-react'
 import {
   getCategory, getCategories, getFloors, getRooms, getRoomOptions,
   getDirectOptions, getFlooringPackages,
@@ -161,6 +161,8 @@ const MOCK_GALLERY: MockGroup[] = [
   },
 ]
 
+const ALL_MOCK_IMAGES: MockImage[] = MOCK_GALLERY.flatMap(g => g.images)
+
 const mockImgSrc = (file: string) => `/mockvillaimages/${encodeURIComponent(file)}`
 
 // Resolve image URLs — static assets live on the Render backend
@@ -277,6 +279,19 @@ export default function CategoryPage() {
 
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [galleryLightbox, setGalleryLightbox] = useState<MockImage | null>(null)
+
+  // Lightbox keyboard navigation
+  useEffect(() => {
+    if (!galleryLightbox) return
+    const idx = ALL_MOCK_IMAGES.findIndex(i => i.file === galleryLightbox.file)
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') setGalleryLightbox(ALL_MOCK_IMAGES[(idx + 1) % ALL_MOCK_IMAGES.length])
+      else if (e.key === 'ArrowLeft') setGalleryLightbox(ALL_MOCK_IMAGES[(idx - 1 + ALL_MOCK_IMAGES.length) % ALL_MOCK_IMAGES.length])
+      else if (e.key === 'Escape') setGalleryLightbox(null)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [galleryLightbox])
 
   const isRoomBased  = ROOM_BASED.includes(categoryId!)
   const isPackageTab = activeTab === 'package'
@@ -1040,22 +1055,33 @@ export default function CategoryPage() {
       )}
 
       {/* ── Mock Villa lightbox ── */}
-      {galleryLightbox && (
-        <div className="mv-lightbox" onClick={() => setGalleryLightbox(null)}>
-          <button className="mv-lightbox-close" onClick={() => setGalleryLightbox(null)}>
-            <X size={24} />
-          </button>
-          <img
-            src={mockImgSrc(galleryLightbox.file)}
-            alt={galleryLightbox.label}
-            className="mv-lightbox-img"
-            onClick={e => e.stopPropagation()}
-          />
-          <p className="mv-lightbox-label" onClick={e => e.stopPropagation()}>
-            {galleryLightbox.label}
-          </p>
-        </div>
-      )}
+      {galleryLightbox && (() => {
+        const idx = ALL_MOCK_IMAGES.findIndex(i => i.file === galleryLightbox.file)
+        const goPrev = (e: React.MouseEvent) => { e.stopPropagation(); setGalleryLightbox(ALL_MOCK_IMAGES[(idx - 1 + ALL_MOCK_IMAGES.length) % ALL_MOCK_IMAGES.length]) }
+        const goNext = (e: React.MouseEvent) => { e.stopPropagation(); setGalleryLightbox(ALL_MOCK_IMAGES[(idx + 1) % ALL_MOCK_IMAGES.length]) }
+        return (
+          <div className="mv-lightbox" onClick={() => setGalleryLightbox(null)}>
+            <button className="mv-lightbox-close" onClick={() => setGalleryLightbox(null)}>
+              <X size={24} />
+            </button>
+            <button className="mv-lightbox-nav mv-lightbox-nav--prev" onClick={goPrev}>
+              <ChevronLeft size={32} />
+            </button>
+            <img
+              src={mockImgSrc(galleryLightbox.file)}
+              alt={galleryLightbox.label}
+              className="mv-lightbox-img"
+              onClick={e => e.stopPropagation()}
+            />
+            <button className="mv-lightbox-nav mv-lightbox-nav--next" onClick={goNext}>
+              <ChevronRight size={32} />
+            </button>
+            <p className="mv-lightbox-label" onClick={e => e.stopPropagation()}>
+              {galleryLightbox.label} <span className="mv-lightbox-counter">({idx + 1} / {ALL_MOCK_IMAGES.length})</span>
+            </p>
+          </div>
+        )
+      })()}
 
     </div>
   )

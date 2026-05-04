@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutGrid, Layers, Bath, ArrowUpSquare,
-  Leaf, Wifi, Wind, Tv2, LogOut, Images, X,
+  Leaf, Wifi, Wind, Tv2, LogOut, Images, X, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { getMyVilla } from '../services/api'
 
@@ -81,6 +81,8 @@ const MOCK_GALLERY: MockGroup[] = [
   },
 ]
 
+const ALL_MOCK_IMAGES: MockImage[] = MOCK_GALLERY.flatMap(g => g.images)
+
 const imgSrc = (file: string) =>
   `/mockvillaimages/${encodeURIComponent(file)}`
 
@@ -95,6 +97,19 @@ export default function CustomisationHub() {
 
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [lightbox,    setLightbox]    = useState<MockImage | null>(null)
+
+  // Lightbox keyboard navigation
+  useEffect(() => {
+    if (!lightbox) return
+    const idx = ALL_MOCK_IMAGES.findIndex(i => i.file === lightbox.file)
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') setLightbox(ALL_MOCK_IMAGES[(idx + 1) % ALL_MOCK_IMAGES.length])
+      else if (e.key === 'ArrowLeft') setLightbox(ALL_MOCK_IMAGES[(idx - 1 + ALL_MOCK_IMAGES.length) % ALL_MOCK_IMAGES.length])
+      else if (e.key === 'Escape') setLightbox(null)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [lightbox])
 
   const userName = localStorage.getItem('user_name') ?? ''
 
@@ -240,22 +255,33 @@ export default function CustomisationHub() {
       )}
 
       {/* ── Lightbox ── */}
-      {lightbox && (
-        <div className="mv-lightbox" onClick={() => setLightbox(null)}>
-          <button className="mv-lightbox-close" onClick={() => setLightbox(null)}>
-            <X size={24} />
-          </button>
-          <img
-            src={imgSrc(lightbox.file)}
-            alt={lightbox.label}
-            className="mv-lightbox-img"
-            onClick={e => e.stopPropagation()}
-          />
-          <p className="mv-lightbox-label" onClick={e => e.stopPropagation()}>
-            {lightbox.label}
-          </p>
-        </div>
-      )}
+      {lightbox && (() => {
+        const idx = ALL_MOCK_IMAGES.findIndex(i => i.file === lightbox.file)
+        const goPrev = (e: React.MouseEvent) => { e.stopPropagation(); setLightbox(ALL_MOCK_IMAGES[(idx - 1 + ALL_MOCK_IMAGES.length) % ALL_MOCK_IMAGES.length]) }
+        const goNext = (e: React.MouseEvent) => { e.stopPropagation(); setLightbox(ALL_MOCK_IMAGES[(idx + 1) % ALL_MOCK_IMAGES.length]) }
+        return (
+          <div className="mv-lightbox" onClick={() => setLightbox(null)}>
+            <button className="mv-lightbox-close" onClick={() => setLightbox(null)}>
+              <X size={24} />
+            </button>
+            <button className="mv-lightbox-nav mv-lightbox-nav--prev" onClick={goPrev}>
+              <ChevronLeft size={32} />
+            </button>
+            <img
+              src={imgSrc(lightbox.file)}
+              alt={lightbox.label}
+              className="mv-lightbox-img"
+              onClick={e => e.stopPropagation()}
+            />
+            <button className="mv-lightbox-nav mv-lightbox-nav--next" onClick={goNext}>
+              <ChevronRight size={32} />
+            </button>
+            <p className="mv-lightbox-label" onClick={e => e.stopPropagation()}>
+              {lightbox.label} <span className="mv-lightbox-counter">({idx + 1} / {ALL_MOCK_IMAGES.length})</span>
+            </p>
+          </div>
+        )
+      })()}
 
     </div>
   )
