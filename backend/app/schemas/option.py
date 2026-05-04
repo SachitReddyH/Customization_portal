@@ -5,6 +5,8 @@ from typing import Optional, List, Literal
 class StandardImage(BaseModel):
     path: str
     label: str
+    code: Optional[str] = None
+    product_name: Optional[str] = None
 
 
 class AddonImage(BaseModel):
