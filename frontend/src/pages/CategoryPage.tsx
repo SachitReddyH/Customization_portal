@@ -30,7 +30,7 @@ interface Option {
   package_tier?: string
   description?: string
   detailed_spec?: string
-  images: { standard?: string; standard_list?: { path: string; label: string }[]; upgrade?: string; upgrade_list?: { path: string; label: string }[]; addon_list?: { path: string; label: string; option_id?: string }[] }
+  images: { standard?: string; standard_list?: { path: string; label: string; code?: string; product_name?: string }[]; upgrade?: string; upgrade_list?: { path: string; label: string; code?: string; product_name?: string }[]; addon_list?: { path: string; label: string; option_id?: string }[] }
   floor_plan_image?: string
   option_type?: string
   vrf_benefits?: string[]
@@ -1452,7 +1452,15 @@ function ComparisonCard({
               return (
                 <div key={i} className="cmp-img-tile" onClick={e => { if (u && onImageClick) { e.stopPropagation(); onImageClick(u) } }}>
                   <img src={u ?? ''} alt={img.label} onError={e => { (e.target as HTMLImageElement).src = errUpg }} />
-                  <span className="cmp-img-label">{img.label}</span>
+                  <span className={`cmp-img-label ${img.code ? 'cmp-img-label--has-tooltip' : ''}`}>
+                    {img.label}
+                    {img.code && (
+                      <span className="cmp-img-tooltip" onClick={e => e.stopPropagation()}>
+                        <span className="cmp-img-tooltip-row"><span className="cmp-img-tooltip-key">Code</span><span className="cmp-img-tooltip-val">{img.code}</span></span>
+                        <span className="cmp-img-tooltip-row"><span className="cmp-img-tooltip-key">Product</span><span className="cmp-img-tooltip-val">{img.product_name}</span></span>
+                      </span>
+                    )}
+                  </span>
                 </div>
               )
             })}
