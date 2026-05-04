@@ -1424,30 +1424,29 @@ body {
 
 /* Tooltip on upgrade image labels */
 .cmp-img-label--has-tooltip {
-  position: relative;
   cursor: default;
 }
 .cmp-img-label--has-tooltip:hover {
   color: #444;
 }
-.cmp-img-tooltip {
-  display: none;
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
+
+/* Fixed-position tooltip — immune to any ancestor overflow:hidden */
+.cmp-img-tooltip-fixed {
+  position: fixed;
+  transform: translate(-50%, -100%);
   background: #2a2a2a;
   color: #f0ece7;
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 10px 14px;
   width: 220px;
-  z-index: 200;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  z-index: 9999;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
   pointer-events: none;
-  white-space: normal;
-  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
 }
-.cmp-img-tooltip::after {
+.cmp-img-tooltip-fixed::after {
   content: '';
   position: absolute;
   top: 100%;
@@ -1456,15 +1455,10 @@ body {
   border: 6px solid transparent;
   border-top-color: #2a2a2a;
 }
-.cmp-img-label--has-tooltip:hover .cmp-img-tooltip {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
 .cmp-img-tooltip-row {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
 }
 .cmp-img-tooltip-key {
   font-size: 9px;

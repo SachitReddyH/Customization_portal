@@ -1361,6 +1361,13 @@ function ComparisonCard({
       : getSeriesAddons(opt)
 
   const [addonsOpen, setAddonsOpen] = useState(false)
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; code: string; product_name: string } | null>(null)
+
+  const showTooltip = (e: React.MouseEvent<HTMLSpanElement>, code: string, product_name: string) => {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    setTooltip({ x: rect.left + rect.width / 2, y: rect.top - 8, code, product_name })
+  }
+  const hideTooltip = () => setTooltip(null)
 
   // Series short name for display (e.g. "Happy D2 Series" → "Happy D2")
   const seriesShort = (opt.upgrade_spec ?? opt.option_name ?? '').replace(/ series$/i, '').trim()
@@ -1452,14 +1459,12 @@ function ComparisonCard({
               return (
                 <div key={i} className="cmp-img-tile" onClick={e => { if (u && onImageClick) { e.stopPropagation(); onImageClick(u) } }}>
                   <img src={u ?? ''} alt={img.label} onError={e => { (e.target as HTMLImageElement).src = errUpg }} />
-                  <span className={`cmp-img-label ${img.code ? 'cmp-img-label--has-tooltip' : ''}`}>
+                  <span
+                    className={`cmp-img-label ${img.code ? 'cmp-img-label--has-tooltip' : ''}`}
+                    onMouseEnter={img.code ? e => showTooltip(e, img.code!, img.product_name ?? '') : undefined}
+                    onMouseLeave={img.code ? hideTooltip : undefined}
+                  >
                     {img.label}
-                    {img.code && (
-                      <span className="cmp-img-tooltip" onClick={e => e.stopPropagation()}>
-                        <span className="cmp-img-tooltip-row"><span className="cmp-img-tooltip-key">Code</span><span className="cmp-img-tooltip-val">{img.code}</span></span>
-                        <span className="cmp-img-tooltip-row"><span className="cmp-img-tooltip-key">Product</span><span className="cmp-img-tooltip-val">{img.product_name}</span></span>
-                      </span>
-                    )}
                   </span>
                 </div>
               )
@@ -1533,6 +1538,24 @@ function ComparisonCard({
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Fixed-position tooltip — never clipped by any ancestor */}
+      {tooltip && (
+        <div
+          className="cmp-img-tooltip-fixed"
+          style={{ left: tooltip.x, top: tooltip.y }}
+          onMouseEnter={hideTooltip}
+        >
+          <div className="cmp-img-tooltip-row">
+            <span className="cmp-img-tooltip-key">Code</span>
+            <span className="cmp-img-tooltip-val">{tooltip.code}</span>
+          </div>
+          <div className="cmp-img-tooltip-row">
+            <span className="cmp-img-tooltip-key">Product</span>
+            <span className="cmp-img-tooltip-val">{tooltip.product_name}</span>
+          </div>
         </div>
       )}
     </div>
