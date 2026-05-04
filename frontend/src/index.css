@@ -1315,7 +1315,7 @@ body {
   background: #f8f7f5;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden; /* keep cover clipping for kitchen layout images */
 }
 .cmp-body--kitchen .cmp-img-tile img {
   flex: 1;
@@ -1386,11 +1386,12 @@ body {
 
 .cmp-img-tile {
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid #e5e0d9;
   background: #f5f4f2;
   cursor: zoom-in;
   transition: box-shadow 0.15s;
+  position: relative;
 }
 .cmp-img-tile:hover {
   box-shadow: 0 3px 10px rgba(0,0,0,0.1);
@@ -1404,6 +1405,7 @@ body {
   transition: transform 0.22s;
   padding: 6px;
   box-sizing: border-box;
+  border-radius: 7px 7px 0 0;
 }
 .cmp-img-tile:hover img {
   transform: scale(1.05);
@@ -1438,9 +1440,8 @@ body {
   color: #f0ece7;
   border-radius: 8px;
   padding: 10px 12px;
-  min-width: 200px;
-  max-width: 240px;
-  z-index: 50;
+  width: 220px;
+  z-index: 200;
   box-shadow: 0 6px 20px rgba(0,0,0,0.35);
   pointer-events: none;
   white-space: normal;
