@@ -709,6 +709,7 @@ body {
 .options-panel {
   flex: 1;
   min-width: 0;
+  min-height: 0;          /* ← allow panel to shrink inside cat-content flex row */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -790,6 +791,7 @@ body {
 /* Options scroll area */
 .options-grid {
   flex: 1;
+  min-height: 0;          /* ← critical: lets flex child shrink so overflow-y kicks in */
   overflow-y: auto;
   padding: 12px 24px 24px;
   display: flex;
@@ -803,12 +805,11 @@ body {
   width: 100%;
 }
 
-/* When no floor sidebar — centre cards with a comfortable max width */
+/* Direct (no sidebar) — remove side padding; card border gives visual separation */
 .options-grid--direct {
-  max-width: 1000px;
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  max-width: 100%;
 }
 
 /* ── Sub-group headings (e.g. Kitchen / Home Theatre) ── */
@@ -3337,8 +3338,9 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
-  flex-direction: unset;        /* override flex-direction: column from .options-grid */
-  align-items: unset;
+  align-items: start;
+  padding-left: 0;
+  padding-right: 0;
 }
 .options-grid.options-grid--sh > * {
   width: 100%;
