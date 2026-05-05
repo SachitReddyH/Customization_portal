@@ -1207,14 +1207,26 @@ function OptionCard({
     )
   }
 
+  // ── Smart Home card (CAT006 packages) ────────────────────────────────────
+  if (upgradeOnly && opt.category_id === 'CAT006') {
+    return (
+      <SmartHomeCard
+        opt={opt}
+        selectedType={selectedType}
+        onSelect={onSelect}
+        onImageClick={onImageClick}
+      />
+    )
+  }
+
   // ── Horizontal card (upgradeOnly: single image, no standard alternative) ──
   if (upgradeOnly && !hasImageLists) {
     const imgSrcUrl = imgUrl(opt.images?.upgrade)
 
     // Categories that render description as bullet points
-    const POINT_CATS    = new Set(['CAT004', 'CAT005', 'CAT006'])
+    const POINT_CATS    = new Set(['CAT004', 'CAT005'])
     const FULL_PT_CATS  = new Set(['CAT004'])          // Lift: show ALL bullets
-    // CAT005/CAT006: show first 3 + ellipsis + "View details" popup
+    // CAT005: show first 3 + ellipsis + "View details" popup
 
     const isPointCat   = POINT_CATS.has(opt.category_id)
     const showAllPts   = FULL_PT_CATS.has(opt.category_id)
@@ -1612,6 +1624,98 @@ function ComparisonCard({
         </div>,
         document.body
       )}
+    </div>
+  )
+}
+
+/* ── Smart Home card (CAT006 packages) ────────── */
+function SmartHomeCard({
+  opt, selectedType, onSelect, onImageClick,
+}: {
+  opt: Option
+  selectedType?: string
+  onSelect: (opt: Option, type: 'standard' | 'upgrade') => void
+  onImageClick?: (url: string) => void
+}) {
+  const imgSrc = imgUrl(opt.images?.upgrade)
+  const tier   = opt.package_tier ?? ''   // 'GOLD' | 'PLATINUM'
+
+  // Parse numbered feature lines: "1. Title – detail" or "1. Title — detail"
+  const parseFeatures = (text: string): { title: string; detail: string }[] =>
+    text.split('\n').map(s => s.trim()).filter(Boolean).map(line => {
+      const stripped = line.replace(/^\d+\.\s*/, '')
+      const cut = stripped.indexOf(' \u2013 ')   // en-dash
+      const cut2 = stripped.indexOf(' \u2014 ')  // em-dash
+      const idx = cut > 0 ? cut : cut2 > 0 ? cut2 : -1
+      if (idx > 0) return { title: stripped.slice(0, idx), detail: stripped.slice(idx + 3) }
+      return { title: stripped, detail: '' }
+    })
+
+  const features = opt.detailed_spec ? parseFeatures(opt.detailed_spec) : []
+
+  const formatPrice = (p: number) => {
+    if (p >= 10000000) return `₹${(p / 10000000).toFixed(2)} Cr`
+    if (p >= 100000)   return `₹${(p / 100000).toFixed(p % 100000 === 0 ? 0 : 1)} L`
+    return `₹${p.toLocaleString('en-IN')}`
+  }
+
+  return (
+    <div className={`sm-card ${selectedType ? 'sm-card--selected' : ''}`}>
+
+      {/* ── Package image ── */}
+      {imgSrc && (
+        <div className="sm-img-wrap" onClick={e => { e.stopPropagation(); onImageClick?.(imgSrc) }}>
+          <img src={imgSrc} alt={opt.option_name ?? tier} className="sm-img" />
+          <span className="spec-img-zoom-hint">🔍 Enlarge</span>
+        </div>
+      )}
+
+      {/* ── Content ── */}
+      <div className="sm-content">
+
+        {/* Tier badge + name */}
+        <div className="sm-header">
+          {tier && (
+            <span className={`sm-tier-badge sm-tier-badge--${tier.toLowerCase()}`}>
+              {tier}
+            </span>
+          )}
+          <h2 className="sm-name">{opt.option_name}</h2>
+        </div>
+
+        {/* Short description */}
+        {opt.description && <p className="sm-headline">{opt.description}</p>}
+
+        {/* Feature list */}
+        {features.length > 0 && (
+          <ul className="sm-features">
+            {features.map((f, i) => (
+              <li key={i} className="sm-feature-item">
+                <span className="sm-feature-title">{f.title}</span>
+                {f.detail && <span className="sm-feature-detail"> — {f.detail}</span>}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Price */}
+        {opt.price_status === 'fixed' && opt.price_inr != null && (
+          <div className="sm-price-row">
+            <span className="sm-price-val">{formatPrice(opt.price_inr)}</span>
+            {opt.price_unit && <span className="sm-price-unit"> / {opt.price_unit}</span>}
+          </div>
+        )}
+
+        {/* Select button */}
+        <div className="sm-footer">
+          <button
+            className={`sm-select-btn ${selectedType ? 'sm-select-btn--selected' : ''}`}
+            onClick={() => onSelect(opt, 'upgrade')}
+          >
+            {selectedType ? '✓ Selected' : 'Select Package'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

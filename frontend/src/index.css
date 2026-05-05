@@ -3347,3 +3347,190 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ══════════════════════════════════════════════
+   Smart Home package card  (.sm-card)
+   — mirrors VRF card visual style
+══════════════════════════════════════════════ */
+.sm-card {
+  background: #fff;
+  border: 1.5px solid #e8e4de;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.06);
+  transition: box-shadow 0.2s, border-color 0.2s;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.sm-card:hover {
+  box-shadow: 0 6px 28px rgba(0,0,0,0.11);
+  border-color: #d4c8bc;
+}
+.sm-card--selected {
+  border-color: #F05E3E !important;
+  box-shadow: 0 0 0 3px rgba(240,94,62,0.12), 0 4px 20px rgba(0,0,0,0.09) !important;
+}
+
+/* ── Package image ── */
+.sm-img-wrap {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: #f5f4f2;
+  cursor: zoom-in;
+}
+.sm-img-wrap:hover .spec-img-zoom-hint { opacity: 1; }
+.sm-img {
+  width: 100%;
+  height: 280px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+.sm-card:hover .sm-img {
+  transform: scale(1.02);
+}
+
+/* ── Content area ── */
+.sm-content {
+  padding: 24px 28px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+}
+
+/* ── Header: tier badge + name ── */
+.sm-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.sm-tier-badge {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 4px;
+}
+.sm-tier-badge--gold {
+  background: #fff4d6;
+  color: #8a6500;
+  border: 1px solid #e8cc7a;
+}
+.sm-tier-badge--platinum {
+  background: #eef2f9;
+  color: #2c4e8a;
+  border: 1px solid #b4c8eb;
+}
+.sm-name {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 700;
+  color: #2b1f16;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+/* ── Short description ── */
+.sm-headline {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: #7a6d63;
+  line-height: 1.55;
+  margin: 0;
+  font-style: italic;
+}
+
+/* ── Feature list ── */
+.sm-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sm-feature-item {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  color: #4a3f36;
+  line-height: 1.55;
+  padding-left: 20px;
+  position: relative;
+}
+.sm-feature-item::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: #F05E3E;
+  font-size: 11px;
+  top: 2px;
+}
+.sm-feature-title {
+  font-weight: 600;
+  color: #2b1f16;
+}
+.sm-feature-detail {
+  color: #6b5b4e;
+  font-weight: 400;
+}
+
+/* ── Price row ── */
+.sm-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  padding-top: 4px;
+  border-top: 1px solid #f0ece7;
+}
+.sm-price-val {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  color: #2b1f16;
+  letter-spacing: -0.01em;
+}
+.sm-price-unit {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: #9a8e84;
+}
+
+/* ── Footer / select button ── */
+.sm-footer {
+  margin-top: 4px;
+}
+.sm-select-btn {
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border-color 0.18s;
+  background: #fff;
+  color: #F05E3E;
+  border: 2px solid #F05E3E;
+}
+.sm-select-btn:hover {
+  background: #fff5f2;
+}
+.sm-select-btn--selected {
+  background: #F05E3E !important;
+  color: #fff !important;
+  border-color: #F05E3E !important;
+}
+
+@media (max-width: 860px) {
+  .sm-img { height: 200px; }
+  .sm-content { padding: 18px 18px 16px; }
+  .sm-name { font-size: 17px; }
+}
