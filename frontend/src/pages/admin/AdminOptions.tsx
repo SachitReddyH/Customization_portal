@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, Upload, X, ChevronDown, ChevronUp, ImagePlus } from 'lucide-react'
 import {
-  listOptions, createOption, updateOption, deleteOption, uploadOptionImage, BASE
+  listOptionsAdmin, createOption, updateOption, deleteOption, uploadOptionImage, BASE
 } from '../../services/api'
 
 const CATEGORIES = [
@@ -208,6 +208,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function AdminOptions() {
   const [activeCat, setActiveCat] = useState('CAT001')
   const [options, setOptions] = useState<OptionDoc[]>([])
+  const [showInactive, setShowInactive] = useState(false)
   const [loading, setLoading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<OptionDoc | null>(null)
@@ -219,13 +220,15 @@ export default function AdminOptions() {
   const load = async (catId: string) => {
     setLoading(true)
     try {
-      const data = await listOptions(catId)
+      const data = await listOptionsAdmin(catId)
       setOptions(data)
     } catch { setOptions([]) }
     finally { setLoading(false) }
   }
 
   useEffect(() => { load(activeCat) }, [activeCat])
+
+  const visibleOptions = showInactive ? options : options.filter(o => o.is_active)
 
   const openAdd = () => {
     setEditTarget(null)
@@ -331,7 +334,24 @@ export default function AdminOptions() {
 
       {/* ── Toolbar ── */}
       <div className="ao-toolbar">
-        <span className="ao-count">{options.length} option{options.length !== 1 ? 's' : ''}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <span className="ao-count">
+            {visibleOptions.length} option{visibleOptions.length !== 1 ? 's' : ''}
+            {options.filter(o => !o.is_active).length > 0 && (
+              <span style={{ color: 'var(--text-secondary)', marginLeft: 6 }}>
+                ({options.filter(o => !o.is_active).length} inactive)
+              </span>
+            )}
+          </span>
+          <label className="ao-checkbox" style={{ fontSize: 12 }}>
+            <input
+              type="checkbox"
+              checked={showInactive}
+              onChange={e => setShowInactive(e.target.checked)}
+            />
+            <span>Show inactive</span>
+          </label>
+        </div>
         <button className="admin-btn admin-btn--primary admin-btn--sm" onClick={openAdd}>
           <Plus size={13} /> Add Option
         </button>
@@ -340,8 +360,12 @@ export default function AdminOptions() {
       {/* ── Table ── */}
       {loading ? (
         <div className="admin-loading">Loading…</div>
-      ) : options.length === 0 ? (
-        <div className="admin-table-empty">No options found for this category.</div>
+      ) : visibleOptions.length === 0 ? (
+        <div className="admin-table-empty">
+          {options.length > 0
+            ? 'All options are inactive. Check "Show inactive" to see them.'
+            : 'No options found for this category.'}
+        </div>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">
@@ -358,8 +382,8 @@ export default function AdminOptions() {
               </tr>
             </thead>
             <tbody>
-              {[...options].sort((a, b) => (a.sort_order ?? 1) - (b.sort_order ?? 1)).map(opt => (
-                <tr key={opt.option_id}>
+              {[...visibleOptions].sort((a, b) => (a.sort_order ?? 1) - (b.sort_order ?? 1)).map(opt => (
+                <tr key={opt.option_id} style={!opt.is_active ? { opacity: 0.45 } : undefined}>
                   <td><code style={{ fontSize: 11 }}>{opt.option_id}</code></td>
                   <td style={{ fontWeight: 500 }}>{opt.option_name ?? '—'}</td>
                   <td><span className="ao-sub">{opt.sub_section ?? '—'}</span></td>

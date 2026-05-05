@@ -142,6 +142,9 @@ export const updateQuote = (id: string, data: {
 export const listOptions = (categoryId: string) =>
   api.get(`/options/${categoryId}`).then(r => r.data)
 
+export const listOptionsAdmin = (categoryId: string) =>
+  api.get(`/admin/options/${categoryId}`).then(r => r.data)
+
 export const createOption = (data: any) =>
   api.post('/admin/options', data).then(r => r.data)
 
