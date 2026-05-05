@@ -751,11 +751,13 @@ export default function CategoryPage() {
           {optionsLoading
             ? <div className="options-loading">Loading…</div>
             : (() => {
-                // For packages/addons show all; for regular options hide anything with no upgrade
+                // Separate intro card(s) — rendered above the selectable options
+                const introOpts = options.filter(o => o.sub_section === 'intro')
+                // For packages/addons show all; for regular options hide anything with no upgrade or intro
                 const visible = (isPackageTab || isAddonTab)
-                  ? options
-                  : options.filter(opt => opt.has_upgrade)
-                if (visible.length === 0)
+                  ? options.filter(o => o.sub_section !== 'intro')
+                  : options.filter(opt => opt.has_upgrade && opt.sub_section !== 'intro')
+                if (visible.length === 0 && introOpts.length === 0)
                   return (
                     <div className="options-empty">
                       {isRoomBased && !isPackageTab && !isAddonTab && !selectedRoom
@@ -766,6 +768,57 @@ export default function CategoryPage() {
                 // Group by sub_section if options carry sub_section values
                 const hasSubGroups = !isRoomBased && !isPackageTab &&
                   visible.some(o => o.sub_section && SUB_GROUP_LABELS[o.sub_section])
+
+                // ── Intro card renderer ──────────────────────────────────
+                const parseFeatures = (text: string) =>
+                  text.split('\n').map(s => s.trim()).filter(Boolean)
+
+                const introSection = introOpts.length > 0 ? (
+                  <div className="sh-intro-section">
+                    {introOpts.map(opt => {
+                      const features = opt.detailed_spec ? parseFeatures(opt.detailed_spec) : []
+                      return (
+                        <div key={opt.option_id} className="sh-intro-card">
+                          {opt.images?.standard && (
+                            <div className="sh-intro-img-wrap">
+                              <img
+                                src={imgUrl(opt.images.standard) ?? ''}
+                                alt={opt.option_name ?? 'Smart Home'}
+                                className="sh-intro-img"
+                              />
+                            </div>
+                          )}
+                          <div className="sh-intro-content">
+                            {opt.description && (
+                              <p className="sh-intro-tagline">{opt.description}</p>
+                            )}
+                            {features.length > 0 && (
+                              <ul className="sh-intro-features">
+                                {features.map((f, i) => {
+                                  const dash = f.indexOf(' — ')
+                                  return (
+                                    <li key={i} className="sh-intro-feature">
+                                      {dash > 0
+                                        ? <><strong>{f.slice(0, dash)}</strong>{f.slice(dash)}</>
+                                        : f
+                                      }
+                                    </li>
+                                  )
+                                })}
+                              </ul>
+                            )}
+                            <p className="sh-intro-note">
+                              * Based on the package chosen (Gold or Platinum), circuits and keypads change accordingly. Core features remain the same: Remote Access, Voice Control, OCPP Integration, CCTV & Sonos Integration.
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {visible.length > 0 && (
+                      <h3 className="sh-packages-heading">Choose Your Package</h3>
+                    )}
+                  </div>
+                ) : null
 
                 if (hasSubGroups) {
                   // Preserve MongoDB order; deduplicate group keys
@@ -779,7 +832,7 @@ export default function CategoryPage() {
                     grouped[grp].push(opt)
                   }
                   return (
-                    <div className={`options-grid options-grid--direct`}>
+                    <>{introSection}<div className={`options-grid options-grid--direct`}>
                       {groupOrder.map(grp => (
                         <div key={grp} className="opt-subgroup">
                           {grp !== '__other' && (
@@ -806,12 +859,12 @@ export default function CategoryPage() {
                           ))}
                         </div>
                       ))}
-                    </div>
+                    </div></>
                   )
                 }
 
                 return (
-                  <div className={`options-grid${!isRoomBased ? ' options-grid--direct' : ''}`}>
+                  <>{introSection}<div className={`options-grid${!isRoomBased ? ' options-grid--direct' : ''}`}>
                     {visible.map(opt => (
                       <OptionCard
                         key={opt.option_id + (opt.location_id ?? '')}
@@ -831,7 +884,7 @@ export default function CategoryPage() {
                         })}
                       />
                     ))}
-                  </div>
+                  </div></>
                 )
               })()
           }
