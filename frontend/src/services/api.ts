@@ -137,3 +137,25 @@ export const markQuoteRead = (id: string) =>
 export const updateQuote = (id: string, data: {
   status: string; admin_notes?: string; quoted_price?: number
 }) => api.patch(`/quotes/${id}`, data).then(r => r.data)
+
+/* ── Admin Options ────────────────────────────────── */
+export const listOptions = (categoryId: string) =>
+  api.get(`/options/${categoryId}`).then(r => r.data)
+
+export const createOption = (data: any) =>
+  api.post('/admin/options', data).then(r => r.data)
+
+export const updateOption = (optionId: string, data: any) =>
+  api.patch(`/admin/options/${optionId}`, data).then(r => r.data)
+
+export const deleteOption = (optionId: string) =>
+  api.delete(`/admin/options/${optionId}`)
+
+export const uploadOptionImage = (file: File, categoryId: string) => {
+  const form = new FormData()
+  form.append('file', file)
+  form.append('category_id', categoryId)
+  return api.post('/admin/upload', form, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }).then(r => r.data as { path: string })
+}

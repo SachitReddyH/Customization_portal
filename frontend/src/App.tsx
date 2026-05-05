@@ -8,6 +8,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminCustomers from './pages/admin/AdminCustomers'
 import AdminCustomerDetail from './pages/admin/AdminCustomerDetail'
 import AdminQuotes from './pages/admin/AdminQuotes'
+import AdminOptions from './pages/admin/AdminOptions'
 import './index.css'
 
 // Module-level blob cache — survives all navigations for the session
@@ -70,6 +71,7 @@ function AppContent() {
           <Route path="customers" element={<AdminCustomers />} />
           <Route path="customers/:customerId" element={<AdminCustomerDetail />} />
           <Route path="quotes" element={<AdminQuotes />} />
+          <Route path="options" element={<AdminOptions />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
