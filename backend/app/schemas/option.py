@@ -97,6 +97,10 @@ class OptionCreate(OptionBase):
 
 class OptionUpdate(BaseModel):
     option_name: Optional[str] = None
+    sub_section: Optional[str] = None
+    location_id: Optional[str] = None
+    floor: Optional[str] = None
+    space: Optional[str] = None
     standard_spec: Optional[str] = None
     upgrade_spec: Optional[str] = None
     has_upgrade: Optional[bool] = None
@@ -109,4 +113,5 @@ class OptionUpdate(BaseModel):
     images: Optional[OptionImages] = None
     notes: Optional[str] = None
     is_active: Optional[bool] = None
+    sort_order: Optional[int] = None
     villa_type_applicable: Optional[List[str]] = None

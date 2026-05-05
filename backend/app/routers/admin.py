@@ -1,5 +1,5 @@
 """Admin-only routes: manage customers, options, and view all selections."""
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from app.database import get_db
 from app.core.deps import require_admin
 from app.core.security import hash_password
@@ -9,6 +9,7 @@ from app.schemas.category import CategoryUpdate, CategoryResponse
 from bson import ObjectId
 from datetime import datetime, timezone
 from typing import List
+import os, shutil, uuid
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -156,7 +157,7 @@ async def create_option(payload: OptionCreate, user=Depends(require_admin)):
 @router.patch("/options/{option_id}", response_model=OptionResponse)
 async def update_option(option_id: str, payload: OptionUpdate, user=Depends(require_admin)):
     db = get_db()
-    update_data = {k: v for k, v in payload.model_dump().items() if v is not None}
+    update_data = {k: v for k, v in payload.model_dump(exclude_unset=True).items()}
     update_data["updated_at"] = datetime.now(timezone.utc)
 
     result = await db.customization_options.find_one_and_update(
@@ -176,6 +177,29 @@ async def delete_option(option_id: str, user=Depends(require_admin)):
     result = await db.customization_options.delete_one({"option_id": option_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Option not found")
+
+
+# ── Image Upload ──────────────────────────────────────────────────────────
+
+ALLOWED_EXTS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
+STATIC_ROOT = os.path.join(os.path.dirname(__file__), '..', '..', 'static')
+
+@router.post("/upload")
+async def upload_image(
+    file: UploadFile = File(...),
+    category_id: str = Form(...),
+    user=Depends(require_admin),
+):
+    ext = os.path.splitext(file.filename or '')[1].lower()
+    if ext not in ALLOWED_EXTS:
+        raise HTTPException(status_code=400, detail="Only jpg, jpeg, png, webp, gif allowed")
+    safe_name = f"{uuid.uuid4().hex}{ext}"
+    folder = os.path.join(STATIC_ROOT, 'options', category_id)
+    os.makedirs(folder, exist_ok=True)
+    dest = os.path.join(folder, safe_name)
+    with open(dest, 'wb') as f:
+        shutil.copyfileobj(file.file, f)
+    return {"path": f"/static/options/{category_id}/{safe_name}"}
 
 
 # ── Category Management ────────────────────────────────────────────────────
