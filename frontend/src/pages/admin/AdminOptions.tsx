@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, Upload, X, ChevronDown, ChevronUp, ImagePlus } from 'lucide-react'
 import {
   listOptions, createOption, updateOption, deleteOption, uploadOptionImage, BASE
@@ -82,7 +82,6 @@ function ImgListEditor({
   categoryId: string
   showCode?: boolean
 }) {
-  const fileRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
 
   const update = (idx: number, patch: Partial<ImgItem>) => {
@@ -250,7 +249,7 @@ export default function AdminOptions() {
       is_active: opt.is_active,
       sort_order: opt.sort_order ?? 1,
       price_status: opt.price_status ?? 'tbd',
-      price_inr: opt.price_inr ?? '',
+      price_inr: opt.price_inr?.toString() ?? '',
       price_unit: opt.price_unit ?? '',
       description: opt.description ?? '',
       notes: opt.notes ?? '',
