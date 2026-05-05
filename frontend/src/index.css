@@ -805,11 +805,12 @@ body {
   width: 100%;
 }
 
-/* Direct (no sidebar) — remove side padding; card border gives visual separation */
+/* When no floor sidebar — centre cards with a comfortable max width */
 .options-grid--direct {
-  padding-left: 0;
-  padding-right: 0;
-  max-width: 100%;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
 }
 
 /* ── Sub-group headings (e.g. Kitchen / Home Theatre) ── */
@@ -3339,8 +3340,10 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 20px;
   align-items: start;
-  padding-left: 0;
-  padding-right: 0;
+}
+/* Intro section spans both columns */
+.options-grid--sh > .sh-intro-section {
+  grid-column: 1 / -1;
 }
 .options-grid.options-grid--sh > * {
   width: 100%;
