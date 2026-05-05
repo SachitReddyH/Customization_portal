@@ -864,7 +864,7 @@ export default function CategoryPage() {
                 }
 
                 return (
-                  <>{introSection}<div className={`options-grid${!isRoomBased ? ' options-grid--direct' : ''}`}>
+                  <>{introSection}<div className={`options-grid${!isRoomBased ? ' options-grid--direct' : ''}${categoryId === 'CAT006' ? ' options-grid--sh' : ''}`}>
                     {visible.map(opt => (
                       <OptionCard
                         key={opt.option_id + (opt.location_id ?? '')}

@@ -3226,62 +3226,62 @@ body {
 }
 
 /* ══════════════════════════════════════════════
-   Smart Home intro section
+   Smart Home — unified vertical layout
+   Image full-width → 2-col features → packages
 ══════════════════════════════════════════════ */
 .sh-intro-section {
   width: 100%;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
+/* Card: vertical column — image on top, content below */
 .sh-intro-card {
   display: flex;
-  flex-direction: row;
-  gap: 32px;
-  align-items: flex-start;
+  flex-direction: column;
   background: #fff;
   border: 1px solid #e8e4de;
-  border-radius: 14px;
-  padding: 28px 32px;
+  border-radius: 16px;
+  overflow: hidden;
   margin-bottom: 16px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 14px rgba(0,0,0,0.06);
 }
 
+/* Image spans full width at the top */
 .sh-intro-img-wrap {
-  flex: 0 0 360px;
-  max-width: 360px;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  width: 100%;
+  line-height: 0;
 }
 
 .sh-intro-img {
   width: 100%;
-  height: 240px;
+  height: 340px;
   object-fit: cover;
   display: block;
 }
 
+/* Text content area */
 .sh-intro-content {
-  flex: 1 1 0;
-  min-width: 0;
+  padding: 28px 32px 24px;
 }
 
 .sh-intro-tagline {
   font-family: var(--font-body);
   font-size: 14px;
   color: #6b5b4e;
-  line-height: 1.6;
-  margin-bottom: 14px;
+  line-height: 1.65;
+  margin-bottom: 20px;
   font-style: italic;
+  text-align: center;
 }
 
+/* 2-column feature grid */
 .sh-intro-features {
   list-style: none;
   padding: 0;
-  margin: 0 0 14px 0;
+  margin: 0 0 16px 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px 24px;
+  gap: 12px 40px;
 }
 
 .sh-intro-feature {
@@ -3289,7 +3289,7 @@ body {
   font-size: 13.5px;
   color: #4a3f36;
   line-height: 1.5;
-  padding-left: 18px;
+  padding-left: 20px;
   position: relative;
 }
 
@@ -3299,7 +3299,7 @@ body {
   left: 0;
   color: #F05E3E;
   font-size: 9px;
-  top: 3px;
+  top: 4px;
 }
 
 .sh-intro-feature strong {
@@ -3313,64 +3313,58 @@ body {
   color: #9a8e84;
   line-height: 1.5;
   font-style: italic;
-  margin-top: 10px;
-  padding-top: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
   border-top: 1px dashed #e0dbd4;
+  text-align: center;
 }
 
+/* "Choose Your Package" divider heading */
 .sh-packages-heading {
   font-family: var(--font-heading);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
-  color: #3d2f24;
-  letter-spacing: 0.04em;
+  color: #7a6d63;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin: 0 0 16px 0;
-  padding-left: 4px;
+  margin: 4px 0 0 0;
+  text-align: center;
+  padding-bottom: 0;
 }
 
-@media (max-width: 860px) {
-  .sh-intro-card {
-    flex-direction: column;
-    padding: 20px;
-    gap: 18px;
-  }
-  .sh-intro-img-wrap {
-    flex: unset;
-    max-width: 100%;
-    width: 100%;
-  }
-  .sh-intro-img {
-    height: 200px;
-  }
-  .sh-intro-features {
-    grid-template-columns: 1fr;
-  }
+/* ── 2-column grid for the package cards ── */
+.options-grid.options-grid--sh {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  flex-direction: unset;        /* override flex-direction: column from .options-grid */
+  align-items: unset;
+}
+.options-grid.options-grid--sh > * {
+  width: 100%;
 }
 
 /* ══════════════════════════════════════════════
    Smart Home package card  (.sm-card)
-   — mirrors VRF card visual style
 ══════════════════════════════════════════════ */
 .sm-card {
   background: #fff;
   border: 1.5px solid #e8e4de;
-  border-radius: 16px;
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 2px 14px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
   transition: box-shadow 0.2s, border-color 0.2s;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  width: 100%;
 }
 .sm-card:hover {
-  box-shadow: 0 6px 28px rgba(0,0,0,0.11);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.11);
   border-color: #d4c8bc;
 }
 .sm-card--selected {
   border-color: #F05E3E !important;
-  box-shadow: 0 0 0 3px rgba(240,94,62,0.12), 0 4px 20px rgba(0,0,0,0.09) !important;
+  box-shadow: 0 0 0 3px rgba(240,94,62,0.12), 0 4px 20px rgba(0,0,0,0.08) !important;
 }
 
 /* ── Package image ── */
@@ -3380,25 +3374,24 @@ body {
   overflow: hidden;
   background: #f5f4f2;
   cursor: zoom-in;
+  line-height: 0;
 }
 .sm-img-wrap:hover .spec-img-zoom-hint { opacity: 1; }
 .sm-img {
   width: 100%;
-  height: 280px;
+  height: 200px;
   object-fit: cover;
   display: block;
   transition: transform 0.3s ease;
 }
-.sm-card:hover .sm-img {
-  transform: scale(1.02);
-}
+.sm-card:hover .sm-img { transform: scale(1.03); }
 
 /* ── Content area ── */
 .sm-content {
-  padding: 24px 28px 22px;
+  padding: 20px 22px 18px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   flex: 1;
 }
 
@@ -3406,16 +3399,16 @@ body {
 .sm-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 .sm-tier-badge {
   font-family: var(--font-heading);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
-  padding: 3px 10px;
+  padding: 3px 9px;
   border-radius: 4px;
 }
 .sm-tier-badge--gold {
@@ -3430,17 +3423,16 @@ body {
 }
 .sm-name {
   font-family: var(--font-heading);
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 700;
   color: #2b1f16;
   margin: 0;
-  letter-spacing: -0.01em;
 }
 
 /* ── Short description ── */
 .sm-headline {
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: 12.5px;
   color: #7a6d63;
   line-height: 1.55;
   margin: 0;
@@ -3454,14 +3446,15 @@ body {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
+  flex: 1;
 }
 .sm-feature-item {
   font-family: var(--font-body);
-  font-size: 13.5px;
+  font-size: 13px;
   color: #4a3f36;
-  line-height: 1.55;
-  padding-left: 20px;
+  line-height: 1.5;
+  padding-left: 18px;
   position: relative;
 }
 .sm-feature-item::before {
@@ -3469,68 +3462,62 @@ body {
   position: absolute;
   left: 0;
   color: #F05E3E;
-  font-size: 11px;
-  top: 2px;
+  font-size: 10px;
+  top: 3px;
 }
-.sm-feature-title {
-  font-weight: 600;
-  color: #2b1f16;
-}
-.sm-feature-detail {
-  color: #6b5b4e;
-  font-weight: 400;
-}
+.sm-feature-title { font-weight: 600; color: #2b1f16; }
+.sm-feature-detail { color: #6b5b4e; font-weight: 400; }
 
 /* ── Price row ── */
 .sm-price-row {
   display: flex;
   align-items: baseline;
   gap: 4px;
-  padding-top: 4px;
+  padding-top: 10px;
   border-top: 1px solid #f0ece7;
 }
 .sm-price-val {
   font-family: var(--font-heading);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   color: #2b1f16;
-  letter-spacing: -0.01em;
 }
 .sm-price-unit {
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: 12.5px;
   color: #9a8e84;
 }
 
 /* ── Footer / select button ── */
-.sm-footer {
-  margin-top: 4px;
-}
+.sm-footer { margin-top: 4px; }
 .sm-select-btn {
   width: 100%;
-  padding: 12px 20px;
+  padding: 11px 16px;
   border-radius: 8px;
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   cursor: pointer;
   transition: background 0.18s, color 0.18s, border-color 0.18s;
   background: #fff;
   color: #F05E3E;
   border: 2px solid #F05E3E;
 }
-.sm-select-btn:hover {
-  background: #fff5f2;
-}
+.sm-select-btn:hover { background: #fff5f2; }
 .sm-select-btn--selected {
   background: #F05E3E !important;
   color: #fff !important;
   border-color: #F05E3E !important;
 }
 
-@media (max-width: 860px) {
-  .sm-img { height: 200px; }
-  .sm-content { padding: 18px 18px 16px; }
-  .sm-name { font-size: 17px; }
+@media (max-width: 900px) {
+  .options-grid.options-grid--sh {
+    grid-template-columns: 1fr;
+  }
+  .sh-intro-img { height: 220px; }
+  .sh-intro-content { padding: 20px 18px 18px; }
+  .sh-intro-features { grid-template-columns: 1fr; }
+  .sm-img { height: 180px; }
+  .sm-content { padding: 16px 16px 14px; }
 }
