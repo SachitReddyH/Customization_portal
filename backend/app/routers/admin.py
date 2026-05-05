@@ -138,6 +138,17 @@ async def get_customer_selections(customer_id: str, user=Depends(require_admin))
 
 # ── Options Management ─────────────────────────────────────────────────────
 
+@router.get("/options/{category_id}", response_model=List[OptionResponse])
+async def list_options_admin(category_id: str, user=Depends(require_admin)):
+    """Returns ALL options for a category (including inactive) for admin management."""
+    db = get_db()
+    cursor = db.customization_options.find({"category_id": category_id}).sort("sort_order", 1)
+    opts = await cursor.to_list(length=None)
+    for o in opts:
+        o["id"] = str(o["_id"])
+    return [OptionResponse(**o) for o in opts]
+
+
 @router.post("/options", response_model=OptionResponse, status_code=201)
 async def create_option(payload: OptionCreate, user=Depends(require_admin)):
     db = get_db()
