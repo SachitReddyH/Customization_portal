@@ -620,6 +620,19 @@ export default function CategoryPage() {
         }
       }
 
+      // Flooring: only one package at a time — remove any other CAT002 package selection
+      if (opt.category_id === 'CAT002' && opt.sub_section === 'package') {
+        const oldPkg = live.find(s =>
+          s.category_id === 'CAT002' &&
+          s.sub_section === 'package' &&
+          s.option_id !== opt.option_id
+        )
+        if (oldPkg) {
+          const r = await removeSelection({ option_id: oldPkg.option_id, location_id: oldPkg.location_id })
+          live = r.selections ?? []
+        }
+      }
+
       // Finally, add the new selection
       const updated = await upsertSelection({
         category_id: opt.category_id,
