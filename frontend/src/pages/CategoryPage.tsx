@@ -810,10 +810,10 @@ export default function CategoryPage() {
                   : options.filter(opt => opt.has_upgrade && opt.sub_section !== 'intro')
                 if (visible.length === 0 && introOpts.length === 0)
                   return (
-                    <div className="options-empty">
+                    <div className={`options-empty${categoryId === 'CAT008' ? ' options-coming-soon' : ''}`}>
                       {isRoomBased && !isPackageTab && !isAddonTab && !selectedRoom
                         ? 'Select a room from the left'
-                        : 'No options available'}
+                        : categoryId === 'CAT008' ? 'Coming Soon' : 'No options available'}
                     </div>
                   )
                 // Group by sub_section if options carry sub_section values
