@@ -1,6 +1,6 @@
 import { useEffect, useState, Fragment } from 'react'
 import { ChevronDown, ChevronUp, Save } from 'lucide-react'
-import { listQuotes, updateQuote, markQuoteRead } from '../../services/api'
+import { listQuotes, updateQuote, markQuoteRead, getAllLocations } from '../../services/api'
 
 interface Quote {
   id: string
@@ -53,6 +53,7 @@ function NotifBadge({ type }: { type?: string | null }) {
 
 export default function AdminQuotes() {
   const [quotes, setQuotes] = useState<Quote[]>([])
+  const [locationMap, setLocationMap] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -62,7 +63,16 @@ export default function AdminQuotes() {
 
   const load = async () => {
     setLoading(true); setError('')
-    try { setQuotes(await listQuotes()) }
+    try {
+      const [qs, locs] = await Promise.all([listQuotes(), getAllLocations()])
+      setQuotes(qs)
+      const map: Record<string, string> = {}
+      locs.forEach((l: any) => {
+        const parts = [l.space, l.room_code].filter(Boolean)
+        map[l.location_id] = parts.join(' — ')
+      })
+      setLocationMap(map)
+    }
     catch { setError('Failed to load quotes.') }
     finally { setLoading(false) }
   }
@@ -185,19 +195,22 @@ export default function AdminQuotes() {
                         return Object.entries(groups).map(([cat, items]) => (
                           <div key={cat} className="quote-snapshot-group">
                             <p className="quote-snapshot-cat">{cat}</p>
-                            {items.map((s: any, i: number) => (
-                              <div key={i} className="quote-snapshot-row">
-                                <div className="quote-snapshot-name-block">
-                                  <span className="quote-snapshot-name">{resolveSnapshotName(s)}</span>
-                                  {s.room_label && (
-                                    <span className="quote-snapshot-room">{s.room_label}</span>
-                                  )}
+                            {items.map((s: any, i: number) => {
+                              const room = s.room_label || (s.location_id ? locationMap[s.location_id] : null)
+                              return (
+                                <div key={i} className="quote-snapshot-row">
+                                  <div className="quote-snapshot-name-block">
+                                    <span className="quote-snapshot-name">{resolveSnapshotName(s)}</span>
+                                    {room && (
+                                      <span className="quote-snapshot-room">{room}</span>
+                                    )}
+                                  </div>
+                                  <span className={`quote-snapshot-type ${s.selection_type}`}>
+                                    {s.selection_type === 'upgrade' ? 'Upgrade' : 'Standard'}
+                                  </span>
                                 </div>
-                                <span className={`quote-snapshot-type ${s.selection_type}`}>
-                                  {s.selection_type === 'upgrade' ? 'Upgrade' : 'Standard'}
-                                </span>
-                              </div>
-                            ))}
+                              )
+                            })}
                           </div>
                         ))
                       })()}
