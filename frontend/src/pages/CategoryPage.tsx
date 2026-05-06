@@ -608,6 +608,18 @@ export default function CategoryPage() {
         }
       }
 
+      // Lift Interior: only one package — remove any other CAT004 selection
+      if (opt.category_id === 'CAT004') {
+        const oldLift = live.find(s =>
+          s.category_id === 'CAT004' &&
+          s.option_id !== opt.option_id
+        )
+        if (oldLift) {
+          const r = await removeSelection({ option_id: oldLift.option_id, location_id: oldLift.location_id })
+          live = r.selections ?? []
+        }
+      }
+
       // Finally, add the new selection
       const updated = await upsertSelection({
         category_id: opt.category_id,
