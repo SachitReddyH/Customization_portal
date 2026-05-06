@@ -888,7 +888,7 @@ body {
   overflow: hidden;
   cursor: pointer;
   transition: box-shadow 0.2s, border-color 0.2s;
-  min-height: 280px;
+  min-height: 340px;
   align-items: stretch;
   width: 100%;
 }
@@ -915,7 +915,7 @@ body {
 }
 
 .opt-horiz-img {
-  width: 42%;
+  width: 52%;
   flex-shrink: 0;
   position: relative;
   background: #f7f6f4;
