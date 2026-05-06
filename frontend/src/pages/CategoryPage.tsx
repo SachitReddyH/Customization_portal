@@ -809,11 +809,22 @@ export default function CategoryPage() {
                   ? options.filter(o => o.sub_section !== 'intro')
                   : options.filter(opt => opt.has_upgrade && opt.sub_section !== 'intro')
                 if (visible.length === 0 && introOpts.length === 0)
-                  return (
-                    <div className={`options-empty${categoryId === 'CAT008' ? ' options-coming-soon' : ''}`}>
+                  return categoryId === 'CAT008' ? (
+                    <div className="options-coming-soon">
+                      <span className="coming-soon-heading">Coming Soon<span className="coming-soon-dots">...</span></span>
+                      <span className="coming-soon-sub">
+                        We're putting the finishing touches on this. Interested?{' '}
+                        <a className="coming-soon-link" href="mailto:info@capstonelife.in?subject=Home%20Theatre%20Interest">
+                          Let us know
+                        </a>{' '}
+                        and we'll keep you in the loop.
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="options-empty">
                       {isRoomBased && !isPackageTab && !isAddonTab && !selectedRoom
                         ? 'Select a room from the left'
-                        : categoryId === 'CAT008' ? 'Coming Soon' : 'No options available'}
+                        : 'No options available'}
                     </div>
                   )
                 // Group by sub_section if options carry sub_section values

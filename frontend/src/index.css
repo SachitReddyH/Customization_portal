@@ -788,12 +788,41 @@ body {
   letter-spacing: 0.04em;
 }
 .options-coming-soon {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px 32px;
+  text-align: center;
+}
+.coming-soon-heading {
   font-family: var(--font-heading);
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
   color: #3d2f24;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+.coming-soon-dots {
+  color: var(--accent);
+}
+.coming-soon-sub {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: #7a6a5e;
+  max-width: 340px;
+  line-height: 1.6;
+}
+.coming-soon-link {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.coming-soon-link:hover {
+  color: #c94a2b;
 }
 
 /* Options scroll area */
