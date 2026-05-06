@@ -582,6 +582,32 @@ export default function CategoryPage() {
         }
       }
 
+      // CP Fittings: only one package per bathroom room
+      if (opt.category_id === 'CAT003' && opt.sub_section === 'cp_fittings') {
+        const oldCp = live.find(s =>
+          s.category_id === 'CAT003' &&
+          s.sub_section === 'cp_fittings' &&
+          s.location_id === opt.location_id &&
+          s.option_id !== opt.option_id
+        )
+        if (oldCp) {
+          const r = await removeSelection({ option_id: oldCp.option_id, location_id: oldCp.location_id })
+          live = r.selections ?? []
+        }
+      }
+
+      // Smart Home: only one package (Gold or Platinum) — remove any other CAT006 selection
+      if (opt.category_id === 'CAT006') {
+        const oldSh = live.find(s =>
+          s.category_id === 'CAT006' &&
+          s.option_id !== opt.option_id
+        )
+        if (oldSh) {
+          const r = await removeSelection({ option_id: oldSh.option_id, location_id: oldSh.location_id })
+          live = r.selections ?? []
+        }
+      }
+
       // Finally, add the new selection
       const updated = await upsertSelection({
         category_id: opt.category_id,
