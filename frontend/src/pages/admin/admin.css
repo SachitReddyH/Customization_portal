@@ -799,10 +799,19 @@ table.admin-table tr:hover td {
   gap: 12px;
 }
 
+.quote-snapshot-name-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
 .quote-snapshot-name {
   font-size: 13px;
   color: var(--text-primary);
-  flex: 1;
+}
+.quote-snapshot-room {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .quote-snapshot-type {

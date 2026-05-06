@@ -68,10 +68,21 @@ async def _build_snapshot(db, user) -> list:
             else:
                 resolved_name = option_id
 
+        # Resolve room info from locations collection
+        room_label = None
+        loc_id = sel.get("location_id")
+        if loc_id:
+            loc = await db.locations.find_one({"location_id": loc_id})
+            if loc:
+                space     = loc.get("space") or ""
+                room_code = loc.get("room_code") or ""
+                room_label = f"{space} — {room_code}".strip(" —") if space or room_code else loc_id
+
         enriched.append({
             **sel,
-            "option_name": resolved_name,
+            "option_name":   resolved_name,
             "category_name": cat.get("name") if cat else sel.get("category_id"),
+            "room_label":    room_label,
         })
     return enriched
 

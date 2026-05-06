@@ -187,7 +187,12 @@ export default function AdminQuotes() {
                             <p className="quote-snapshot-cat">{cat}</p>
                             {items.map((s: any, i: number) => (
                               <div key={i} className="quote-snapshot-row">
-                                <span className="quote-snapshot-name">{resolveSnapshotName(s)}</span>
+                                <div className="quote-snapshot-name-block">
+                                  <span className="quote-snapshot-name">{resolveSnapshotName(s)}</span>
+                                  {s.room_label && (
+                                    <span className="quote-snapshot-room">{s.room_label}</span>
+                                  )}
+                                </div>
                                 <span className={`quote-snapshot-type ${s.selection_type}`}>
                                   {s.selection_type === 'upgrade' ? 'Upgrade' : 'Standard'}
                                 </span>
