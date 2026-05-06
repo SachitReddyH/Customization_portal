@@ -1344,7 +1344,10 @@ body {
   background: #f8f7f5;
 }
 .cmp-body--kitchen .cmp-btn--upg {
-  margin: 10px 16px 18px;
+  width: auto;
+  display: block;
+  margin: 10px auto 18px;
+  padding: 9px 28px;
   border-radius: 8px;
 }
 
