@@ -3233,7 +3233,6 @@ body {
 ══════════════════════════════════════════════ */
 .sh-intro-section {
   width: 100%;
-  margin-bottom: 24px;
 }
 
 /* Card: vertical column — image on top, content below */
@@ -3320,7 +3319,24 @@ body {
   text-align: center;
 }
 
-/* "Choose Your Package" divider heading */
+/* ── 2-column grid for the package cards ── */
+.options-grid.options-grid--sh {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 12px 24px 48px;   /* explicit padding; generous bottom so cards don't cut off */
+}
+/* Intro section and heading each span both columns */
+.options-grid--sh > .sh-intro-section,
+.options-grid--sh > .sh-packages-heading {
+  grid-column: 1 / -1;
+}
+.options-grid.options-grid--sh > * {
+  width: 100%;
+}
+
+/* "Choose Your Package" heading — own grid row with equal space above & below */
 .sh-packages-heading {
   font-family: var(--font-heading);
   font-size: 14px;
@@ -3328,24 +3344,9 @@ body {
   color: #7a6d63;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin: 20px 0 20px 0;
   text-align: center;
-}
-
-/* ── 2-column grid for the package cards ── */
-.options-grid.options-grid--sh {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  align-items: start;
-  padding-bottom: 32px;
-}
-/* Intro section spans both columns */
-.options-grid--sh > .sh-intro-section {
-  grid-column: 1 / -1;
-}
-.options-grid.options-grid--sh > * {
-  width: 100%;
+  margin: 0;
+  padding: 24px 0;           /* equal top & bottom padding */
 }
 
 /* ══════════════════════════════════════════════

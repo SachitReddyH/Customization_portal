@@ -774,50 +774,52 @@ export default function CategoryPage() {
                   text.split('\n').map(s => s.trim()).filter(Boolean)
 
                 const introSection = introOpts.length > 0 ? (
-                  <div className="sh-intro-section">
-                    {introOpts.map(opt => {
-                      const features = opt.detailed_spec ? parseFeatures(opt.detailed_spec) : []
-                      return (
-                        <div key={opt.option_id} className="sh-intro-card">
-                          {opt.images?.standard && (
-                            <div className="sh-intro-img-wrap">
-                              <img
-                                src={imgUrl(opt.images.standard) ?? ''}
-                                alt={opt.option_name ?? 'Smart Home'}
-                                className="sh-intro-img"
-                              />
+                  <>
+                    <div className="sh-intro-section">
+                      {introOpts.map(opt => {
+                        const features = opt.detailed_spec ? parseFeatures(opt.detailed_spec) : []
+                        return (
+                          <div key={opt.option_id} className="sh-intro-card">
+                            {opt.images?.standard && (
+                              <div className="sh-intro-img-wrap">
+                                <img
+                                  src={imgUrl(opt.images.standard) ?? ''}
+                                  alt={opt.option_name ?? 'Smart Home'}
+                                  className="sh-intro-img"
+                                />
+                              </div>
+                            )}
+                            <div className="sh-intro-content">
+                              {opt.description && (
+                                <p className="sh-intro-tagline">{opt.description}</p>
+                              )}
+                              {features.length > 0 && (
+                                <ul className="sh-intro-features">
+                                  {features.map((f, i) => {
+                                    const dash = f.indexOf(' — ')
+                                    return (
+                                      <li key={i} className="sh-intro-feature">
+                                        {dash > 0
+                                          ? <><strong>{f.slice(0, dash)}</strong>{f.slice(dash)}</>
+                                          : f
+                                        }
+                                      </li>
+                                    )
+                                  })}
+                                </ul>
+                              )}
+                              <p className="sh-intro-note">
+                                * Based on the package chosen (Gold or Platinum), circuits and keypads change accordingly. Core features remain the same: Remote Access, Voice Control, OCPP Integration, CCTV &amp; Sonos Integration.
+                              </p>
                             </div>
-                          )}
-                          <div className="sh-intro-content">
-                            {opt.description && (
-                              <p className="sh-intro-tagline">{opt.description}</p>
-                            )}
-                            {features.length > 0 && (
-                              <ul className="sh-intro-features">
-                                {features.map((f, i) => {
-                                  const dash = f.indexOf(' — ')
-                                  return (
-                                    <li key={i} className="sh-intro-feature">
-                                      {dash > 0
-                                        ? <><strong>{f.slice(0, dash)}</strong>{f.slice(dash)}</>
-                                        : f
-                                      }
-                                    </li>
-                                  )
-                                })}
-                              </ul>
-                            )}
-                            <p className="sh-intro-note">
-                              * Based on the package chosen (Gold or Platinum), circuits and keypads change accordingly. Core features remain the same: Remote Access, Voice Control, OCPP Integration, CCTV & Sonos Integration.
-                            </p>
                           </div>
-                        </div>
-                      )
-                    })}
+                        )
+                      })}
+                    </div>
                     {visible.length > 0 && (
                       <h3 className="sh-packages-heading">Choose Your Package</h3>
                     )}
-                  </div>
+                  </>
                 ) : null
 
                 if (hasSubGroups) {
