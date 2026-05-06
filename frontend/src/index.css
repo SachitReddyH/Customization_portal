@@ -1216,7 +1216,7 @@ body {
 ══════════════════════════════════════════════════ */
 .opt-card--comparison {
   padding: 0;
-  overflow: hidden;
+  overflow: visible;        /* don't clip — button must not be cut off */
   border: 1px solid #e5e0d9;
   border-radius: 14px;
   background: #fff;
@@ -1270,9 +1270,13 @@ body {
 .cmp-panel--std {
   background: #f8f7f5;
   flex: 1;
+  border-radius: 0 0 0 14px;   /* match card's bottom-left radius */
+  overflow: hidden;              /* clip image backgrounds at corner */
 }
 .cmp-panel--upg {
   background: #fffcfa;
+  border-radius: 0 0 14px 0;    /* match card's bottom-right radius */
+  /* no overflow:hidden — button must not be clipped */
 }
 .cmp-panel--std.cmp-panel--active {
   background: #f0ede9;
@@ -1340,7 +1344,7 @@ body {
   background: #f8f7f5;
 }
 .cmp-body--kitchen .cmp-btn--upg {
-  margin: 10px 14px 14px;
+  margin: 10px 16px 18px;
   border-radius: 8px;
 }
 
