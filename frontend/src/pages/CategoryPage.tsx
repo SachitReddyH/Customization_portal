@@ -1036,11 +1036,11 @@ export default function CategoryPage() {
                                 {opt?.space && opt?.option_name && (
                                   <span className="cart-item-room">{opt.space}</span>
                                 )}
-                                <span className={`cart-item-type ${sel.selection_type}`}>
-                                  {sel.selection_type === 'upgrade'
-                                    ? (sel.category_id === 'CAT001' ? 'Option' : 'Upgrade')
-                                    : 'Standard'}
-                                </span>
+                                {sel.selection_type === 'upgrade' && (
+                                  <span className="cart-item-type upgrade">
+                                    {sel.category_id === 'CAT001' ? 'Option' : 'Upgrade'}
+                                  </span>
+                                )}
                               </div>
                               <button
                                 className="cart-item-remove"
