@@ -1639,15 +1639,16 @@ function SmartHomeCard({
   onImageClick?: (url: string) => void
 }) {
   const imgSrc = imgUrl(opt.images?.upgrade)
-  const tier   = opt.package_tier ?? ''   // 'GOLD' | 'PLATINUM'
+  const tier   = opt.package_tier ?? ''
+  const [detailsOpen, setDetailsOpen] = useState(false)
 
   // Parse numbered feature lines: "1. Title – detail" or "1. Title — detail"
   const parseFeatures = (text: string): { title: string; detail: string }[] =>
     text.split('\n').map(s => s.trim()).filter(Boolean).map(line => {
       const stripped = line.replace(/^\d+\.\s*/, '')
-      const cut = stripped.indexOf(' \u2013 ')   // en-dash
-      const cut2 = stripped.indexOf(' \u2014 ')  // em-dash
-      const idx = cut > 0 ? cut : cut2 > 0 ? cut2 : -1
+      const cut  = stripped.indexOf(' \u2013 ')
+      const cut2 = stripped.indexOf(' \u2014 ')
+      const idx  = cut > 0 ? cut : cut2 > 0 ? cut2 : -1
       if (idx > 0) return { title: stripped.slice(0, idx), detail: stripped.slice(idx + 3) }
       return { title: stripped, detail: '' }
     })
@@ -1661,63 +1662,83 @@ function SmartHomeCard({
   }
 
   return (
-    <div className={`sm-card ${selectedType ? 'sm-card--selected' : ''}`}>
+    <>
+      <div className={`sm-card ${selectedType ? 'sm-card--selected' : ''}`}>
 
-      {/* ── Package image ── */}
-      {imgSrc && (
-        <div className="sm-img-wrap" onClick={e => { e.stopPropagation(); onImageClick?.(imgSrc) }}>
-          <img src={imgSrc} alt={opt.option_name ?? tier} className="sm-img" />
-          <span className="spec-img-zoom-hint">🔍 Enlarge</span>
-        </div>
-      )}
-
-      {/* ── Content ── */}
-      <div className="sm-content">
-
-        {/* Tier badge + name */}
-        <div className="sm-header">
-          {tier && (
-            <span className={`sm-tier-badge sm-tier-badge--${tier.toLowerCase()}`}>
-              {tier}
-            </span>
-          )}
-          <h2 className="sm-name">{opt.option_name}</h2>
-        </div>
-
-        {/* Short description */}
-        {opt.description && <p className="sm-headline">{opt.description}</p>}
-
-        {/* Feature list */}
-        {features.length > 0 && (
-          <ul className="sm-features">
-            {features.map((f, i) => (
-              <li key={i} className="sm-feature-item">
-                <span className="sm-feature-title">{f.title}</span>
-                {f.detail && <span className="sm-feature-detail"> — {f.detail}</span>}
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {/* Price */}
-        {opt.price_status === 'fixed' && opt.price_inr != null && (
-          <div className="sm-price-row">
-            <span className="sm-price-val">{formatPrice(opt.price_inr)}</span>
-            {opt.price_unit && <span className="sm-price-unit"> / {opt.price_unit}</span>}
+        {/* ── Package image — full, no crop ── */}
+        {imgSrc && (
+          <div className="sm-img-wrap" onClick={e => { e.stopPropagation(); onImageClick?.(imgSrc) }}>
+            <img src={imgSrc} alt={opt.option_name ?? tier} className="sm-img" />
+            <span className="spec-img-zoom-hint">🔍 Enlarge</span>
           </div>
         )}
 
-        {/* Select button */}
-        <div className="sm-footer">
-          <button
-            className={`sm-select-btn ${selectedType ? 'sm-select-btn--selected' : ''}`}
-            onClick={() => onSelect(opt, 'upgrade')}
-          >
-            {selectedType ? '✓ Selected' : 'Select Package'}
-          </button>
+        {/* ── Content ── */}
+        <div className="sm-content">
+
+          {/* Tier badge + name */}
+          <div className="sm-header">
+            {tier && (
+              <span className={`sm-tier-badge sm-tier-badge--${tier.toLowerCase()}`}>
+                {tier}
+              </span>
+            )}
+            <h2 className="sm-name">{opt.option_name}</h2>
+          </div>
+
+          {/* Price */}
+          {opt.price_status === 'fixed' && opt.price_inr != null && (
+            <div className="sm-price-row">
+              <span className="sm-price-val">{formatPrice(opt.price_inr)}</span>
+              {opt.price_unit && <span className="sm-price-unit"> / {opt.price_unit}</span>}
+            </div>
+          )}
+
+          {/* Footer: View Details + Select */}
+          <div className="sm-footer">
+            {features.length > 0 && (
+              <button
+                className="sm-details-btn"
+                onClick={e => { e.stopPropagation(); setDetailsOpen(true) }}
+              >
+                View Details
+              </button>
+            )}
+            <button
+              className={`sm-select-btn ${selectedType ? 'sm-select-btn--selected' : ''}`}
+              onClick={() => onSelect(opt, 'upgrade')}
+            >
+              {selectedType ? '✓ Selected' : 'Select Package'}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* ── Details modal ── */}
+      {detailsOpen && (
+        <div className="desc-modal-overlay" onClick={() => setDetailsOpen(false)}>
+          <div className="desc-modal" onClick={e => e.stopPropagation()}>
+            <div className="desc-modal-header">
+              <div className="sm-modal-title-row">
+                {tier && <span className={`sm-tier-badge sm-tier-badge--${tier.toLowerCase()}`}>{tier}</span>}
+                <h3 className="desc-modal-title">{opt.option_name}</h3>
+              </div>
+              <button className="desc-modal-close" onClick={() => setDetailsOpen(false)}><X size={20} /></button>
+            </div>
+            <div className="desc-modal-body">
+              <ul className="opt-point-list opt-point-list--full">
+                {features.map((f, i) => (
+                  <li key={i} className="opt-point-item">
+                    <span className="opt-point-title">{f.title}</span>
+                    {f.detail && <span className="opt-point-detail"> — {f.detail}</span>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 

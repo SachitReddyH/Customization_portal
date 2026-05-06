@@ -3371,24 +3371,24 @@ body {
   box-shadow: 0 0 0 3px rgba(240,94,62,0.12), 0 4px 20px rgba(0,0,0,0.08) !important;
 }
 
-/* ── Package image ── */
+/* ── Package image — full visible, no crop ── */
 .sm-img-wrap {
   position: relative;
   width: 100%;
-  overflow: hidden;
-  background: #f5f4f2;
+  background: #111;
   cursor: zoom-in;
   line-height: 0;
 }
 .sm-img-wrap:hover .spec-img-zoom-hint { opacity: 1; }
 .sm-img {
   width: 100%;
-  height: 200px;
-  object-fit: cover;
+  height: auto;
+  min-height: 260px;
+  max-height: 400px;
+  object-fit: contain;
   display: block;
-  transition: transform 0.3s ease;
 }
-.sm-card:hover .sm-img { transform: scale(1.03); }
+.sm-card:hover .sm-img { opacity: 0.95; }
 
 /* ── Content area ── */
 .sm-content {
@@ -3492,10 +3492,29 @@ body {
   color: #9a8e84;
 }
 
-/* ── Footer / select button ── */
-.sm-footer { margin-top: 4px; }
+/* ── Footer: View Details + Select side by side ── */
+.sm-footer {
+  margin-top: 4px;
+  display: flex;
+  gap: 8px;
+}
+.sm-details-btn {
+  flex: 0 0 auto;
+  padding: 11px 16px;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #f5f4f2;
+  color: #5a4e45;
+  border: 1.5px solid #ddd8d0;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.sm-details-btn:hover { background: #ede9e3; }
 .sm-select-btn {
-  width: 100%;
+  flex: 1;
   padding: 11px 16px;
   border-radius: 8px;
   font-family: var(--font-body);
@@ -3514,6 +3533,12 @@ body {
   color: #fff !important;
   border-color: #F05E3E !important;
 }
+/* Title row inside details modal */
+.sm-modal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
 @media (max-width: 900px) {
   .options-grid.options-grid--sh {
@@ -3522,6 +3547,6 @@ body {
   .sh-intro-img { height: auto; }
   .sh-intro-content { padding: 20px 18px 18px; }
   .sh-intro-features { grid-template-columns: 1fr; }
-  .sm-img { height: 180px; }
+  .sm-img { min-height: 180px; max-height: 280px; }
   .sm-content { padding: 16px 16px 14px; }
 }
