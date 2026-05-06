@@ -3339,14 +3339,14 @@ body {
 /* "Choose Your Package" heading — own grid row with equal space above & below */
 .sh-packages-heading {
   font-family: var(--font-heading);
-  font-size: 14px;
-  font-weight: 600;
-  color: #7a6d63;
-  letter-spacing: 0.08em;
+  font-size: 22px;
+  font-weight: 700;
+  color: #3d2f24;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   text-align: center;
   margin: 0;
-  padding: 24px 0;           /* equal top & bottom padding */
+  padding: 24px 0;
 }
 
 /* ══════════════════════════════════════════════
