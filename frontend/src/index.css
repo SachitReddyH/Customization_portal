@@ -1298,7 +1298,7 @@ body {
 .cmp-body--kitchen .cmp-panel {
   padding: 0;
   gap: 0;
-  min-height: 320px;
+  min-height: 380px;
 }
 .cmp-body--kitchen .cmp-panel--upg {
   display: flex;
@@ -1306,6 +1306,8 @@ body {
 }
 .cmp-body--kitchen .cmp-img-grid {
   flex: 1;
+  min-height: 0;      /* allow flex shrink so button always has room */
+  overflow: hidden;   /* clip images within allocated space */
   display: flex;
   flex-direction: column;
 }
@@ -1326,7 +1328,7 @@ body {
   flex: 1;
   width: 100%;
   height: 100%;
-  min-height: 260px;
+  min-height: 0;      /* let flex layout control height, not content minimum */
   object-fit: contain;
   object-position: center;
   padding: 0;
