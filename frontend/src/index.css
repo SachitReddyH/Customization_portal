@@ -3328,9 +3328,8 @@ body {
   color: #7a6d63;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin: 4px 0 0 0;
+  margin: 20px 0 20px 0;
   text-align: center;
-  padding-bottom: 0;
 }
 
 /* ── 2-column grid for the package cards ── */
@@ -3339,6 +3338,7 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 20px;
   align-items: start;
+  padding-bottom: 32px;
 }
 /* Intro section spans both columns */
 .options-grid--sh > .sh-intro-section {
