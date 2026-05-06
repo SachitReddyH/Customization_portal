@@ -1051,3 +1051,25 @@ table.admin-table tr:hover td {
 }
 .admin-input:focus { border-color: var(--accent); }
 .admin-input select { appearance: none; }
+
+
+/* ── Category Interests section (dashboard) ──────── */
+.admin-interests-section {
+  margin-top: 28px;
+  background: var(--white);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.admin-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 22px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  background: #faf9f7;
+}

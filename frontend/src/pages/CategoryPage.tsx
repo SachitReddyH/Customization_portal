@@ -7,6 +7,7 @@ import {
   getDirectOptions, getFlooringPackages,
   getMyVilla, getMySelections, upsertSelection, removeSelection, clearAllSelections,
   getMyQuotes, requestQuote,
+  submitInterest,
   BASE,
 } from '../services/api'
 
@@ -266,6 +267,10 @@ export default function CategoryPage() {
   const [optionMap, setOptionMap] = useState<Record<string, Option>>({})
   // Category id → display name (for cart grouping)
   const [categoryNames, setCategoryNames] = useState<Record<string, string>>({})
+
+  // Coming-soon interest
+  const [interestSent, setInterestSent]       = useState(false)
+  const [interestLoading, setInterestLoading] = useState(false)
 
   // Floor plan lightbox
   const [lightboxUrl, setLightboxUrl] = useState('')
@@ -813,12 +818,27 @@ export default function CategoryPage() {
                     <div className="options-coming-soon">
                       <span className="coming-soon-heading">Coming Soon<span className="coming-soon-dots">...</span></span>
                       <span className="coming-soon-sub">
-                        We're putting the finishing touches on this. Interested?{' '}
-                        <a className="coming-soon-link" href="mailto:info@capstonelife.in?subject=Home%20Theatre%20Interest">
-                          Let us know
-                        </a>{' '}
-                        and we'll keep you in the loop.
+                        We're putting the finishing touches on this.
                       </span>
+                      {interestSent ? (
+                        <span className="coming-soon-sent">✓ We've noted your interest — we'll be in touch!</span>
+                      ) : (
+                        <button
+                          className="coming-soon-btn"
+                          disabled={interestLoading}
+                          onClick={async () => {
+                            setInterestLoading(true)
+                            try {
+                              await submitInterest(categoryId!, category?.category_name ?? 'Home Theatre')
+                              setInterestSent(true)
+                            } finally {
+                              setInterestLoading(false)
+                            }
+                          }}
+                        >
+                          {interestLoading ? 'Sending…' : 'Let us know you\'re interested'}
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <div className="options-empty">

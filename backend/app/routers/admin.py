@@ -241,10 +241,13 @@ async def dashboard(user=Depends(require_admin)):
     pending_quotes = await db.quote_requests.count_documents({"status": "pending"})
     submitted_selections = await db.customer_selections.count_documents({"status": "submitted"})
 
+    category_interests = await db.interests.count_documents({})
+
     return {
         "total_customers": total_customers,
         "total_villas": total_villas,
         "assigned_villas": assigned_villas,
         "pending_quotes": pending_quotes,
         "submitted_selections": submitted_selections,
+        "category_interests": category_interests,
     }

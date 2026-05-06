@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Users, Home, CheckCircle, Clock, ClipboardList
+  Users, Home, CheckCircle, Clock, ClipboardList, Bell
 } from 'lucide-react'
-import { getDashboard } from '../../services/api'
+import { getDashboard, listInterests } from '../../services/api'
 
 interface DashboardData {
   total_customers: number
@@ -11,6 +11,16 @@ interface DashboardData {
   assigned_villas: number
   pending_quotes: number
   submitted_selections: number
+  category_interests: number
+}
+
+interface InterestItem {
+  id: string
+  customer_name: string
+  customer_email: string
+  villa_name: string | null
+  category_name: string
+  created_at: string
 }
 
 interface StatCardProps {
@@ -32,13 +42,14 @@ function StatCard({ icon, iconClass, value, label }: StatCardProps) {
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
-  const [data, setData] = useState<DashboardData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [data, setData]           = useState<DashboardData | null>(null)
+  const [interests, setInterests] = useState<InterestItem[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState('')
 
   useEffect(() => {
-    getDashboard()
-      .then(setData)
+    Promise.all([getDashboard(), listInterests()])
+      .then(([dash, ints]) => { setData(dash); setInterests(ints) })
       .catch(() => setError('Failed to load dashboard data.'))
       .finally(() => setLoading(false))
   }, [])
@@ -81,6 +92,12 @@ export default function AdminDashboard() {
           value={data.submitted_selections}
           label="Submitted Selections"
         />
+        <StatCard
+          icon={<Bell size={20} />}
+          iconClass="stat-card-icon--orange"
+          value={data.category_interests ?? 0}
+          label="Category Interests"
+        />
       </div>
 
       {/* ── Quick actions ── */}
@@ -103,6 +120,38 @@ export default function AdminDashboard() {
           </button>
         </div>
       </div>
+
+      {/* ── Category Interests ── */}
+      {interests.length > 0 && (
+        <div className="admin-interests-section">
+          <div className="admin-section-title">
+            <Bell size={15} />
+            Customer Interests — Coming Soon Categories
+          </div>
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Email</th>
+                <th>Villa</th>
+                <th>Category</th>
+                <th>Submitted</th>
+              </tr>
+            </thead>
+            <tbody>
+              {interests.map(i => (
+                <tr key={i.id}>
+                  <td>{i.customer_name}</td>
+                  <td>{i.customer_email}</td>
+                  <td>{i.villa_name ?? '—'}</td>
+                  <td>{i.category_name}</td>
+                  <td>{i.created_at ? new Date(i.created_at).toLocaleDateString() : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }

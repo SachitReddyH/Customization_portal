@@ -98,6 +98,13 @@ export const removeSelection = (data: {
 export const clearAllSelections = () =>
   api.delete('/selections/clear').then(r => r.data)
 
+/* ── Interests ───────────────────────────────────── */
+export const submitInterest = (categoryId: string, categoryName: string) =>
+  api.post('/interests', { category_id: categoryId, category_name: categoryName }).then(r => r.data)
+
+export const listInterests = () =>
+  api.get('/interests/admin').then(r => r.data)
+
 /* ── Admin ────────────────────────────────────── */
 export const getDashboard = () =>
   api.get('/admin/dashboard').then(r => r.data)

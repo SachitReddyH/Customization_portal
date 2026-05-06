@@ -815,14 +815,34 @@ body {
   max-width: 340px;
   line-height: 1.6;
 }
-.coming-soon-link {
-  color: var(--accent);
+.coming-soon-btn {
+  margin-top: 4px;
+  padding: 11px 28px;
+  background: var(--dark);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 13px;
   font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.18s;
 }
-.coming-soon-link:hover {
-  color: #c94a2b;
+.coming-soon-btn:hover:not(:disabled) {
+  background: var(--accent);
+}
+.coming-soon-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.coming-soon-sent {
+  margin-top: 4px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: #3a8a4a;
 }
 
 /* Options scroll area */
