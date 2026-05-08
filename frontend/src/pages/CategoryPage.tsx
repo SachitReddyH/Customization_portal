@@ -689,7 +689,7 @@ export default function CategoryPage() {
       {/* ── Top nav ── */}
       <nav className="cat-nav">
         <button className="cat-back" onClick={() => navigate('/hub', { state: { showCards: true } })}>
-          <ArrowLeft size={18} /> Back
+          <ArrowLeft size={18} /> Home
         </button>
         <span className="cat-nav-title">{category?.name ?? ''}</span>
         <div className="cat-nav-right">
