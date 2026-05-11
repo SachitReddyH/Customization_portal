@@ -7,6 +7,12 @@ class QuoteRequestCreate(BaseModel):
     customer_notes: Optional[str] = None
 
 
+class ItemPrice(BaseModel):
+    option_id: str
+    location_id: Optional[str] = None
+    price: float
+
+
 class QuoteRequestResponse(BaseModel):
     id: str
     customer_id: str
@@ -18,6 +24,7 @@ class QuoteRequestResponse(BaseModel):
     customer_notes: Optional[str] = None
     admin_notes: Optional[str] = None
     quoted_price: Optional[float] = None
+    item_prices: Optional[List[dict]] = None  # per-line-item prices set by admin
     selection_snapshot: Optional[List[dict]] = None
     requested_at: datetime
     updated_at: Optional[datetime] = None   # set when customer updates an existing request
@@ -32,3 +39,4 @@ class QuoteStatusUpdate(BaseModel):
     status: str
     admin_notes: Optional[str] = None
     quoted_price: Optional[float] = None
+    item_prices: Optional[List[ItemPrice]] = None  # per-line-item prices

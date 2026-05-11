@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.database import get_db
 from app.core.deps import get_current_user, require_admin
-from app.schemas.quote import QuoteRequestCreate, QuoteRequestResponse, QuoteStatusUpdate
+from app.schemas.quote import QuoteRequestCreate, QuoteRequestResponse, QuoteStatusUpdate, ItemPrice
 from bson import ObjectId
 from datetime import datetime, timezone
 from typing import List
@@ -83,6 +83,8 @@ async def _build_snapshot(db, user) -> list:
             "option_name":   resolved_name,
             "category_name": cat.get("name") if cat else sel.get("category_id"),
             "room_label":    room_label,
+            "price_inr":     opt.get("price_inr") if opt else None,
+            "price_unit":    opt.get("price_unit") if opt else None,
         })
     return enriched
 
@@ -204,7 +206,11 @@ async def update_quote(quote_id: str, payload: QuoteStatusUpdate, user=Depends(r
     }
     if payload.admin_notes is not None:
         update["admin_notes"] = payload.admin_notes
-    if payload.quoted_price is not None:
+    if payload.item_prices is not None:
+        # Save individual line-item prices and auto-compute total
+        update["item_prices"] = [ip.model_dump() for ip in payload.item_prices]
+        update["quoted_price"] = sum(ip.price for ip in payload.item_prices)
+    elif payload.quoted_price is not None:
         update["quoted_price"] = payload.quoted_price
 
     result = await db.quote_requests.find_one_and_update(

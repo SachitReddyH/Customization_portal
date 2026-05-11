@@ -8,17 +8,17 @@ interface Quote {
   customer_name: string
   villa_name?: string
   status: string
-  notification_type?: string | null   // 'new' | 'updated' | null
+  notification_type?: string | null
   customer_notes?: string
   admin_notes?: string
   quoted_price?: number
+  item_prices?: Array<{ option_id: string; location_id?: string; price: number }>
   requested_at: string
   updated_at?: string
   selection_snapshot?: any[]
 }
 
-/** Resolve a snapshot entry's display name.
- *  Handles real option names, synthetic addon IDs (OPT-BP-001-ADN-BAT), etc. */
+/** Resolve a snapshot entry's display name. */
 function resolveSnapshotName(s: any): string {
   if (s.option_name) return s.option_name
   const id: string = s.option_id ?? ''
@@ -33,10 +33,13 @@ function resolveSnapshotName(s: any): string {
 interface EditState {
   status: string
   admin_notes: string
-  quoted_price: string
+  item_prices: Record<number, string>   // flat snapshot index → price string
 }
 
 const STATUS_OPTIONS = ['pending', 'reviewed', 'quoted', 'accepted', 'rejected']
+
+const fmtINR = (n: number) =>
+  new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n)
 
 function StatusBadge({ status }: { status: string }) {
   return <span className={`badge badge--${status}`}>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
@@ -49,6 +52,37 @@ function NotifBadge({ type }: { type?: string | null }) {
       {type === 'new' ? '🔴 New' : '🟡 Updated'}
     </span>
   )
+}
+
+/** Build initial item_prices from saved item_prices or option price_inr values */
+function buildInitialPrices(q: Quote): Record<number, string> {
+  const prices: Record<number, string> = {}
+  const snapshot = q.selection_snapshot || []
+  if (q.item_prices && q.item_prices.length > 0) {
+    // Use previously saved per-item prices
+    q.item_prices.forEach((ip, i) => {
+      prices[i] = ip.price != null ? String(ip.price) : ''
+    })
+  } else {
+    // Pre-fill from option price_inr in snapshot
+    snapshot.forEach((s: any, i: number) => {
+      if (s.price_inr != null) prices[i] = String(s.price_inr)
+    })
+  }
+  return prices
+}
+
+function computeTotal(snapshot: any[], item_prices: Record<number, string>): number | null {
+  let total = 0
+  let hasAny = false
+  snapshot.forEach((_s, i) => {
+    const v = item_prices[i]
+    if (v !== undefined && v !== '') {
+      const n = parseFloat(v)
+      if (!isNaN(n)) { total += n; hasAny = true }
+    }
+  })
+  return hasAny ? total : null
 }
 
 export default function AdminQuotes() {
@@ -83,23 +117,34 @@ export default function AdminQuotes() {
     editStates[q.id] ?? {
       status: q.status,
       admin_notes: q.admin_notes || '',
-      quoted_price: q.quoted_price != null ? String(q.quoted_price) : '',
+      item_prices: buildInitialPrices(q),
     }
 
-  const setEditField = (id: string, field: keyof EditState, value: string) => {
+  const setEditField = (id: string, field: 'status' | 'admin_notes', value: string) => {
     const q = quotes.find(q => q.id === id)!
     setEditStates(prev => ({ ...prev, [id]: { ...getEditState(q), [field]: value } }))
+  }
+
+  const setItemPrice = (id: string, idx: number, value: string) => {
+    const q = quotes.find(q => q.id === id)!
+    const cur = getEditState(q)
+    setEditStates(prev => ({
+      ...prev,
+      [id]: { ...cur, item_prices: { ...cur.item_prices, [idx]: value } }
+    }))
   }
 
   const handleToggle = async (id: string) => {
     const q = quotes.find(q => q.id === id)!
     if (expandedId !== id) {
-      // Initialise edit state
       setEditStates(prev => ({
         ...prev,
-        [id]: { status: q.status, admin_notes: q.admin_notes || '', quoted_price: q.quoted_price != null ? String(q.quoted_price) : '' }
+        [id]: {
+          status: q.status,
+          admin_notes: q.admin_notes || '',
+          item_prices: buildInitialPrices(q),
+        }
       }))
-      // Auto-mark as seen if notification exists
       if (q.notification_type) {
         try {
           const updated = await markQuoteRead(id)
@@ -113,11 +158,30 @@ export default function AdminQuotes() {
 
   const handleSave = async (id: string) => {
     const es = editStates[id]; if (!es) return
+    const q = quotes.find(q => q.id === id)!
     setSaving(id); setSaveError(prev => ({ ...prev, [id]: '' }))
     try {
-      const payload: { status: string; admin_notes?: string; quoted_price?: number } = { status: es.status }
+      const snapshot = q.selection_snapshot || []
+      const cleanItemPrices = snapshot
+        .map((s: any, i: number) => ({
+          option_id: s.option_id,
+          location_id: s.location_id || null,
+          price: parseFloat(es.item_prices[i] ?? ''),
+          _i: i,
+        }))
+        .filter(ip => {
+          const v = es.item_prices[ip._i]
+          return v !== undefined && v !== '' && !isNaN(ip.price)
+        })
+        .map(({ option_id, location_id, price }) => ({ option_id, location_id, price }))
+
+      const total = cleanItemPrices.reduce((sum, ip) => sum + ip.price, 0)
+      const payload: any = { status: es.status }
       if (es.admin_notes.trim()) payload.admin_notes = es.admin_notes.trim()
-      if (es.quoted_price !== '') { const n = parseFloat(es.quoted_price); if (!isNaN(n)) payload.quoted_price = n }
+      if (cleanItemPrices.length > 0) {
+        payload.item_prices = cleanItemPrices
+        payload.quoted_price = total
+      }
       await updateQuote(id, payload)
       await load(); setExpandedId(null)
     } catch (err: any) {
@@ -131,11 +195,8 @@ export default function AdminQuotes() {
     return new Date(utc).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })
   }
 
-  const fmtPrice = (p?: number) => p != null
-    ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(p)
-    : '—'
+  const fmtPrice = (p?: number) => p != null ? fmtINR(p) : '—'
 
-  // Split into sections
   const newQuotes     = quotes.filter(q => q.notification_type === 'new')
   const updatedQuotes = quotes.filter(q => q.notification_type === 'updated')
   const seenQuotes    = quotes.filter(q => !q.notification_type)
@@ -144,6 +205,18 @@ export default function AdminQuotes() {
     const isOpen = expandedId === q.id
     const es = getEditState(q)
     const snapshotCount = Array.isArray(q.selection_snapshot) ? q.selection_snapshot.length : 0
+    const snapshot = q.selection_snapshot || []
+
+    // Build groups with flat indices
+    const groups: Record<string, { item: any; idx: number }[]> = {}
+    let flatIdx = 0
+    snapshot.forEach((s: any) => {
+      const key = s.category_name ?? s.category_id ?? 'Other'
+      if (!groups[key]) groups[key] = []
+      groups[key].push({ item: s, idx: flatIdx++ })
+    })
+
+    const total = computeTotal(snapshot, es.item_prices)
 
     return (
       <Fragment key={q.id}>
@@ -181,41 +254,61 @@ export default function AdminQuotes() {
           <tr key={`${q.id}-expand`}>
             <td colSpan={7} style={{ padding: 0 }}>
               <div className="quote-expand-panel">
-                <div className="quote-expand-inner">
+                <div className="quote-expand-inner quote-expand-inner--wide">
 
-                  {/* Selections snapshot */}
-                  {Array.isArray(q.selection_snapshot) && q.selection_snapshot.length > 0 && (
+                  {/* Selections snapshot with per-item prices */}
+                  {snapshot.length > 0 && (
                     <div className="quote-snapshot">
-                      <p className="quote-snapshot-title">Customer Selections</p>
-                      {(() => {
-                        const groups: Record<string, typeof q.selection_snapshot> = {}
-                        q.selection_snapshot!.forEach((s: any) => {
-                          const key = s.category_name ?? s.category_id ?? 'Other'
-                          if (!groups[key]) groups[key] = []
-                          groups[key].push(s)
-                        })
-                        return Object.entries(groups).map(([cat, items]) => (
-                          <div key={cat} className="quote-snapshot-group">
-                            <p className="quote-snapshot-cat">{cat}</p>
-                            {items.map((s: any, i: number) => {
-                              const room = s.room_label || (s.location_id ? locationMap[s.location_id] : null)
-                              return (
-                                <div key={i} className="quote-snapshot-row">
-                                  <div className="quote-snapshot-name-block">
-                                    <span className="quote-snapshot-name">{resolveSnapshotName(s)}</span>
-                                    {room && (
-                                      <span className="quote-snapshot-room">{room}</span>
-                                    )}
-                                  </div>
-                                  <span className={`quote-snapshot-type ${s.selection_type}`}>
-                                    {s.selection_type === 'upgrade' ? 'Upgrade' : 'Standard'}
-                                  </span>
+                      <div className="quote-snapshot-header-row">
+                        <p className="quote-snapshot-title" style={{ margin: 0 }}>Customer Selections</p>
+                        <div className="quote-snapshot-col-labels">
+                          <span>Type</span>
+                          <span>Price (INR)</span>
+                        </div>
+                      </div>
+
+                      {Object.entries(groups).map(([cat, entries]) => (
+                        <div key={cat} className="quote-snapshot-group">
+                          <p className="quote-snapshot-cat">{cat}</p>
+                          {entries.map(({ item: s, idx: i }) => {
+                            const room = s.room_label || (s.location_id ? locationMap[s.location_id] : null)
+                            const priceVal = es.item_prices[i] !== undefined
+                              ? es.item_prices[i]
+                              : (s.price_inr != null ? String(s.price_inr) : '')
+                            return (
+                              <div key={i} className="quote-snapshot-row">
+                                <div className="quote-snapshot-name-block">
+                                  <span className="quote-snapshot-name">{resolveSnapshotName(s)}</span>
+                                  {room && <span className="quote-snapshot-room">{room}</span>}
                                 </div>
-                              )
-                            })}
-                          </div>
-                        ))
-                      })()}
+                                <span className={`quote-snapshot-type ${s.selection_type}`}>
+                                  {s.selection_type === 'upgrade' ? 'Upgrade' : 'Standard'}
+                                </span>
+                                <div className="quote-item-price-wrap">
+                                  <span className="quote-item-price-sym">₹</span>
+                                  <input
+                                    type="number"
+                                    className="quote-item-price-input"
+                                    placeholder="Enter price"
+                                    value={priceVal}
+                                    onChange={e => setItemPrice(q.id, i, e.target.value)}
+                                    min={0}
+                                    step={1000}
+                                  />
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ))}
+
+                      {/* Running total */}
+                      <div className="quote-total-row">
+                        <span className="quote-total-label">Total</span>
+                        <span className="quote-total-value">
+                          {total != null ? fmtINR(total) : <span style={{ color: '#bbb' }}>—</span>}
+                        </span>
+                      </div>
                     </div>
                   )}
 
@@ -227,7 +320,7 @@ export default function AdminQuotes() {
                     </div>
                   )}
 
-                  {/* Admin update fields */}
+                  {/* Admin fields */}
                   <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 8 }}>
                     <div className="admin-form-field" style={{ flex: '0 0 180px' }}>
                       <label>Status</label>
@@ -236,15 +329,6 @@ export default function AdminQuotes() {
                           <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
                         ))}
                       </select>
-                    </div>
-                    <div className="admin-form-field" style={{ flex: '0 0 180px' }}>
-                      <label>Quoted Price (INR)</label>
-                      <input
-                        type="number" placeholder="e.g. 250000"
-                        value={es.quoted_price}
-                        onChange={e => setEditField(q.id, 'quoted_price', e.target.value)}
-                        min={0} step={1000}
-                      />
                     </div>
                   </div>
 
@@ -298,7 +382,6 @@ export default function AdminQuotes() {
         </div>
       ) : (
         <>
-          {/* ── NEW section ── */}
           {newQuotes.length > 0 && (
             <div className="admin-table-wrap quote-section--new" style={{ marginBottom: 20 }}>
               <div className="admin-table-header">
@@ -309,7 +392,6 @@ export default function AdminQuotes() {
             </div>
           )}
 
-          {/* ── UPDATED section ── */}
           {updatedQuotes.length > 0 && (
             <div className="admin-table-wrap quote-section--updated" style={{ marginBottom: 20 }}>
               <div className="admin-table-header">
@@ -320,7 +402,6 @@ export default function AdminQuotes() {
             </div>
           )}
 
-          {/* ── ALL OTHERS section ── */}
           {seenQuotes.length > 0 && (
             <div className="admin-table-wrap">
               <div className="admin-table-header">
