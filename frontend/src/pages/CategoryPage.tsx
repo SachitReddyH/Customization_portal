@@ -6,7 +6,7 @@ import {
   getCategory, getCategories, getFloors, getRooms, getRoomOptions,
   getDirectOptions, getFlooringPackages,
   getMyVilla, getMySelections, upsertSelection, removeSelection, clearAllSelections,
-  submitInterest,
+  requestQuote, submitInterest,
   BASE,
 } from '../services/api'
 
@@ -293,6 +293,24 @@ export default function CategoryPage() {
 
   // Cart collapsed
   const [cartCollapsed, setCartCollapsed] = useState(false)
+
+  // Quote (last category only)
+  const [quoteSubmitting, setQuoteSubmitting] = useState(false)
+  const [quoteSuccess,    setQuoteSuccess]    = useState(false)
+  const [quoteError,      setQuoteError]      = useState('')
+
+  const handleRequestQuote = async () => {
+    setQuoteSubmitting(true)
+    setQuoteError('')
+    try {
+      await requestQuote({})
+      setQuoteSuccess(true)
+    } catch (e: any) {
+      setQuoteError(e?.response?.data?.detail || 'Failed to submit. Please try again.')
+    } finally {
+      setQuoteSubmitting(false)
+    }
+  }
 
   // Floor plan lightbox
   const [lightboxUrl, setLightboxUrl] = useState('')
@@ -1105,29 +1123,53 @@ export default function CategoryPage() {
                 </div>
             }
 
-            {/* ── Next Category / Home navigation ── */}
+            {/* ── Prev / Next navigation ── */}
             {(() => {
               const currentIdx = CATEGORY_ORDER.findIndex(c => c.id === categoryId)
+              const prevCat    = CATEGORY_ORDER[currentIdx - 1]
               const nextCat    = CATEGORY_ORDER[currentIdx + 1]
+              const isFirst    = currentIdx === 0
               const isLast     = currentIdx === CATEGORY_ORDER.length - 1
 
               return (
                 <div className="cart-nav-section">
-                  {isLast ? (
-                    <button
-                      className="cart-nav-btn cart-nav-btn--home"
-                      onClick={() => navigate('/hub', { state: { showCards: true } })}
-                    >
-                      ← Go to Home
-                    </button>
-                  ) : (
-                    <button
-                      className="cart-nav-btn cart-nav-btn--next"
-                      onClick={() => navigate(`/category/${nextCat.id}`)}
-                    >
-                      Next: {nextCat.name} →
-                    </button>
-                  )}
+                  <div className="cart-nav-row">
+
+                    {/* Prev button — hidden on first category */}
+                    {!isFirst && (
+                      <button
+                        className="cart-nav-btn cart-nav-btn--prev"
+                        onClick={() => navigate(`/category/${prevCat.id}`)}
+                      >
+                        ← Prev
+                      </button>
+                    )}
+
+                    {/* Next OR Request for Quote on last category */}
+                    {isLast ? (
+                      quoteSuccess ? (
+                        <div className="cart-nav-quote-success">
+                          ✓ Quote submitted!
+                        </div>
+                      ) : (
+                        <button
+                          className="cart-nav-btn cart-nav-btn--quote"
+                          disabled={selections.length === 0 || quoteSubmitting}
+                          onClick={handleRequestQuote}
+                        >
+                          {quoteSubmitting ? 'Submitting…' : 'Request for Quote'}
+                        </button>
+                      )
+                    ) : (
+                      <button
+                        className={`cart-nav-btn cart-nav-btn--next${isFirst ? ' cart-nav-btn--full' : ''}`}
+                        onClick={() => navigate(`/category/${nextCat.id}`)}
+                      >
+                        Next →
+                      </button>
+                    )}
+                  </div>
+                  {quoteError && <p className="cart-nav-quote-error">{quoteError}</p>}
                 </div>
               )
             })()}
