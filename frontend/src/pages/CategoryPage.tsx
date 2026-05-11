@@ -981,14 +981,16 @@ export default function CategoryPage() {
         {/* ══ RIGHT — Floor plan + Cart ══ */}
         <aside className={`right-panel${cartCollapsed ? ' right-panel--collapsed' : ''}`}>
 
-          {/* Collapse toggle tab */}
-          <button
-            className="cart-collapse-btn"
-            onClick={() => setCartCollapsed(p => !p)}
-            title={cartCollapsed ? 'Expand cart' : 'Collapse cart'}
-          >
-            {cartCollapsed ? '«' : '»'}
-          </button>
+          {/* Collapsed strip — just shows expand button */}
+          {cartCollapsed && (
+            <div className="cart-collapsed-strip">
+              <button className="cart-toggle-btn" onClick={() => setCartCollapsed(false)} title="Expand cart">
+                <ChevronLeft size={18} />
+              </button>
+              <span className="cart-collapsed-label">Cart</span>
+              {selections.length > 0 && <span className="cart-count">{selections.length}</span>}
+            </div>
+          )}
 
           {/* Floor plan removed from packages tab — shown inline in each card */}
 
@@ -1011,16 +1013,20 @@ export default function CategoryPage() {
           )}
 
           {/* Cart */}
-          <div className={`cart-section ${(!isRoomBased || isPackageTab || isAddonTab) ? 'cart-section--full' : ''}`}>
+          {!cartCollapsed && <div className={`cart-section ${(!isRoomBased || isPackageTab || isAddonTab) ? 'cart-section--full' : ''}`}>
             <div className="cart-header">
               <ShoppingCart size={16} />
               <span>Your Selections</span>
               <span className="cart-count">{selections.length}</span>
+              <span style={{ flex: 1 }} />
               {selections.length > 0 && (
                 <button className="cart-clear-btn" onClick={handleClearCart}>
                   Clear all
                 </button>
               )}
+              <button className="cart-toggle-btn" onClick={() => setCartCollapsed(true)} title="Collapse cart">
+                <ChevronRight size={16} />
+              </button>
             </div>
 
             {selections.length === 0
@@ -1100,7 +1106,7 @@ export default function CategoryPage() {
                 </button>
               )}
             </div>
-          </div>
+          </div>}
 
         </aside>
       </div>
