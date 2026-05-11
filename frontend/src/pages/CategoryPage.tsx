@@ -343,6 +343,20 @@ export default function CategoryPage() {
   /* ── Initial loads ─────────────────────────────── */
   useEffect(() => {
     if (!categoryId) return
+
+    // ── Reset all page state when category changes ──
+    const newTabs = SUB_SECTIONS[categoryId] ?? []
+    setActiveTab(newTabs[0]?.id ?? '')
+    setCategory(null)
+    setOptions([])
+    setFloors([])
+    setRoomsByFloor({})
+    setSelectedFloor('')
+    setSelectedRoom(null)
+    setExpandedFloors(new Set())
+    setFloorsLoading(false)
+    setFloorsError(false)
+
     getCategory(categoryId).then(setCategory).catch(console.error)
     getMyVilla().then(villas => setVilla(villas[0] ?? null)).catch(console.error)
     // Fetch categories → build name map for cart grouping
