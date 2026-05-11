@@ -125,9 +125,11 @@ export default function AdminQuotes() {
     } finally { setSaving(null) }
   }
 
-  const fmtDate = (d?: string) => d
-    ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })
-    : '—'
+  const fmtDate = (d?: string) => {
+    if (!d) return '—'
+    const utc = d.endsWith('Z') || d.includes('+') ? d : d + 'Z'
+    return new Date(utc).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })
+  }
 
   const fmtPrice = (p?: number) => p != null
     ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(p)

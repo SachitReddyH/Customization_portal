@@ -141,12 +141,15 @@ export default function AdminCustomerDetail() {
     return parts.join(' – ')
   }
 
-  const formatDate = (d: string) =>
-    new Date(d).toLocaleString('en-IN', {
+  const formatDate = (d: string) => {
+    // MongoDB datetimes are UTC but may arrive without 'Z'; force UTC before converting to IST
+    const utc = d.endsWith('Z') || d.includes('+') ? d : d + 'Z'
+    return new Date(utc).toLocaleString('en-IN', {
       day: '2-digit', month: 'short', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
       timeZone: 'Asia/Kolkata'
     })
+  }
 
   if (loading) return <div className="admin-loading">Loading customer data…</div>
   if (error)   return <div className="admin-error">{error}</div>
