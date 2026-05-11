@@ -5,7 +5,7 @@ import {
   Leaf, Wifi, Wind, Tv2, LogOut, Images, X, ChevronLeft, ChevronRight,
   ShoppingCart, ChevronRight as ChevronRightIcon,
 } from 'lucide-react'
-import { getMyVilla, getMySelections, getAllLocations, getDirectOptions } from '../services/api'
+import { getMyVilla, getMySelections, getAllLocations, getDirectOptions, requestQuote } from '../services/api'
 
 const CATEGORIES = [
   { id: 'CAT001', name: 'Space Customisations',    tagline: 'Spaces that adapt to you',                             icon: LayoutGrid    },
@@ -120,6 +120,24 @@ export default function CustomisationHub() {
   const [locationMap, setLocationMap] = useState<Record<string, string>>({})
   const [optionMap,   setOptionMap]   = useState<Record<string, string>>({})
   const [cartOpen, setCartOpen]     = useState(false)
+
+  // Quote state
+  const [quoteSubmitting, setQuoteSubmitting] = useState(false)
+  const [quoteSuccess,    setQuoteSuccess]    = useState(false)
+  const [quoteError,      setQuoteError]      = useState('')
+
+  const handleRequestQuote = async () => {
+    setQuoteSubmitting(true)
+    setQuoteError('')
+    try {
+      await requestQuote({})
+      setQuoteSuccess(true)
+    } catch (e: any) {
+      setQuoteError(e?.response?.data?.detail || 'Something went wrong. Please try again.')
+    } finally {
+      setQuoteSubmitting(false)
+    }
+  }
 
   useEffect(() => {
     getMyVilla().then((villas: any[]) => { if (villas?.length) setVilla(villas[0]) }).catch(() => {})
@@ -379,13 +397,23 @@ export default function CustomisationHub() {
 
             {/* Footer */}
             <div className="hub-cart-footer">
-              <button
-                className="hub-cart-quote-btn"
-                onClick={() => { setCartOpen(false); navigate('/category/CAT001') }}
-              >
-                Continue Customising
-                <ChevronRightIcon size={16} />
-              </button>
+              {quoteSuccess ? (
+                <div className="hub-cart-quote-success">
+                  <span>✓</span>
+                  <span>Quote request submitted!<br />Our team will be in touch soon.</span>
+                </div>
+              ) : (
+                <>
+                  {quoteError && <p className="hub-cart-quote-error">{quoteError}</p>}
+                  <button
+                    className="hub-cart-quote-btn"
+                    disabled={selections.length === 0 || quoteSubmitting}
+                    onClick={handleRequestQuote}
+                  >
+                    {quoteSubmitting ? 'Submitting…' : 'Request for Quote'}
+                  </button>
+                </>
+              )}
             </div>
 
           </div>

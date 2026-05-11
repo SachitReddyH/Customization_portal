@@ -51,6 +51,17 @@ interface Room { location_id: string; floor: string; space: string; room_code: s
 
 /* ── Constants ──────────────────────────────────── */
 const ROOM_BASED = ['CAT002', 'CAT003']
+
+const CATEGORY_ORDER = [
+  { id: 'CAT001', name: 'Space Customisations'    },
+  { id: 'CAT002', name: 'Flooring Upgrades'        },
+  { id: 'CAT003', name: 'Bathroom Upgrades'        },
+  { id: 'CAT004', name: 'Lift Interior Refinement' },
+  { id: 'CAT005', name: 'Landscape Packages'       },
+  { id: 'CAT006', name: 'Smart Home'               },
+  { id: 'CAT007', name: 'VRF Cooling System'       },
+  { id: 'CAT008', name: 'Home Theatre'             },
+]
 const FLOOR_SUFFIX: Record<string, string> = {
   'Ground Floor': 'gf', 'First Floor': 'ff', 'Second Floor': 'sf',
 }
@@ -1069,42 +1080,32 @@ export default function CategoryPage() {
                 </div>
             }
 
-            {/* ── Request for Quote ── */}
-            <div className="cart-quote-section">
-              {pendingQuote ? (
-                <>
-                  {/* Persistent banner — always shows while a pending quote exists */}
-                  <div className={`cart-quote-success ${quoteJustActed ? 'cart-quote-success--flash' : ''}`}>
-                    <span className="cart-quote-success-icon">✓</span>
-                    <span>
-                      {quoteJustActed && pendingQuote.notification_type === 'updated'
-                        ? <>Selections updated.<br />Admin has been notified.</>
-                        : quoteJustActed
-                        ? <>Quote request submitted.<br />Our team will be in touch soon.</>
-                        : <>Quote request pending.<br />Our team will be in touch soon.</>
-                      }
-                    </span>
-                  </div>
-                  {/* Update button — lets customer re-submit after adding new items */}
-                  {selections.length > 0 && (
+            {/* ── Next Category / Home navigation ── */}
+            {(() => {
+              const currentIdx = CATEGORY_ORDER.findIndex(c => c.id === categoryId)
+              const nextCat    = CATEGORY_ORDER[currentIdx + 1]
+              const isLast     = currentIdx === CATEGORY_ORDER.length - 1
+
+              return (
+                <div className="cart-nav-section">
+                  {isLast ? (
                     <button
-                      className="cart-quote-update-btn"
-                      onClick={() => { setQuoteModalMode('update'); setQuoteModalOpen(true); setQuoteError('') }}
+                      className="cart-nav-btn cart-nav-btn--home"
+                      onClick={() => navigate('/hub', { state: { showCards: true } })}
                     >
-                      Update my request with current selections
+                      ← Go to Home
+                    </button>
+                  ) : (
+                    <button
+                      className="cart-nav-btn cart-nav-btn--next"
+                      onClick={() => navigate(`/category/${nextCat.id}`)}
+                    >
+                      Next: {nextCat.name} →
                     </button>
                   )}
-                </>
-              ) : (
-                <button
-                  className="cart-quote-btn"
-                  disabled={selections.length === 0}
-                  onClick={() => { setQuoteModalMode('new'); setQuoteModalOpen(true); setQuoteError('') }}
-                >
-                  Request for Quote
-                </button>
-              )}
-            </div>
+                </div>
+              )
+            })()}
           </div>}
 
         </aside>
