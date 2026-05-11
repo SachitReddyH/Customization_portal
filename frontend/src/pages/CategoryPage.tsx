@@ -236,6 +236,15 @@ function getSeriesAddons(opt: Option): { label: string; path: string }[] {
   return []
 }
 
+// ── Module-level caches — survive category navigation (same component instance) ──
+// These never change between categories so we fetch them once and reuse
+const _stable: {
+  villa:         any | null
+  categoryNames: Record<string, string>
+  optionMap:     Record<string, Option>   // accumulates; never cleared
+  selections:    SelectionItem[] | null
+} = { villa: null, categoryNames: {}, optionMap: {}, selections: null }
+
 /* ══════════════════════════════════════════════════
    MAIN COMPONENT
 ══════════════════════════════════════════════════ */
@@ -244,7 +253,7 @@ export default function CategoryPage() {
   const navigate = useNavigate()
 
   const [category, setCategory] = useState<any>(null)
-  const [villa, setVilla] = useState<any>(null)
+  const [villa, setVilla] = useState<any>(_stable.villa)
 
   // Floor / room nav state
   const [floors, setFloors] = useState<string[]>([])
@@ -271,12 +280,12 @@ export default function CategoryPage() {
   const [options, setOptions] = useState<Option[]>([])
   const [optionsLoading, setOptionsLoading] = useState(false)
 
-  // Selections (cart)
-  const [selections, setSelections] = useState<SelectionItem[]>([])
-  // Local map option_id → option (for cart display)
-  const [optionMap, setOptionMap] = useState<Record<string, Option>>({})
-  // Category id → display name (for cart grouping)
-  const [categoryNames, setCategoryNames] = useState<Record<string, string>>({})
+  // Selections (cart) — initialise from cache so cart shows instantly on nav
+  const [selections, setSelections] = useState<SelectionItem[]>(_stable.selections ?? [])
+  // Local map option_id → option — initialise from cache to prevent flash of codes
+  const [optionMap, setOptionMap] = useState<Record<string, Option>>(_stable.optionMap)
+  // Category id → display name — initialise from cache
+  const [categoryNames, setCategoryNames] = useState<Record<string, string>>(_stable.categoryNames)
 
   // Coming-soon interest
   const [interestSent, setInterestSent]       = useState(false)
@@ -340,15 +349,35 @@ export default function CategoryPage() {
     }
   }, [])
 
-  /* ── Initial loads ─────────────────────────────── */
+  /* ── One-time load: stable data that never changes between categories ── */
+  useEffect(() => {
+    // Villa
+    if (!_stable.villa) {
+      getMyVilla().then(villas => {
+        _stable.villa = villas[0] ?? null
+        setVilla(_stable.villa)
+      }).catch(console.error)
+    }
+    // Category names
+    if (Object.keys(_stable.categoryNames).length === 0) {
+      getCategories().then((cats: any[]) => {
+        const map: Record<string, string> = {}
+        cats.forEach(c => { map[c.category_id] = c.name })
+        _stable.categoryNames = map
+        setCategoryNames(map)
+      }).catch(console.error)
+    }
+  }, []) // runs once on mount only
+
+  /* ── Per-category loads ─────────────────────────── */
   useEffect(() => {
     if (!categoryId) return
 
-    // ── Cleanup flag: prevents stale async callbacks from a previous category
-    //    writing into this category's state (race condition when navigating fast)
+    // Cleanup flag: prevents stale async callbacks from a previous category
+    // writing into this category's state (race condition when navigating fast)
     let active = true
 
-    // ── Reset all page state for new category ──
+    // Reset navigation state for new category
     const newTabs = SUB_SECTIONS[categoryId] ?? []
     setActiveTab(newTabs[0]?.id ?? '')
     setCategory(null)
@@ -362,29 +391,25 @@ export default function CategoryPage() {
     setFloorsError(false)
 
     getCategory(categoryId).then(d => { if (active) setCategory(d) }).catch(console.error)
-    getMyVilla().then(villas => { if (active) setVilla(villas[0] ?? null) }).catch(console.error)
 
-    getCategories().then((cats: any[]) => {
-      if (!active) return
-      const map: Record<string, string> = {}
-      cats.forEach(c => { map[c.category_id] = c.name })
-      setCategoryNames(map)
-    }).catch(console.error)
-
+    // Refresh selections in background; cart already shows cached values instantly
     getMySelections().then(async d => {
       if (!active) return
       const sels: SelectionItem[] = d.selections ?? []
+      _stable.selections = sels
       setSelections(sels)
+
+      // Only fetch options for categories not already in the cache
       const catIds = Array.from(new Set(sels.map((s: SelectionItem) => s.category_id)))
-      catIds.forEach(async (cid: string) => {
+      const missing = catIds.filter(cid => !Object.values(_stable.optionMap).some(o => o.category_id === cid))
+      missing.forEach(async (cid: string) => {
         try {
           const opts: Option[] = await getDirectOptions(cid)
           if (!active) return
-          setOptionMap(prev => {
-            const next = { ...prev }
-            opts.forEach(o => { next[o.option_id] = o })
-            return next
-          })
+          const next = { ..._stable.optionMap }
+          opts.forEach(o => { next[o.option_id] = o })
+          _stable.optionMap = next
+          setOptionMap(next)
         } catch { /* silently ignore */ }
       })
     }).catch(console.error)
@@ -395,14 +420,13 @@ export default function CategoryPage() {
       if (categoryId === 'CAT002') {
         getFlooringPackages().then(pkgs => {
           if (!active) return
-          setOptionMap(prev => {
-            const next = { ...prev }
-            pkgs.forEach((p: Option) => { next[p.option_id] = p })
-            return next
-          })
+          const next = { ..._stable.optionMap }
+          pkgs.forEach((p: Option) => { next[p.option_id] = p })
+          _stable.optionMap = next
+          setOptionMap(next)
         }).catch(console.error)
 
-        // Pre-fetch all rooms for package chip labels — guarded by active flag
+        // Pre-fetch all rooms for package chip labels
         getFloors(categoryId).then(async d => {
           if (!active) return
           const floorList: string[] = d.floors ?? []
@@ -450,6 +474,7 @@ export default function CategoryPage() {
         setOptionMap(prev => {
           const next = { ...prev }
           opts.forEach((o: Option) => { next[o.option_id] = o })
+          _stable.optionMap = next
           return next
         })
       })
@@ -467,6 +492,7 @@ export default function CategoryPage() {
         setOptionMap(prev => {
           const next = { ...prev }
           opts.forEach((o: Option) => { next[o.option_id] = o })
+          _stable.optionMap = next
           return next
         })
       })
@@ -484,6 +510,7 @@ export default function CategoryPage() {
         setOptionMap(prev => {
           const next = { ...prev }
           opts.forEach(o => { next[o.option_id] = o })
+          _stable.optionMap = next
           return next
         })
       })
@@ -499,6 +526,7 @@ export default function CategoryPage() {
       setOptionMap(prev => {
         const next = { ...prev }
         opts.forEach((o: Option) => { next[o.option_id] = o })
+        _stable.optionMap = next
         return next
       })
     } catch (e) { console.error(e) }
@@ -669,7 +697,9 @@ export default function CategoryPage() {
         location_id: opt.location_id,
         selection_type: type,
       })
-      setSelections(updated.selections ?? [])
+      const sels = updated.selections ?? []
+      _stable.selections = sels
+      setSelections(sels)
 
     } catch (e) { console.error(e) }
   }
@@ -677,14 +707,17 @@ export default function CategoryPage() {
   const handleRemoveFromCart = async (sel: SelectionItem) => {
     try {
       const updated = await removeSelection({ option_id: sel.option_id, location_id: sel.location_id })
-      setSelections(updated.selections ?? [])
+      const sels = updated.selections ?? []
+      _stable.selections = sels
+      setSelections(sels)
     } catch (e) { console.error(e) }
   }
 
   const handleClearCart = async () => {
     try {
       const updated = await clearAllSelections()
-      setSelections(updated.selections ?? [])
+      _stable.selections = []
+      setSelections([])
     } catch (e) { console.error(e) }
   }
 
