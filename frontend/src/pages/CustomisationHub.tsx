@@ -149,8 +149,8 @@ export default function CustomisationHub() {
     getAllLocations().then((locs: any[]) => {
       const map: Record<string, string> = {}
       locs.forEach((l: any) => {
-        const parts = [l.space, l.room_code].filter(Boolean)
-        map[l.location_id] = parts.join(' — ')
+        // Use only the human-readable space name, not the room code
+        map[l.location_id] = l.space || ''
       })
       setLocationMap(map)
     }).catch(() => {})
