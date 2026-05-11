@@ -715,7 +715,7 @@ export default function CategoryPage() {
 
   const handleClearCart = async () => {
     try {
-      const updated = await clearAllSelections()
+      await clearAllSelections()
       _stable.selections = []
       setSelections([])
     } catch (e) { console.error(e) }
