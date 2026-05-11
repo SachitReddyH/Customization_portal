@@ -344,7 +344,11 @@ export default function CategoryPage() {
   useEffect(() => {
     if (!categoryId) return
 
-    // ── Reset all page state when category changes ──
+    // ── Cleanup flag: prevents stale async callbacks from a previous category
+    //    writing into this category's state (race condition when navigating fast)
+    let active = true
+
+    // ── Reset all page state for new category ──
     const newTabs = SUB_SECTIONS[categoryId] ?? []
     setActiveTab(newTabs[0]?.id ?? '')
     setCategory(null)
@@ -357,25 +361,25 @@ export default function CategoryPage() {
     setFloorsLoading(false)
     setFloorsError(false)
 
-    getCategory(categoryId).then(setCategory).catch(console.error)
-    getMyVilla().then(villas => setVilla(villas[0] ?? null)).catch(console.error)
-    // Fetch categories → build name map for cart grouping
+    getCategory(categoryId).then(d => { if (active) setCategory(d) }).catch(console.error)
+    getMyVilla().then(villas => { if (active) setVilla(villas[0] ?? null) }).catch(console.error)
+
     getCategories().then((cats: any[]) => {
+      if (!active) return
       const map: Record<string, string> = {}
       cats.forEach(c => { map[c.category_id] = c.name })
       setCategoryNames(map)
     }).catch(console.error)
 
-    // Fetch all selections; then pre-load options for every category in the cart
     getMySelections().then(async d => {
+      if (!active) return
       const sels: SelectionItem[] = d.selections ?? []
       setSelections(sels)
-
-      // Unique category_ids that appear in selections (to populate optionMap for cart names)
       const catIds = Array.from(new Set(sels.map((s: SelectionItem) => s.category_id)))
       catIds.forEach(async (cid: string) => {
         try {
           const opts: Option[] = await getDirectOptions(cid)
+          if (!active) return
           setOptionMap(prev => {
             const next = { ...prev }
             opts.forEach(o => { next[o.option_id] = o })
@@ -387,9 +391,10 @@ export default function CategoryPage() {
 
     if (ROOM_BASED.includes(categoryId)) {
       loadFloors(categoryId)
-      // Pre-load packages so rooms_covered is in optionMap even if user never clicks Packages tab
+
       if (categoryId === 'CAT002') {
         getFlooringPackages().then(pkgs => {
+          if (!active) return
           setOptionMap(prev => {
             const next = { ...prev }
             pkgs.forEach((p: Option) => { next[p.option_id] = p })
@@ -397,12 +402,14 @@ export default function CategoryPage() {
           })
         }).catch(console.error)
 
-        // Pre-fetch all rooms so locationMap resolves package chip labels immediately
+        // Pre-fetch all rooms for package chip labels — guarded by active flag
         getFloors(categoryId).then(async d => {
+          if (!active) return
           const floorList: string[] = d.floors ?? []
           await Promise.all(floorList.map(async floor => {
             try {
               const rd = await getRooms(categoryId, floor)
+              if (!active) return
               setRoomsByFloor(prev => ({ ...prev, [floor]: rd.rooms ?? [] }))
             } catch { /* ignore */ }
           }))
@@ -411,6 +418,8 @@ export default function CategoryPage() {
     } else {
       loadDirectOptions(categoryId)
     }
+
+    return () => { active = false }
   }, [categoryId, loadFloors])
 
   /* ── Load rooms when floor expands ─────────────── */
