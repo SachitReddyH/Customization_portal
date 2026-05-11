@@ -69,7 +69,6 @@ export default function AdminCustomerDetail() {
 
   useEffect(() => {
     if (!customerId) return
-
     const fetchAll = async () => {
       setLoading(true)
       setError('')
@@ -83,19 +82,15 @@ export default function AdminCustomerDetail() {
         setData(selResp)
         setCategories(cats)
         setVillas(vs)
-        // Build location_id → display name map
         const locMap: Record<string, string> = {}
         locs.forEach((l: { location_id: string; floor?: string; space?: string }) => {
           if (l.location_id) {
-            // Show "Space — Floor" e.g. "Toilet — Bedroom 1 — Ground Floor"
             locMap[l.location_id] = l.space
               ? (l.floor ? `${l.space} — ${l.floor}` : l.space)
               : l.location_id
           }
         })
         setLocationNames(locMap)
-
-        // Fetch options for every category that appears in selections
         const catIds: string[] = Array.from(
           new Set((selResp.selections as Selection[]).map(s => s.category_id))
         )
@@ -113,22 +108,16 @@ export default function AdminCustomerDetail() {
         setLoading(false)
       }
     }
-
     fetchAll()
   }, [customerId])
 
-  // category_id is like "CAT002", match against category_id field (not MongoDB _id)
   const getCategoryName = (categoryId: string) =>
     categories.find(c => c.category_id === categoryId)?.name || categoryId
 
-  // option_id is like "OPT-FL-001", match against option_id field.
-  // Also handles synthetic addon IDs like OPT-BP-001-ADN-BAT.
   const getOptionName = (categoryId: string, optionId: string) => {
     const opts = optionsMap[categoryId] || []
     const opt = opts.find(o => o.option_id === optionId)
     if (opt) return opt.option_name || opt.space || optionId
-
-    // Synthetic addon: e.g. OPT-BP-001-ADN-BAT → "Bathtub — Happy D2"
     const adnMatch = optionId.match(/^(.+)-ADN-([A-Z]+)$/)
     if (adnMatch) {
       const [, parentId, code] = adnMatch
@@ -149,7 +138,6 @@ export default function AdminCustomerDetail() {
     const parts = [v.villa_number]
     if (v.villa_type) parts.push(v.villa_type)
     if (v.facing) parts.push(v.facing)
-    if (v.block) parts.push(`Blk ${v.block}`)
     return parts.join(' – ')
   }
 
@@ -160,13 +148,12 @@ export default function AdminCustomerDetail() {
     })
 
   if (loading) return <div className="admin-loading">Loading customer data…</div>
-  if (error) return <div className="admin-error">{error}</div>
-  if (!data) return null
+  if (error)   return <div className="admin-error">{error}</div>
+  if (!data)   return null
 
   const { customer, selections, status } = data
   const villa = getVilla(customer.villa_id)
 
-  // Group selections by category_id
   const grouped: Record<string, Selection[]> = {}
   selections.forEach(s => {
     if (!grouped[s.category_id]) grouped[s.category_id] = []
@@ -174,92 +161,76 @@ export default function AdminCustomerDetail() {
   })
 
   return (
-    <div className="admin-customer-detail">
-      {/* ── Header ── */}
-      <div className="admin-customer-header">
-        <button
-          className="admin-btn admin-btn--ghost admin-btn--sm"
-          onClick={() => navigate('/admin/customers')}
-        >
-          <ArrowLeft size={14} />
-          Back
+    <div className="acd-page">
+
+      {/* ── Customer header card ── */}
+      <div className="acd-header">
+        <button className="acd-back-btn" onClick={() => navigate('/admin/customers')}>
+          <ArrowLeft size={14} /> Back
         </button>
 
-        <div className="admin-customer-header-info">
-          <h2 className="admin-customer-name">{customer.full_name}</h2>
-          <div className="admin-customer-meta">
+        <div className="acd-header-info">
+          <h2 className="acd-name">{customer.full_name}</h2>
+          <div className="acd-meta">
             <span>{customer.email}</span>
-            {customer.phone && <span>{customer.phone}</span>}
-            {villa && <span>Villa: {formatVilla(villa)}</span>}
+            {customer.phone && <><span className="acd-meta-sep">·</span><span>{customer.phone}</span></>}
+            {villa && <><span className="acd-meta-sep">·</span><span>Villa {formatVilla(villa)}</span></>}
           </div>
         </div>
 
-        <div>
-          <span className={`badge badge--${status === 'submitted' ? 'submitted' : 'in_progress'}`}>
-            {status === 'submitted' ? 'Submitted' : 'In Progress'}
-          </span>
-        </div>
+        <span className={`acd-status-badge ${status === 'submitted' ? 'acd-status-badge--submitted' : 'acd-status-badge--progress'}`}>
+          {status === 'submitted' ? 'Submitted' : 'In Progress'}
+        </span>
       </div>
 
-      {/* ── Selections ── */}
-      <div className="admin-section">
-        <div className="admin-section-header">
-          <span className="admin-section-title">
-            Customisation Selections
-          </span>
-          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-            {selections.length} item{selections.length !== 1 ? 's' : ''} selected
-          </span>
+      {/* ── Selections card ── */}
+      <div className="acd-card">
+        <div className="acd-card-header">
+          <span className="acd-card-title">Customisation Selections</span>
+          <span className="acd-card-count">{selections.length} item{selections.length !== 1 ? 's' : ''}</span>
         </div>
 
         {selections.length === 0 ? (
-          <div className="admin-table-empty">No selections made yet.</div>
+          <div className="acd-empty">No selections made yet.</div>
         ) : (
-          Object.entries(grouped).map(([catId, items]) => (
-            <div key={catId} className="admin-category-group">
-              <div className="admin-category-group-title">
-                {getCategoryName(catId)}
-              </div>
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Option</th>
-                    <th>Location</th>
-                    <th>Type</th>
-                    <th>Sub-section</th>
-                    <th>Selected At</th>
+          <table className="acd-table">
+            <thead>
+              <tr>
+                <th>Option</th>
+                <th>Room / Location</th>
+                <th>Selected At</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(grouped).map(([catId, items]) => (
+                <>
+                  {/* Category divider row */}
+                  <tr key={`cat-${catId}`} className="acd-cat-row">
+                    <td colSpan={3}>{getCategoryName(catId)}</td>
                   </tr>
-                </thead>
-                <tbody>
                   {items.map((sel, idx) => (
-                    <tr key={idx}>
-                      <td style={{ fontWeight: 500 }}>
+                    <tr key={idx} className="acd-item-row">
+                      <td className="acd-td-option">
                         {getOptionName(catId, sel.option_id)}
                       </td>
-                      <td style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
-                        {sel.location_id ? (locationNames[sel.location_id] ?? sel.location_id) : '—'}
+                      <td className="acd-td-location">
+                        {sel.location_id
+                          ? (locationNames[sel.location_id] ?? sel.location_id)
+                          : <span className="acd-dash">—</span>
+                        }
                       </td>
-                      <td>
-                        <span
-                          className={`badge ${sel.selection_type === 'upgrade' ? 'badge--quoted' : 'badge--active'}`}
-                        >
-                          {sel.selection_type === 'upgrade' ? 'Upgrade' : 'Standard'}
-                        </span>
-                      </td>
-                      <td style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
-                        {sel.sub_section || '—'}
-                      </td>
-                      <td style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
+                      <td className="acd-td-date">
                         {formatDate(sel.selected_at)}
                       </td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          ))
+                </>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
+
     </div>
   )
 }
