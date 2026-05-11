@@ -2152,6 +2152,8 @@ body {
 }
 .cart-collapsed-count {
   font-size: 11px;
+  margin-left: 0 !important;  /* override the auto margin from .cart-count */
+  align-self: center;
 }
 .cart-collapsed-label {
   writing-mode: vertical-rl;
