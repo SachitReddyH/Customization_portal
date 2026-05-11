@@ -45,6 +45,12 @@ async def get_my_selections(user=Depends(get_current_user)):
     customer_id = user["_id"]
     villa_id = ObjectId(user["villa_id"]) if user.get("villa_id") else None
     doc = await _get_or_create_selection(db, customer_id, villa_id)
+    # Enrich selections with option_name for display
+    for sel in doc.get("selections", []):
+        if not sel.get("option_name"):
+            opt = await db.customization_options.find_one({"option_id": sel["option_id"]})
+            if opt:
+                sel["option_name"] = opt.get("option_name") or opt.get("space") or sel["option_id"]
     return _fmt(doc)
 
 

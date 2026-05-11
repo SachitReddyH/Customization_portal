@@ -5,7 +5,7 @@ import {
   Leaf, Wifi, Wind, Tv2, LogOut, Images, X, ChevronLeft, ChevronRight,
   ShoppingCart, ChevronRight as ChevronRightIcon,
 } from 'lucide-react'
-import { getMyVilla, getMySelections, getAllLocations } from '../services/api'
+import { getMyVilla, getMySelections, getAllLocations, getDirectOptions } from '../services/api'
 
 const CATEGORIES = [
   { id: 'CAT001', name: 'Space Customisations',    tagline: 'Spaces that adapt to you',                             icon: LayoutGrid    },
@@ -118,11 +118,34 @@ export default function CustomisationHub() {
   const [villa, setVilla]           = useState<any>(null)
   const [selections, setSelections] = useState<any[]>([])
   const [locationMap, setLocationMap] = useState<Record<string, string>>({})
+  const [optionMap,   setOptionMap]   = useState<Record<string, string>>({})
   const [cartOpen, setCartOpen]     = useState(false)
 
   useEffect(() => {
     getMyVilla().then((villas: any[]) => { if (villas?.length) setVilla(villas[0]) }).catch(() => {})
-    getMySelections().then((data: any) => setSelections(data?.selections ?? [])).catch(() => {})
+
+    getMySelections().then((data: any) => {
+      const sels: any[] = data?.selections ?? []
+      setSelections(sels)
+
+      // Build optionId → readable name map by fetching options for each category
+      const catIds = [...new Set(sels.map((s: any) => s.category_id))] as string[]
+      if (catIds.length === 0) return
+      Promise.all(
+        catIds.map((catId) => getDirectOptions(catId).catch(() => [] as any[]))
+      ).then((results) => {
+        const map: Record<string, string> = {}
+        results.forEach((opts: any[]) => {
+          opts.forEach((opt: any) => {
+            // Best readable name: option_name → upgrade_spec (short) → space → option_id
+            const name = opt.option_name || opt.upgrade_spec || opt.space || opt.option_id
+            map[opt.option_id] = name
+          })
+        })
+        setOptionMap(map)
+      })
+    }).catch(() => {})
+
     getAllLocations().then((locs: any[]) => {
       const map: Record<string, string> = {}
       locs.forEach((l: any) => {
@@ -342,7 +365,7 @@ export default function CustomisationHub() {
                     {items.map((s: any, i: number) => (
                       <div key={i} className="hub-cart-item">
                         <div className="hub-cart-item-info">
-                          <span className="hub-cart-item-name">{s.option_name ?? s.option_id}</span>
+                          <span className="hub-cart-item-name">{optionMap[s.option_id] ?? s.option_name ?? s.option_id}</span>
                           {s.location_id && locationMap[s.location_id] && (
                             <span className="hub-cart-item-room">{locationMap[s.location_id]}</span>
                           )}

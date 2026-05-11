@@ -7,6 +7,7 @@ class SelectionItem(BaseModel):
     category_id: str
     sub_section: Optional[str] = None       # "individual"|"package" or "sanitaryware"|"cp_fittings"
     option_id: str
+    option_name: Optional[str] = None       # resolved display name (enriched on read)
     location_id: Optional[str] = None       # for room-specific options
     selection_type: Literal["standard", "upgrade"] = "standard"
     customer_notes: Optional[str] = None
