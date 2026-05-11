@@ -272,6 +272,9 @@ export default function CategoryPage() {
   const [interestSent, setInterestSent]       = useState(false)
   const [interestLoading, setInterestLoading] = useState(false)
 
+  // Cart collapsed
+  const [cartCollapsed, setCartCollapsed] = useState(false)
+
   // Floor plan lightbox
   const [lightboxUrl, setLightboxUrl] = useState('')
   // Quote request
@@ -976,7 +979,16 @@ export default function CategoryPage() {
         </main>
 
         {/* ══ RIGHT — Floor plan + Cart ══ */}
-        <aside className="right-panel">
+        <aside className={`right-panel${cartCollapsed ? ' right-panel--collapsed' : ''}`}>
+
+          {/* Collapse toggle tab */}
+          <button
+            className="cart-collapse-btn"
+            onClick={() => setCartCollapsed(p => !p)}
+            title={cartCollapsed ? 'Expand cart' : 'Collapse cart'}
+          >
+            {cartCollapsed ? '«' : '»'}
+          </button>
 
           {/* Floor plan removed from packages tab — shown inline in each card */}
 
