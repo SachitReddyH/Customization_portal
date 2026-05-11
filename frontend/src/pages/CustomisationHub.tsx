@@ -3,8 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutGrid, Layers, Bath, ArrowUpSquare,
   Leaf, Wifi, Wind, Tv2, LogOut, Images, X, ChevronLeft, ChevronRight,
+  ShoppingCart, ChevronRight as ChevronRightIcon,
 } from 'lucide-react'
-import { getMyVilla } from '../services/api'
+import { getMyVilla, getMySelections, getAllLocations } from '../services/api'
 
 const CATEGORIES = [
   { id: 'CAT001', name: 'Space Customisations',    tagline: 'Spaces that adapt to you',                             icon: LayoutGrid    },
@@ -114,10 +115,32 @@ export default function CustomisationHub() {
   const userName = localStorage.getItem('user_name') ?? ''
 
 
-  const [villa, setVilla] = useState<any>(null)
+  const [villa, setVilla]           = useState<any>(null)
+  const [selections, setSelections] = useState<any[]>([])
+  const [locationMap, setLocationMap] = useState<Record<string, string>>({})
+  const [cartOpen, setCartOpen]     = useState(false)
+
   useEffect(() => {
     getMyVilla().then((villas: any[]) => { if (villas?.length) setVilla(villas[0]) }).catch(() => {})
+    getMySelections().then((data: any) => setSelections(data?.selections ?? [])).catch(() => {})
+    getAllLocations().then((locs: any[]) => {
+      const map: Record<string, string> = {}
+      locs.forEach((l: any) => {
+        const parts = [l.space, l.room_code].filter(Boolean)
+        map[l.location_id] = parts.join(' — ')
+      })
+      setLocationMap(map)
+    }).catch(() => {})
   }, [])
+
+  // Group selections by category for the drawer
+  const CAT_NAMES: Record<string, string> = Object.fromEntries(CATEGORIES.map(c => [c.id, c.name]))
+  const grouped = selections.reduce<Record<string, any[]>>((acc, s) => {
+    const key = CAT_NAMES[s.category_id] ?? s.category_id
+    if (!acc[key]) acc[key] = []
+    acc[key].push(s)
+    return acc
+  }, {})
 
   const handleCustomise = () => {
     if (!expanded) {
@@ -282,6 +305,69 @@ export default function CustomisationHub() {
           </div>
         )
       })()}
+
+      {/* ── Floating Cart Button ── */}
+      {expanded && (
+        <button className="hub-cart-fab" onClick={() => setCartOpen(true)}>
+          <ShoppingCart size={22} />
+          {selections.length > 0 && (
+            <span className="hub-cart-fab-count">{selections.length}</span>
+          )}
+        </button>
+      )}
+
+      {/* ── Cart Drawer ── */}
+      {cartOpen && (
+        <div className="hub-cart-overlay" onClick={() => setCartOpen(false)}>
+          <div className="hub-cart-drawer" onClick={e => e.stopPropagation()}>
+
+            {/* Header */}
+            <div className="hub-cart-header">
+              <ShoppingCart size={18} />
+              <span>Your Selections</span>
+              {selections.length > 0 && <span className="hub-cart-count">{selections.length}</span>}
+              <button className="hub-cart-close" onClick={() => setCartOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="hub-cart-body">
+              {selections.length === 0 ? (
+                <p className="hub-cart-empty">No selections yet. Browse the categories to get started.</p>
+              ) : (
+                Object.entries(grouped).map(([catName, items]) => (
+                  <div key={catName} className="hub-cart-group">
+                    <p className="hub-cart-group-label">{catName}</p>
+                    {items.map((s: any, i: number) => (
+                      <div key={i} className="hub-cart-item">
+                        <div className="hub-cart-item-info">
+                          <span className="hub-cart-item-name">{s.option_name ?? s.option_id}</span>
+                          {s.location_id && locationMap[s.location_id] && (
+                            <span className="hub-cart-item-room">{locationMap[s.location_id]}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="hub-cart-footer">
+              <button
+                className="hub-cart-quote-btn"
+                onClick={() => { setCartOpen(false); navigate('/category/CAT001') }}
+              >
+                Continue Customising
+                <ChevronRightIcon size={16} />
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   )
