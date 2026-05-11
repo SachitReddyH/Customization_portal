@@ -6,7 +6,6 @@ import {
   getCategory, getCategories, getFloors, getRooms, getRoomOptions,
   getDirectOptions, getFlooringPackages,
   getMyVilla, getMySelections, upsertSelection, removeSelection, clearAllSelections,
-  getMyQuotes, requestQuote,
   submitInterest,
   BASE,
 } from '../services/api'
@@ -288,14 +287,6 @@ export default function CategoryPage() {
 
   // Floor plan lightbox
   const [lightboxUrl, setLightboxUrl] = useState('')
-  // Quote request
-  const [pendingQuote, setPendingQuote] = useState<any>(null)   // the pending quote object
-  const [quoteModalOpen, setQuoteModalOpen] = useState(false)
-  const [quoteModalMode, setQuoteModalMode] = useState<'new' | 'update'>('new')
-  const [quoteNotes, setQuoteNotes] = useState('')
-  const [quoteSubmitting, setQuoteSubmitting] = useState(false)
-  const [quoteJustActed, setQuoteJustActed] = useState(false)   // show inline success flash
-  const [quoteError, setQuoteError] = useState('')
 
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [galleryLightbox, setGalleryLightbox] = useState<MockImage | null>(null)
@@ -354,11 +345,6 @@ export default function CategoryPage() {
     if (!categoryId) return
     getCategory(categoryId).then(setCategory).catch(console.error)
     getMyVilla().then(villas => setVilla(villas[0] ?? null)).catch(console.error)
-    getMyQuotes().then((qs: any[]) => {
-      const pq = qs.find((q: any) => q.status === 'pending')
-      setPendingQuote(pq ?? null)
-    }).catch(console.error)
-
     // Fetch categories → build name map for cart grouping
     getCategories().then((cats: any[]) => {
       const map: Record<string, string> = {}
@@ -677,23 +663,6 @@ export default function CategoryPage() {
       const updated = await clearAllSelections()
       setSelections(updated.selections ?? [])
     } catch (e) { console.error(e) }
-  }
-
-  const handleRequestQuote = async () => {
-    setQuoteSubmitting(true)
-    setQuoteError('')
-    try {
-      const result = await requestQuote({ customer_notes: quoteNotes.trim() || undefined })
-      setPendingQuote(result)
-      setQuoteJustActed(true)
-      setQuoteModalOpen(false)
-      setQuoteNotes('')
-      setTimeout(() => setQuoteJustActed(false), 4000)
-    } catch (e: any) {
-      setQuoteError(e.response?.data?.detail ?? 'Failed to submit. Please try again.')
-    } finally {
-      setQuoteSubmitting(false)
-    }
   }
 
   /* ── Render ──────────────────────────────────────── */
@@ -1110,48 +1079,6 @@ export default function CategoryPage() {
 
         </aside>
       </div>
-
-      {/* ── Quote request modal ── */}
-      {quoteModalOpen && (
-        <div className="quote-modal-overlay" onClick={() => !quoteSubmitting && setQuoteModalOpen(false)}>
-          <div className="quote-modal" onClick={e => e.stopPropagation()}>
-            <h3 className="quote-modal-title">
-              {quoteModalMode === 'update' ? 'Update Quote Request' : 'Request for Quote'}
-            </h3>
-            <p className="quote-modal-subtitle">
-              {quoteModalMode === 'update'
-                ? `Your existing request will be updated with your current selections (${selections.length} item${selections.length !== 1 ? 's' : ''}). The admin will be notified of the change.`
-                : `Your current selections (${selections.length} item${selections.length !== 1 ? 's' : ''}) will be sent to our team. You can add an optional note below.`
-              }
-            </p>
-            <textarea
-              className="quote-modal-notes"
-              placeholder="Any special requests or questions for our team… (optional)"
-              value={quoteNotes}
-              onChange={e => setQuoteNotes(e.target.value)}
-              rows={4}
-              disabled={quoteSubmitting}
-            />
-            {quoteError && <p className="quote-modal-error">{quoteError}</p>}
-            <div className="quote-modal-actions">
-              <button
-                className="quote-modal-submit"
-                onClick={handleRequestQuote}
-                disabled={quoteSubmitting}
-              >
-                {quoteSubmitting ? 'Submitting…' : quoteModalMode === 'update' ? 'Update Request' : 'Submit Request'}
-              </button>
-              <button
-                className="quote-modal-cancel"
-                onClick={() => setQuoteModalOpen(false)}
-                disabled={quoteSubmitting}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Floor plan lightbox ── */}
       {lightboxUrl && (

@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutGrid, Layers, Bath, ArrowUpSquare,
   Leaf, Wifi, Wind, Tv2, LogOut, Images, X, ChevronLeft, ChevronRight,
-  ShoppingCart, ChevronRight as ChevronRightIcon,
+  ShoppingCart,
 } from 'lucide-react'
 import { getMyVilla, getMySelections, getAllLocations, getDirectOptions, requestQuote } from '../services/api'
 
