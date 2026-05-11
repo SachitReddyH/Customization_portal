@@ -862,6 +862,16 @@ body {
   width: 100%;
 }
 
+/* In the wide (no-sidebar) view, cap content width and centre it
+   so the panel doesn't stretch awkwardly when the cart is collapsed */
+.options-panel--wide .options-grid {
+  max-width: 1040px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  align-self: center;
+}
+
 /* When no floor sidebar — centre cards with a comfortable max width */
 .options-grid--direct {
   max-width: 1000px;
