@@ -126,7 +126,7 @@ export default function AdminQuotes() {
   }
 
   const fmtDate = (d?: string) => d
-    ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+    ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })
     : '—'
 
   const fmtPrice = (p?: number) => p != null

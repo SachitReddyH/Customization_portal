@@ -145,7 +145,7 @@ export default function AdminDashboard() {
                   <td>{i.customer_email}</td>
                   <td>{i.villa_name ?? '—'}</td>
                   <td>{i.category_name}</td>
-                  <td>{i.created_at ? new Date(i.created_at).toLocaleDateString() : '—'}</td>
+                  <td>{i.created_at ? new Date(i.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }) : '—'}</td>
                 </tr>
               ))}
             </tbody>

@@ -147,7 +147,8 @@ export default function AdminCustomers() {
   const formatDeadline = (d?: string) => {
     if (!d) return '—'
     return new Date(d).toLocaleDateString('en-IN', {
-      day: '2-digit', month: 'short', year: 'numeric'
+      day: '2-digit', month: 'short', year: 'numeric',
+      timeZone: 'Asia/Kolkata'
     })
   }
 

@@ -144,7 +144,8 @@ export default function AdminCustomerDetail() {
   const formatDate = (d: string) =>
     new Date(d).toLocaleString('en-IN', {
       day: '2-digit', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit'
+      hour: '2-digit', minute: '2-digit',
+      timeZone: 'Asia/Kolkata'
     })
 
   if (loading) return <div className="admin-loading">Loading customer data…</div>
