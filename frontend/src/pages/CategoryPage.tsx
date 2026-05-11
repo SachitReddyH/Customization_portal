@@ -981,14 +981,13 @@ export default function CategoryPage() {
         {/* ══ RIGHT — Floor plan + Cart ══ */}
         <aside className={`right-panel${cartCollapsed ? ' right-panel--collapsed' : ''}`}>
 
-          {/* Collapsed strip — just shows expand button */}
+          {/* Collapsed strip — full-height clickable tab */}
           {cartCollapsed && (
-            <div className="cart-collapsed-strip">
-              <button className="cart-toggle-btn" onClick={() => setCartCollapsed(false)} title="Expand cart">
-                <ChevronLeft size={18} />
-              </button>
-              <span className="cart-collapsed-label">Cart</span>
-              {selections.length > 0 && <span className="cart-count">{selections.length}</span>}
+            <div className="cart-collapsed-strip" onClick={() => setCartCollapsed(false)} title="Open cart">
+              <ChevronLeft size={18} className="cart-collapsed-arrow" />
+              <ShoppingCart size={15} className="cart-collapsed-icon" />
+              {selections.length > 0 && <span className="cart-count cart-collapsed-count">{selections.length}</span>}
+              <span className="cart-collapsed-label">Your Selections</span>
             </div>
           )}
 

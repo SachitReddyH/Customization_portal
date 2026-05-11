@@ -2126,36 +2126,52 @@ body {
   width: 48px;
 }
 
-/* Collapsed vertical strip */
+/* Collapsed vertical strip — full-height clickable tab */
 .cart-collapsed-strip {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 16px 0;
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 20px 0 24px;
   height: 100%;
+  cursor: pointer;
+  background: #faf9f7;
+  transition: background 0.15s;
 }
-.cart-collapsed-strip .cart-count {
+.cart-collapsed-strip:hover {
+  background: #f0ede9;
+}
+.cart-collapsed-arrow {
+  color: var(--dark);
+  flex-shrink: 0;
+}
+.cart-collapsed-icon {
+  color: #888;
+  flex-shrink: 0;
+}
+.cart-collapsed-count {
   font-size: 11px;
 }
 .cart-collapsed-label {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   font-family: var(--font-body);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #aaa;
+  margin-top: 4px;
 }
 
-/* Toggle button — used both in header and collapsed strip */
+/* Toggle button — in cart header */
 .cart-toggle-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: 1px solid #e5e0d9;
   background: #f7f5f2;
