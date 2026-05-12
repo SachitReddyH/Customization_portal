@@ -151,6 +151,13 @@ export default function CustomisationHub() {
     }
   }
 
+  // Poll quote status — runs on mount and every 15 s so the bell updates live
+  const fetchQuote = () => {
+    getMyQuotes().then((quotes: any[]) => {
+      if (quotes?.length) setMyQuote(quotes[0])
+    }).catch(() => {})
+  }
+
   useEffect(() => {
     getMyVilla().then((villas: any[]) => { if (villas?.length) setVilla(villas[0]) }).catch(() => {})
 
@@ -178,25 +185,28 @@ export default function CustomisationHub() {
       setLocationMap(map)
     }).catch(() => {})
 
-    // Fetch quote for bell notification
-    getMyQuotes().then((quotes: any[]) => {
-      if (quotes?.length) setMyQuote(quotes[0])
-    }).catch(() => {})
-  }, [])
+    // Fetch quote immediately, then poll every 15 s
+    fetchQuote()
+    const quoteTimer = setInterval(fetchQuote, 15000)
+    return () => clearInterval(quoteTimer)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const isAccepted = selectionsStatus === 'accepted'
   const hasQuoteNotification = myQuote?.customer_notification === 'quoted'
   const isQuoteAccepted      = myQuote?.status === 'accepted'
 
   // Build quote items from snapshot + item_prices
+  // Match prices by option_id + location_id (not array index, which breaks for partial price sets)
   const quoteItems = (() => {
     if (!myQuote?.selection_snapshot) return []
     const snapshot   = myQuote.selection_snapshot as any[]
-    const itemPrices = myQuote.item_prices as any[] | undefined
-    return snapshot.map((s: any, i: number) => {
-      const saved = itemPrices?.find((_: any, pi: number) => pi === i)
-      const price = saved?.price ?? null
-      return { ...s, resolvedPrice: price }
+    const itemPrices = (myQuote.item_prices ?? []) as any[]
+    return snapshot.map((s: any) => {
+      const saved = itemPrices.find((ip: any) =>
+        ip.option_id === s.option_id &&
+        (ip.location_id ?? null) === (s.location_id ?? null)
+      )
+      return { ...s, resolvedPrice: saved?.price ?? null }
     })
   })()
 
