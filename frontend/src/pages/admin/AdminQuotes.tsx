@@ -1,6 +1,6 @@
 import { useEffect, useState, Fragment } from 'react'
-import { ChevronDown, ChevronUp, Save, Download } from 'lucide-react'
-import { listQuotes, updateQuote, markQuoteRead, getAllLocations } from '../../services/api'
+import { ChevronDown, ChevronUp, Save, Download, Send } from 'lucide-react'
+import { listQuotes, updateQuote, sendQuoteToCustomer, markQuoteRead, getAllLocations } from '../../services/api'
 import { generateQuotation } from '../../utils/generateQuotation'
 
 interface Quote {
@@ -94,6 +94,7 @@ export default function AdminQuotes() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [editStates, setEditStates] = useState<Record<string, EditState>>({})
   const [saving, setSaving] = useState<string | null>(null)
+  const [sending, setSending] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<Record<string, string>>({})
 
   const load = async () => {
@@ -188,6 +189,26 @@ export default function AdminQuotes() {
     } catch (err: any) {
       setSaveError(prev => ({ ...prev, [id]: err.response?.data?.detail || 'Failed to save.' }))
     } finally { setSaving(null) }
+  }
+
+  const handleSendToCustomer = async (id: string) => {
+    const es = editStates[id]; if (!es) return
+    const q  = quotes.find(q => q.id === id)!
+    setSending(id); setSaveError(prev => ({ ...prev, [id]: '' }))
+    try {
+      const snapshot = q.selection_snapshot || []
+      const cleanItemPrices = snapshot
+        .map((s: any, i: number) => ({ option_id: s.option_id, location_id: s.location_id || null, price: parseFloat(es.item_prices[i] ?? ''), _i: i }))
+        .filter(ip => { const v = es.item_prices[ip._i]; return v !== undefined && v !== '' && !isNaN(ip.price) })
+        .map(({ option_id, location_id, price }) => ({ option_id, location_id, price }))
+      const total = cleanItemPrices.reduce((sum, ip) => sum + ip.price, 0)
+      const payload: any = { status: 'quoted' }
+      if (cleanItemPrices.length > 0) { payload.item_prices = cleanItemPrices; payload.quoted_price = total }
+      await sendQuoteToCustomer(id, payload)
+      await load(); setExpandedId(null)
+    } catch (err: any) {
+      setSaveError(prev => ({ ...prev, [id]: err.response?.data?.detail || 'Failed to send.' }))
+    } finally { setSending(null) }
   }
 
   const handleDownload = (q: Quote, es: EditState) => {
@@ -364,13 +385,16 @@ export default function AdminQuotes() {
                   {saveError[q.id] && <div className="admin-error" style={{ margin: 0 }}>{saveError[q.id]}</div>}
 
                   <div className="quote-expand-actions">
-                    <button className="admin-btn admin-btn--primary admin-btn--sm" onClick={() => handleSave(q.id)} disabled={saving === q.id}>
+                    <button className="admin-btn admin-btn--primary admin-btn--sm" onClick={() => handleSave(q.id)} disabled={saving === q.id || sending === q.id}>
                       <Save size={13} /> {saving === q.id ? 'Saving…' : 'Save Changes'}
                     </button>
-                    <button className="admin-btn admin-btn--download admin-btn--sm" onClick={() => handleDownload(q, es)} disabled={saving === q.id}>
+                    <button className="admin-btn admin-btn--send admin-btn--sm" onClick={() => handleSendToCustomer(q.id)} disabled={saving === q.id || sending === q.id}>
+                      <Send size={13} /> {sending === q.id ? 'Sending…' : 'Send to Customer'}
+                    </button>
+                    <button className="admin-btn admin-btn--download admin-btn--sm" onClick={() => handleDownload(q, es)} disabled={saving === q.id || sending === q.id}>
                       <Download size={13} /> Download Quotation
                     </button>
-                    <button className="admin-btn admin-btn--ghost admin-btn--sm" onClick={() => setExpandedId(null)} disabled={saving === q.id}>
+                    <button className="admin-btn admin-btn--ghost admin-btn--sm" onClick={() => setExpandedId(null)} disabled={saving === q.id || sending === q.id}>
                       Cancel
                     </button>
                   </div>

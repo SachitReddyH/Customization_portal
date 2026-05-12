@@ -24,12 +24,14 @@ class QuoteRequestResponse(BaseModel):
     customer_notes: Optional[str] = None
     admin_notes: Optional[str] = None
     quoted_price: Optional[float] = None
-    item_prices: Optional[List[dict]] = None  # per-line-item prices set by admin
+    item_prices: Optional[List[dict]] = None        # per-line-item prices set by admin
+    customer_notification: Optional[str] = None     # 'quoted' | None  (customer-facing bell)
     selection_snapshot: Optional[List[dict]] = None
     requested_at: datetime
-    updated_at: Optional[datetime] = None   # set when customer updates an existing request
+    updated_at: Optional[datetime] = None           # set when customer updates an existing request
     reviewed_at: Optional[datetime] = None
     reviewed_by: Optional[str] = None
+    accepted_at: Optional[datetime] = None
 
     class Config:
         populate_by_name = True

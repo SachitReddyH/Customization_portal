@@ -142,8 +142,18 @@ export const markQuoteRead = (id: string) =>
   api.post(`/quotes/${id}/read`).then(r => r.data)
 
 export const updateQuote = (id: string, data: {
-  status: string; admin_notes?: string; quoted_price?: number
+  status: string; admin_notes?: string; quoted_price?: number; item_prices?: any[]
 }) => api.patch(`/quotes/${id}`, data).then(r => r.data)
+
+export const sendQuoteToCustomer = (id: string, data: {
+  status: string; item_prices?: any[]; quoted_price?: number
+}) => api.post(`/quotes/${id}/send`, data).then(r => r.data)
+
+export const acceptQuote = (id: string) =>
+  api.post(`/quotes/${id}/accept`).then(r => r.data)
+
+export const requestQuoteChanges = (id: string) =>
+  api.post(`/quotes/${id}/request_changes`).then(r => r.data)
 
 /* ── Admin Options ────────────────────────────────── */
 export const listOptions = (categoryId: string) =>

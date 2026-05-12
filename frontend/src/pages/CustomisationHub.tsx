@@ -3,9 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutGrid, Layers, Bath, ArrowUpSquare,
   Leaf, Wifi, Wind, Tv2, LogOut, Images, X, ChevronLeft, ChevronRight,
-  ShoppingCart,
+  ShoppingCart, Bell, CheckCircle, Lock,
 } from 'lucide-react'
-import { getMyVilla, getMySelections, getAllLocations, getDirectOptions, requestQuote } from '../services/api'
+import {
+  getMyVilla, getMySelections, getAllLocations, getDirectOptions,
+  requestQuote, getMyQuotes, acceptQuote, requestQuoteChanges,
+} from '../services/api'
 
 const CATEGORIES = [
   { id: 'CAT001', name: 'Space Customisations',    tagline: 'Spaces that adapt to you',                             icon: LayoutGrid    },
@@ -83,9 +86,11 @@ const MOCK_GALLERY: MockGroup[] = [
 ]
 
 const ALL_MOCK_IMAGES: MockImage[] = MOCK_GALLERY.flatMap(g => g.images)
+const imgSrc = (file: string) => `/mockvillaimages/${encodeURIComponent(file)}`
 
-const imgSrc = (file: string) =>
-  `/mockvillaimages/${encodeURIComponent(file)}`
+function fmtINR(n: number) {
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n)
+}
 
 /* ════════════════════════════════════════════════ */
 
@@ -114,14 +119,21 @@ export default function CustomisationHub() {
 
   const userName = localStorage.getItem('user_name') ?? ''
 
+  const [villa,        setVilla]        = useState<any>(null)
+  const [selections,   setSelections]   = useState<any[]>([])
+  const [selectionsStatus, setSelectionsStatus] = useState<string>('in_progress')
+  const [locationMap,  setLocationMap]  = useState<Record<string, string>>({})
+  const [optionMap,    setOptionMap]    = useState<Record<string, string>>({})
+  const [cartOpen,     setCartOpen]     = useState(false)
 
-  const [villa, setVilla]           = useState<any>(null)
-  const [selections, setSelections] = useState<any[]>([])
-  const [locationMap, setLocationMap] = useState<Record<string, string>>({})
-  const [optionMap,   setOptionMap]   = useState<Record<string, string>>({})
-  const [cartOpen, setCartOpen]     = useState(false)
+  // Quote notification state
+  const [myQuote,          setMyQuote]          = useState<any>(null)
+  const [quotePanelOpen,   setQuotePanelOpen]   = useState(false)
+  const [acceptLoading,    setAcceptLoading]    = useState(false)
+  const [acceptError,      setAcceptError]      = useState('')
+  const [editLoading,      setEditLoading]      = useState(false)
 
-  // Quote state
+  // Cart quote state
   const [quoteSubmitting, setQuoteSubmitting] = useState(false)
   const [quoteSuccess,    setQuoteSuccess]    = useState(false)
   const [quoteError,      setQuoteError]      = useState('')
@@ -145,19 +157,15 @@ export default function CustomisationHub() {
     getMySelections().then((data: any) => {
       const sels: any[] = data?.selections ?? []
       setSelections(sels)
+      setSelectionsStatus(data?.status ?? 'in_progress')
 
-      // Build optionId → readable name map by fetching options for each category
       const catIds = [...new Set(sels.map((s: any) => s.category_id))] as string[]
       if (catIds.length === 0) return
-      Promise.all(
-        catIds.map((catId) => getDirectOptions(catId).catch(() => [] as any[]))
-      ).then((results) => {
+      Promise.all(catIds.map((catId) => getDirectOptions(catId).catch(() => [] as any[]))).then((results) => {
         const map: Record<string, string> = {}
         results.forEach((opts: any[]) => {
           opts.forEach((opt: any) => {
-            // Best readable name: option_name → upgrade_spec (short) → space → option_id
-            const name = opt.option_name || opt.upgrade_spec || opt.space || opt.option_id
-            map[opt.option_id] = name
+            map[opt.option_id] = opt.option_name || opt.upgrade_spec || opt.space || opt.option_id
           })
         })
         setOptionMap(map)
@@ -166,15 +174,75 @@ export default function CustomisationHub() {
 
     getAllLocations().then((locs: any[]) => {
       const map: Record<string, string> = {}
-      locs.forEach((l: any) => {
-        // Use only the human-readable space name, not the room code
-        map[l.location_id] = l.space || ''
-      })
+      locs.forEach((l: any) => { map[l.location_id] = l.space || '' })
       setLocationMap(map)
+    }).catch(() => {})
+
+    // Fetch quote for bell notification
+    getMyQuotes().then((quotes: any[]) => {
+      if (quotes?.length) setMyQuote(quotes[0])
     }).catch(() => {})
   }, [])
 
-  // Group selections by category for the drawer
+  const isAccepted = selectionsStatus === 'accepted'
+  const hasQuoteNotification = myQuote?.customer_notification === 'quoted'
+  const isQuoteAccepted      = myQuote?.status === 'accepted'
+
+  // Build quote items from snapshot + item_prices
+  const quoteItems = (() => {
+    if (!myQuote?.selection_snapshot) return []
+    const snapshot   = myQuote.selection_snapshot as any[]
+    const itemPrices = myQuote.item_prices as any[] | undefined
+    return snapshot.map((s: any, i: number) => {
+      const saved = itemPrices?.find((_: any, pi: number) => pi === i)
+      const price = saved?.price ?? null
+      return { ...s, resolvedPrice: price }
+    })
+  })()
+
+  const quoteTotal: number | null = myQuote?.quoted_price ?? null
+
+  // Group quote items by category
+  const quoteGroups: Record<string, any[]> = {}
+  quoteItems.forEach((item: any) => {
+    const key = item.category_name ?? item.category_id ?? 'Other'
+    if (!quoteGroups[key]) quoteGroups[key] = []
+    quoteGroups[key].push(item)
+  })
+
+  const handleAcceptQuote = async () => {
+    if (!myQuote) return
+    const confirmed = window.confirm(
+      '⚠️ Once you accept this quotation, your villa customisations will be permanently frozen and no further changes can be made.\n\nAre you sure you want to accept?'
+    )
+    if (!confirmed) return
+    setAcceptLoading(true)
+    setAcceptError('')
+    try {
+      const updated = await acceptQuote(myQuote.id)
+      setMyQuote(updated)
+      setSelectionsStatus('accepted')
+      setQuotePanelOpen(false)
+    } catch (e: any) {
+      setAcceptError(e?.response?.data?.detail || 'Something went wrong.')
+    } finally {
+      setAcceptLoading(false)
+    }
+  }
+
+  const handleEditSelections = async () => {
+    if (!myQuote) return
+    setEditLoading(true)
+    try {
+      const updated = await requestQuoteChanges(myQuote.id)
+      setMyQuote(updated)
+      setSelectionsStatus('in_progress')
+      setQuotePanelOpen(false)
+    } catch { /* ignore */ }
+    finally { setEditLoading(false) }
+  }
+
+  // Group cart selections by category
   const CAT_NAMES: Record<string, string> = Object.fromEntries(CATEGORIES.map(c => [c.id, c.name]))
   const grouped = selections.reduce<Record<string, any[]>>((acc, s) => {
     const key = CAT_NAMES[s.category_id] ?? s.category_id
@@ -198,23 +266,33 @@ export default function CustomisationHub() {
       {/* White frosted overlay */}
       <div className={`hub-video-overlay ${expanded ? 'active' : ''}`} />
 
-      {/* ── Top-right: mock villa button + logout ── */}
+      {/* ── Top-right: mock villa + bell + logout ── */}
       <div className={`hub-topbar ${expanded ? 'hub-topbar--dark' : ''}`}>
-        <button
-          className="hub-topbar-gallery"
-          onClick={() => setGalleryOpen(true)}
-          title="Mock Villa Images"
-        >
-          <Images size={15} />
-          <span>Mock Villa</span>
+        <button className="hub-topbar-gallery" onClick={() => setGalleryOpen(true)} title="Mock Villa Images">
+          <Images size={15} /><span>Mock Villa</span>
         </button>
+
+        {/* ── Bell notification button ── */}
+        <button
+          className={`hub-topbar-bell ${hasQuoteNotification ? 'hub-topbar-bell--active' : ''} ${isQuoteAccepted ? 'hub-topbar-bell--accepted' : ''}`}
+          onClick={() => setQuotePanelOpen(true)}
+          title={isQuoteAccepted ? 'Quotation Accepted' : hasQuoteNotification ? 'You have a new quotation' : 'Quotation'}
+        >
+          {isQuoteAccepted
+            ? <CheckCircle size={15} />
+            : <Bell size={15} />
+          }
+          {hasQuoteNotification && !isQuoteAccepted && (
+            <span className="hub-bell-dot" />
+          )}
+        </button>
+
         <button className="hub-topbar-logout" onClick={handleLogout} title="Log out">
-          <LogOut size={15} />
-          <span>Logout</span>
+          <LogOut size={15} /><span>Logout</span>
         </button>
       </div>
 
-      {/* ── Villa info bar — slides in with cards ── */}
+      {/* ── Villa info bar ── */}
       <div className={`hub-infobar ${expanded ? 'hub-infobar--visible' : ''}`}>
         <div className="hub-infobar-chip">
           <span className="hub-infobar-label">Name</span>
@@ -240,6 +318,14 @@ export default function CustomisationHub() {
         <button className="hub-cta-btn" onClick={handleCustomise}>Begin Customising</button>
       </div>
 
+      {/* ── Accepted banner ── */}
+      {isAccepted && expanded && (
+        <div className="hub-accepted-banner">
+          <Lock size={14} />
+          Your customisation selections have been accepted and are now locked.
+        </div>
+      )}
+
       {/* ── Category cards ── */}
       <div className="categories-overlay">
         <div className="categories-grid">
@@ -251,13 +337,14 @@ export default function CustomisationHub() {
                 return (
                   <div
                     key={cat.id}
-                    className={`card ${expanded ? 'visible' : ''}`}
+                    className={`card ${expanded ? 'visible' : ''} ${isAccepted ? 'card--locked' : ''}`}
                     style={{ transitionDelay: settled ? '0ms' : expanded ? `${globalIdx * 60}ms` : '0ms' }}
-                    onClick={() => navigate(`/category/${cat.id}`)}
+                    onClick={() => !isAccepted && navigate(`/category/${cat.id}`)}
                   >
-                    <span className="card-icon"><Icon size={26} strokeWidth={1.5} color="#F05E3E" /></span>
+                    <span className="card-icon"><Icon size={26} strokeWidth={1.5} color={isAccepted ? '#bbb' : '#F05E3E'} /></span>
                     <p className="card-name">{cat.name}</p>
                     <p className="card-tagline">{cat.tagline}</p>
+                    {isAccepted && <Lock size={14} className="card-lock-icon" color="#bbb" />}
                   </div>
                 )
               })}
@@ -266,46 +353,28 @@ export default function CustomisationHub() {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════════
-          MOCK VILLA GALLERY MODAL
-      ══════════════════════════════════════════ */}
+      {/* ── Mock Villa Gallery Modal ── */}
       {galleryOpen && (
         <div className="mv-overlay" onClick={() => setGalleryOpen(false)}>
           <div className="mv-panel" onClick={e => e.stopPropagation()}>
-
-            {/* Header */}
             <div className="mv-header">
               <div>
                 <h2 className="mv-title">Mock Villa</h2>
                 <p className="mv-subtitle">Reference images across all floors</p>
                 <p className="mv-disclaimer"><strong>Disclaimer:</strong> These images are for reference purposes only and do not represent the actual final product, finishes, or dimensions.</p>
               </div>
-              <button className="mv-close" onClick={() => setGalleryOpen(false)}>
-                <X size={20} />
-              </button>
+              <button className="mv-close" onClick={() => setGalleryOpen(false)}><X size={20} /></button>
             </div>
-
-            {/* Grouped image grid */}
             <div className="mv-body">
               {MOCK_GALLERY.map(section => (
                 <div key={section.group} className="mv-section">
                   <h3 className="mv-section-title">{section.group}</h3>
                   <div className="mv-grid">
                     {section.images.map(img => (
-                      <div
-                        key={img.file}
-                        className="mv-item"
-                        onClick={() => setLightbox(img)}
-                      >
+                      <div key={img.file} className="mv-item" onClick={() => setLightbox(img)}>
                         <div className="mv-img-wrap">
-                          <img
-                            src={imgSrc(img.file)}
-                            alt={img.label}
-                            loading="lazy"
-                            onError={e => {
-                              (e.target as HTMLImageElement).style.display = 'none'
-                            }}
-                          />
+                          <img src={imgSrc(img.file)} alt={img.label} loading="lazy"
+                            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                         </div>
                         <p className="mv-label">{img.label}</p>
                       </div>
@@ -325,21 +394,10 @@ export default function CustomisationHub() {
         const goNext = (e: React.MouseEvent) => { e.stopPropagation(); setLightbox(ALL_MOCK_IMAGES[(idx + 1) % ALL_MOCK_IMAGES.length]) }
         return (
           <div className="mv-lightbox" onClick={() => setLightbox(null)}>
-            <button className="mv-lightbox-close" onClick={() => setLightbox(null)}>
-              <X size={24} />
-            </button>
-            <button className="mv-lightbox-nav mv-lightbox-nav--prev" onClick={goPrev}>
-              <ChevronLeft size={32} />
-            </button>
-            <img
-              src={imgSrc(lightbox.file)}
-              alt={lightbox.label}
-              className="mv-lightbox-img"
-              onClick={e => e.stopPropagation()}
-            />
-            <button className="mv-lightbox-nav mv-lightbox-nav--next" onClick={goNext}>
-              <ChevronRight size={32} />
-            </button>
+            <button className="mv-lightbox-close" onClick={() => setLightbox(null)}><X size={24} /></button>
+            <button className="mv-lightbox-nav mv-lightbox-nav--prev" onClick={goPrev}><ChevronLeft size={32} /></button>
+            <img src={imgSrc(lightbox.file)} alt={lightbox.label} className="mv-lightbox-img" onClick={e => e.stopPropagation()} />
+            <button className="mv-lightbox-nav mv-lightbox-nav--next" onClick={goNext}><ChevronRight size={32} /></button>
             <p className="mv-lightbox-label" onClick={e => e.stopPropagation()}>
               {lightbox.label} <span className="mv-lightbox-counter">({idx + 1} / {ALL_MOCK_IMAGES.length})</span>
             </p>
@@ -348,12 +406,10 @@ export default function CustomisationHub() {
       })()}
 
       {/* ── Floating Cart Button ── */}
-      {expanded && (
+      {expanded && !isAccepted && (
         <button className="hub-cart-fab" onClick={() => setCartOpen(true)}>
           <ShoppingCart size={22} />
-          {selections.length > 0 && (
-            <span className="hub-cart-fab-count">{selections.length}</span>
-          )}
+          {selections.length > 0 && <span className="hub-cart-fab-count">{selections.length}</span>}
         </button>
       )}
 
@@ -361,18 +417,12 @@ export default function CustomisationHub() {
       {cartOpen && (
         <div className="hub-cart-overlay" onClick={() => setCartOpen(false)}>
           <div className="hub-cart-drawer" onClick={e => e.stopPropagation()}>
-
-            {/* Header */}
             <div className="hub-cart-header">
               <ShoppingCart size={18} />
               <span>Your Selections</span>
               {selections.length > 0 && <span className="hub-cart-count">{selections.length}</span>}
-              <button className="hub-cart-close" onClick={() => setCartOpen(false)}>
-                <X size={18} />
-              </button>
+              <button className="hub-cart-close" onClick={() => setCartOpen(false)}><X size={18} /></button>
             </div>
-
-            {/* Body */}
             <div className="hub-cart-body">
               {selections.length === 0 ? (
                 <p className="hub-cart-empty">No selections yet. Browse the categories to get started.</p>
@@ -394,8 +444,6 @@ export default function CustomisationHub() {
                 ))
               )}
             </div>
-
-            {/* Footer */}
             <div className="hub-cart-footer">
               {quoteSuccess ? (
                 <div className="hub-cart-quote-success">
@@ -415,6 +463,114 @@ export default function CustomisationHub() {
                 </>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════
+          QUOTE NOTIFICATION PANEL
+      ══════════════════════════════════════════ */}
+      {quotePanelOpen && (
+        <div className="qn-overlay" onClick={() => setQuotePanelOpen(false)}>
+          <div className="qn-panel" onClick={e => e.stopPropagation()}>
+
+            {/* Header */}
+            <div className="qn-header">
+              <button className="qn-close" onClick={() => setQuotePanelOpen(false)}><X size={18} /></button>
+              {isQuoteAccepted ? (
+                <div className="qn-header-accepted">
+                  <CheckCircle size={28} color="#1a7a47" />
+                  <div>
+                    <h2 className="qn-title">Quotation Accepted</h2>
+                    <p className="qn-subtitle">Your customisations are confirmed and locked</p>
+                  </div>
+                </div>
+              ) : hasQuoteNotification ? (
+                <div className="qn-header-info">
+                  <Bell size={22} color="#F05E3E" />
+                  <div>
+                    <h2 className="qn-title">Your Quotation is Ready</h2>
+                    <p className="qn-subtitle">Capstone Life has reviewed your selections and prepared a price</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="qn-header-info">
+                  <Bell size={22} color="#aaa" />
+                  <div>
+                    <h2 className="qn-title">Your Quotation</h2>
+                    <p className="qn-subtitle">Quote status: {myQuote?.status ?? 'No quote yet'}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Items */}
+            {quoteItems.length > 0 ? (
+              <div className="qn-body">
+                {Object.entries(quoteGroups).map(([cat, items]) => (
+                  <div key={cat} className="qn-group">
+                    <p className="qn-cat">{cat}</p>
+                    {items.map((item: any, i: number) => (
+                      <div key={i} className="qn-item">
+                        <div className="qn-item-info">
+                          <span className="qn-item-name">
+                            {item.option_name || item.option_id}
+                          </span>
+                          {item.room_label && (
+                            <span className="qn-item-room">{item.room_label}</span>
+                          )}
+                        </div>
+                        <span className="qn-item-price">
+                          {item.resolvedPrice != null
+                            ? fmtINR(item.resolvedPrice)
+                            : <span className="qn-on-request">On Request</span>
+                          }
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+
+                {/* Total */}
+                <div className="qn-total-row">
+                  <span className="qn-total-label">Total</span>
+                  <span className="qn-total-value">
+                    {quoteTotal != null ? fmtINR(quoteTotal) : '—'}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="qn-empty">No quotation details yet.</div>
+            )}
+
+            {/* Footer actions */}
+            {!isQuoteAccepted && (hasQuoteNotification || myQuote?.status === 'quoted') && (
+              <div className="qn-footer">
+                {acceptError && <p className="qn-error">{acceptError}</p>}
+                <button
+                  className="qn-btn qn-btn--accept"
+                  onClick={handleAcceptQuote}
+                  disabled={acceptLoading || editLoading}
+                >
+                  <CheckCircle size={15} />
+                  {acceptLoading ? 'Accepting…' : 'Accept Quote'}
+                </button>
+                <button
+                  className="qn-btn qn-btn--edit"
+                  onClick={handleEditSelections}
+                  disabled={acceptLoading || editLoading}
+                >
+                  {editLoading ? 'Please wait…' : 'Edit My Selections'}
+                </button>
+              </div>
+            )}
+
+            {isQuoteAccepted && (
+              <div className="qn-footer qn-footer--accepted">
+                <Lock size={14} color="#1a7a47" />
+                <span>Your selections are final. No further changes can be made.</span>
+              </div>
+            )}
 
           </div>
         </div>

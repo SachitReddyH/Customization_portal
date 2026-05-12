@@ -62,6 +62,8 @@ async def upsert_selection(payload: SelectionUpsert, user=Depends(get_current_us
     villa_id = ObjectId(user["villa_id"]) if user.get("villa_id") else None
     doc = await _get_or_create_selection(db, customer_id, villa_id)
 
+    if doc.get("status") == "accepted":
+        raise HTTPException(status_code=400, detail="Your customisations have been accepted and are locked.")
     if doc.get("status") == "submitted":
         raise HTTPException(status_code=400, detail="Selections already submitted. Contact admin to reopen.")
 

@@ -195,6 +195,95 @@ async def mark_quote_read(quote_id: str, user=Depends(require_admin)):
     return await _enrich(db, result)
 
 
+@router.post("/{quote_id}/send", response_model=QuoteRequestResponse)
+async def send_quote_to_customer(quote_id: str, payload: QuoteStatusUpdate, user=Depends(require_admin)):
+    """Admin saves prices and sends the quotation to the customer (triggers bell notification)."""
+    db  = get_db()
+    now = datetime.now(timezone.utc)
+
+    update: dict = {
+        "status":                "quoted",
+        "notification_type":     None,          # clear admin notification
+        "customer_notification": "quoted",      # trigger customer bell
+        "reviewed_at":           now,
+        "reviewed_by":           user["_id"],
+    }
+    if payload.admin_notes is not None:
+        update["admin_notes"] = payload.admin_notes
+    if payload.item_prices is not None:
+        update["item_prices"]   = [ip.model_dump() for ip in payload.item_prices]
+        update["quoted_price"]  = sum(ip.price for ip in payload.item_prices)
+    elif payload.quoted_price is not None:
+        update["quoted_price"]  = payload.quoted_price
+
+    result = await db.quote_requests.find_one_and_update(
+        {"_id": ObjectId(quote_id)},
+        {"$set": update},
+        return_document=True,
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="Quote not found")
+    return await _enrich(db, result)
+
+
+@router.post("/{quote_id}/accept", response_model=QuoteRequestResponse)
+async def accept_quote(quote_id: str, user=Depends(get_current_user)):
+    """Customer accepts the quoted price — permanently locks all customisations."""
+    if user["role"] != "customer":
+        raise HTTPException(status_code=403, detail="Only customers can accept quotes")
+    db    = get_db()
+    quote = await db.quote_requests.find_one({"_id": ObjectId(quote_id)})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found")
+    if str(quote["customer_id"]) != str(user["_id"]):
+        raise HTTPException(status_code=403, detail="Access denied")
+    if quote.get("status") != "quoted":
+        raise HTTPException(status_code=400, detail="Quote is not in quoted state")
+    now    = datetime.now(timezone.utc)
+    result = await db.quote_requests.find_one_and_update(
+        {"_id": ObjectId(quote_id)},
+        {"$set": {"status": "accepted", "customer_notification": None, "accepted_at": now}},
+        return_document=True,
+    )
+    # Lock selections permanently
+    await db.customer_selections.update_one(
+        {"customer_id": user["_id"]},
+        {"$set": {"status": "accepted", "last_updated": now}},
+    )
+    return await _enrich(db, result)
+
+
+@router.post("/{quote_id}/request_changes", response_model=QuoteRequestResponse)
+async def request_changes(quote_id: str, user=Depends(get_current_user)):
+    """Customer dismisses the quote and goes back to editing selections."""
+    if user["role"] != "customer":
+        raise HTTPException(status_code=403, detail="Only customers can request changes")
+    db    = get_db()
+    quote = await db.quote_requests.find_one({"_id": ObjectId(quote_id)})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found")
+    if str(quote["customer_id"]) != str(user["_id"]):
+        raise HTTPException(status_code=403, detail="Access denied")
+    now    = datetime.now(timezone.utc)
+    result = await db.quote_requests.find_one_and_update(
+        {"_id": ObjectId(quote_id)},
+        {"$set": {
+            "status":                "pending",
+            "customer_notification": None,
+            "notification_type":     None,
+            "item_prices":           [],
+            "quoted_price":          None,
+        }},
+        return_document=True,
+    )
+    # Unlock selections so customer can edit again
+    await db.customer_selections.update_one(
+        {"customer_id": user["_id"]},
+        {"$set": {"status": "in_progress", "last_updated": now}},
+    )
+    return await _enrich(db, result)
+
+
 @router.patch("/{quote_id}", response_model=QuoteRequestResponse)
 async def update_quote(quote_id: str, payload: QuoteStatusUpdate, user=Depends(require_admin)):
     """Admin updates status / price / notes — also clears notification so it moves to 'seen'."""
