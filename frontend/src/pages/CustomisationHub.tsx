@@ -529,8 +529,8 @@ export default function CustomisationHub() {
               )}
             </div>
 
-            {/* Items */}
-            {quoteItems.length > 0 ? (
+            {/* Items — only show when admin has actually sent a quotation */}
+            {quoteItems.length > 0 && (myQuote?.status === 'quoted' || myQuote?.status === 'accepted') ? (
               <div className="qn-body">
                 {Object.entries(quoteGroups).map(([cat, items]) => (
                   <div key={cat} className="qn-group">
