@@ -19,12 +19,6 @@ export interface QuotationData {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────
-function fmtINR(n: number): string {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency', currency: 'INR', maximumFractionDigits: 0,
-  }).format(n)
-}
-
 function fmtDate(d: string): string {
   const utc = d.endsWith('Z') || d.includes('+') ? d : d + 'Z'
   return new Date(utc).toLocaleDateString('en-IN', {
