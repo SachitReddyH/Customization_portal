@@ -181,9 +181,6 @@ export default function AdminCustomers() {
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Villa</th>
-                <th>Deadline</th>
-                <th>Status</th>
-                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -200,31 +197,6 @@ export default function AdminCustomers() {
                       ) : (
                         <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>Unassigned</span>
                       )}
-                    </td>
-                    <td style={{ fontSize: 12 }}>{formatDeadline(c.customization_deadline)}</td>
-                    <td>
-                      <span className={`badge badge--${c.is_active ? 'active' : 'inactive'}`}>
-                        {c.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="admin-table-actions">
-                        <button
-                          className="admin-btn admin-btn--ghost admin-btn--sm"
-                          onClick={() => navigate(`/admin/customers/${c.id}`)}
-                          title="View selections"
-                        >
-                          <Eye size={13} />
-                          Selections
-                        </button>
-                        <button
-                          className="admin-btn admin-btn--danger admin-btn--sm"
-                          onClick={() => setDeleteTarget(c)}
-                          title="Delete customer"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 )
