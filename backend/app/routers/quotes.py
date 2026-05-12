@@ -104,8 +104,10 @@ async def create_or_update_quote(payload: QuoteRequestCreate, user=Depends(get_c
     now = datetime.now(timezone.utc)
     snapshot = await _build_snapshot(db, user)
 
+    # Find most recent quote regardless of status — always update rather than duplicate
     existing = await db.quote_requests.find_one(
-        {"customer_id": user["_id"], "status": "pending"}
+        {"customer_id": user["_id"]},
+        sort=[("requested_at", -1)]
     )
 
     if existing:

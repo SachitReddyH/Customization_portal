@@ -157,18 +157,35 @@ async def submit_selections(user=Depends(get_current_user)):
         return_document=True,
     )
 
-    # Auto-create a quote request
-    await db.quote_requests.insert_one({
-        "customer_id": customer_id,
-        "villa_id": doc.get("villa_id"),
-        "status": "pending",
-        "customer_notes": None,
-        "admin_notes": None,
-        "quoted_price": None,
-        "selection_snapshot": doc.get("selections", []),
-        "requested_at": now,
-        "reviewed_at": None,
-        "reviewed_by": None,
-    })
+    # Upsert quote request — update existing if one exists, else create new
+    existing_quote = await db.quote_requests.find_one(
+        {"customer_id": customer_id},
+        sort=[("requested_at", -1)]
+    )
+    if existing_quote:
+        await db.quote_requests.update_one(
+            {"_id": existing_quote["_id"]},
+            {"$set": {
+                "status": "pending",
+                "notification_type": "updated",
+                "selection_snapshot": doc.get("selections", []),
+                "updated_at": now,
+            }}
+        )
+    else:
+        await db.quote_requests.insert_one({
+            "customer_id": customer_id,
+            "villa_id": doc.get("villa_id"),
+            "status": "pending",
+            "notification_type": "new",
+            "customer_notes": None,
+            "admin_notes": None,
+            "quoted_price": None,
+            "selection_snapshot": doc.get("selections", []),
+            "requested_at": now,
+            "updated_at": None,
+            "reviewed_at": None,
+            "reviewed_by": None,
+        })
 
     return _fmt(result)
