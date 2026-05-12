@@ -1,5 +1,5 @@
 import { useEffect, useState, Fragment } from 'react'
-import { ChevronDown, ChevronUp, Save, Download, Send, Lock, Unlock } from 'lucide-react'
+import { ChevronDown, ChevronUp, Save, Download, Send, Lock, Unlock, Filter } from 'lucide-react'
 import { listQuotes, updateQuote, sendQuoteToCustomer, markQuoteRead, getAllLocations, unfreezeQuote } from '../../services/api'
 import { generateQuotation } from '../../utils/generateQuotation'
 
@@ -97,6 +97,10 @@ export default function AdminQuotes() {
   const [sending, setSending] = useState<string | null>(null)
   const [unfreezing, setUnfreezing] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<Record<string, string>>({})
+
+  // Filter & sort state
+  const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [sortBy, setSortBy] = useState<string>('date_desc')
 
   const load = async () => {
     setLoading(true); setError('')
@@ -256,9 +260,22 @@ export default function AdminQuotes() {
 
   const fmtPrice = (p?: number) => p != null ? fmtINR(p) : '—'
 
-  const newQuotes     = quotes.filter(q => q.notification_type === 'new')
-  const updatedQuotes = quotes.filter(q => q.notification_type === 'updated')
-  const seenQuotes    = quotes.filter(q => !q.notification_type)
+  // Apply status filter then sort
+  const filteredQuotes = (() => {
+    let list = filterStatus === 'all' ? quotes : quotes.filter(q => q.status === filterStatus)
+    list = [...list].sort((a, b) => {
+      if (sortBy === 'price_asc')  return (a.quoted_price ?? -1) - (b.quoted_price ?? -1)
+      if (sortBy === 'price_desc') return (b.quoted_price ?? -1) - (a.quoted_price ?? -1)
+      if (sortBy === 'date_asc')   return new Date(a.requested_at).getTime() - new Date(b.requested_at).getTime()
+      // default: date_desc
+      return new Date(b.requested_at).getTime() - new Date(a.requested_at).getTime()
+    })
+    return list
+  })()
+
+  const newQuotes     = filteredQuotes.filter(q => q.notification_type === 'new')
+  const updatedQuotes = filteredQuotes.filter(q => q.notification_type === 'updated')
+  const seenQuotes    = filteredQuotes.filter(q => !q.notification_type)
 
   const renderRow = (q: Quote) => {
     const isOpen = expandedId === q.id
@@ -494,6 +511,37 @@ export default function AdminQuotes() {
 
   return (
     <div>
+      {/* ── Filter bar ── */}
+      {!loading && !error && quotes.length > 0 && (
+        <div className="quotes-filter-bar">
+          <div className="quotes-filter-group">
+            <Filter size={13} className="quotes-filter-icon" />
+            <label className="quotes-filter-label">Status</label>
+            <select className="quotes-filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+              <option value="all">All</option>
+              <option value="pending">Pending</option>
+              <option value="quoted">Quoted</option>
+              <option value="accepted">Accepted</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div className="quotes-filter-group">
+            <label className="quotes-filter-label">Sort by</label>
+            <select className="quotes-filter-select" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+              <option value="date_desc">Date — Newest first</option>
+              <option value="date_asc">Date — Oldest first</option>
+              <option value="price_desc">Price — High to Low</option>
+              <option value="price_asc">Price — Low to High</option>
+            </select>
+          </div>
+          {(filterStatus !== 'all' || sortBy !== 'date_desc') && (
+            <button className="quotes-filter-clear" onClick={() => { setFilterStatus('all'); setSortBy('date_desc') }}>
+              Clear
+            </button>
+          )}
+        </div>
+      )}
+
       {loading ? (
         <div className="admin-loading">Loading quotes…</div>
       ) : error ? (
@@ -501,6 +549,10 @@ export default function AdminQuotes() {
       ) : quotes.length === 0 ? (
         <div className="admin-table-wrap">
           <div className="admin-table-empty">No quote requests yet.</div>
+        </div>
+      ) : filteredQuotes.length === 0 ? (
+        <div className="admin-table-wrap">
+          <div className="admin-table-empty">No quotes match the selected filter.</div>
         </div>
       ) : (
         <>

@@ -862,6 +862,77 @@ table.admin-table tr:hover td {
 .quote-row--new td { background: #fff8f8; }
 .quote-row--updated td { background: #fffcf3; }
 
+/* ── Quotes filter bar ──────────────────────────── */
+.quotes-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  margin-bottom: 16px;
+}
+
+.quotes-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quotes-filter-icon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.quotes-filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+}
+
+.quotes-filter-select {
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 28px 5px 10px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b6b6b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.quotes-filter-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.quotes-filter-clear {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 2px;
+  letter-spacing: 0.03em;
+  margin-left: auto;
+  transition: opacity 0.15s;
+}
+
+.quotes-filter-clear:hover { opacity: 0.7; }
+
 /* ── Frozen / accepted quote state ─────────────── */
 .quote-frozen-banner {
   display: flex;
