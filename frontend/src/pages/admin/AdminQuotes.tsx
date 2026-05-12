@@ -1,6 +1,7 @@
 import { useEffect, useState, Fragment } from 'react'
-import { ChevronDown, ChevronUp, Save } from 'lucide-react'
+import { ChevronDown, ChevronUp, Save, Download } from 'lucide-react'
 import { listQuotes, updateQuote, markQuoteRead, getAllLocations } from '../../services/api'
+import { generateQuotation } from '../../utils/generateQuotation'
 
 interface Quote {
   id: string
@@ -189,6 +190,32 @@ export default function AdminQuotes() {
     } finally { setSaving(null) }
   }
 
+  const handleDownload = (q: Quote, es: EditState) => {
+    const snapshot = q.selection_snapshot || []
+    let flatIdx = 0
+    const items = snapshot.map((s: any) => {
+      const i = flatIdx++
+      const priceVal = es.item_prices[i] !== undefined ? es.item_prices[i] : (s.price_inr != null ? String(s.price_inr) : '')
+      const price = priceVal !== '' ? parseFloat(priceVal) : null
+      return {
+        category:   s.category_name ?? s.category_id ?? 'Other',
+        optionName: s.option_name ?? s.option_id ?? '',
+        room:       s.room_label ?? (s.location_id ? locationMap[s.location_id] : '') ?? '',
+        type:       s.selection_type ?? 'standard',
+        price:      price !== null && !isNaN(price) ? price : null,
+      }
+    })
+    const total = computeTotal(snapshot, es.item_prices)
+    generateQuotation({
+      customerName: q.customer_name,
+      villaName:    q.villa_name || '',
+      status:       q.status,
+      requestedAt:  q.requested_at,
+      items,
+      total,
+    })
+  }
+
   const fmtDate = (d?: string) => {
     if (!d) return '—'
     const utc = d.endsWith('Z') || d.includes('+') ? d : d + 'Z'
@@ -339,6 +366,9 @@ export default function AdminQuotes() {
                   <div className="quote-expand-actions">
                     <button className="admin-btn admin-btn--primary admin-btn--sm" onClick={() => handleSave(q.id)} disabled={saving === q.id}>
                       <Save size={13} /> {saving === q.id ? 'Saving…' : 'Save Changes'}
+                    </button>
+                    <button className="admin-btn admin-btn--download admin-btn--sm" onClick={() => handleDownload(q, es)} disabled={saving === q.id}>
+                      <Download size={13} /> Download Quotation
                     </button>
                     <button className="admin-btn admin-btn--ghost admin-btn--sm" onClick={() => setExpandedId(null)} disabled={saving === q.id}>
                       Cancel
