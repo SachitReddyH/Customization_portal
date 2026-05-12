@@ -36,6 +36,7 @@ interface OptionDoc {
   price_unit?: string
   description?: string
   notes?: string
+  link?: string
   images?: {
     standard?: string
     standard_list?: ImgItem[]
@@ -61,6 +62,7 @@ const BLANK_FORM = {
   price_unit: '',
   description: '',
   notes: '',
+  link: '',
   std_single: '',
   upg_single: '',
   std_list: [] as ImgItem[],
@@ -256,6 +258,7 @@ export default function AdminOptions() {
       price_unit: opt.price_unit ?? '',
       description: opt.description ?? '',
       notes: opt.notes ?? '',
+      link: opt.link ?? '',
       std_single: opt.images?.standard ?? '',
       upg_single: opt.images?.upgrade ?? '',
       std_list: opt.images?.standard_list ?? [],
@@ -287,6 +290,7 @@ export default function AdminOptions() {
         price_unit: form.price_unit || undefined,
         description: form.description || undefined,
         notes: form.notes || undefined,
+        link: form.link || undefined,
         images: {
           standard: form.std_single || undefined,
           upgrade: form.upg_single || undefined,
@@ -498,6 +502,10 @@ export default function AdminOptions() {
                 <label className="ao-field" style={{ marginTop: 10 }}>
                   <span>Notes</span>
                   <textarea className="admin-input ao-textarea" value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Internal notes…" rows={2} />
+                </label>
+                <label className="ao-field" style={{ marginTop: 10 }}>
+                  <span>External Link (e.g. brand collection URL)</span>
+                  <input className="admin-input" value={form.link} onChange={e => set('link', e.target.value)} placeholder="https://…" type="url" />
                 </label>
               </Section>
 

@@ -1335,6 +1335,25 @@ input[type="url"], textarea {
   padding: 16px 20px 12px;
   border-bottom: 1px solid #f0ece7;
 }
+.cmp-collection-link {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  text-decoration: none;
+  border: 1px solid rgba(240, 94, 62, 0.3);
+  border-radius: 5px;
+  padding: 4px 9px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.cmp-collection-link:hover {
+  background: rgba(240, 94, 62, 0.07);
+  border-color: var(--accent);
+}
+
 .cmp-title {
   font-family: var(--font-heading);
   font-size: 15px;

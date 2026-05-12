@@ -76,6 +76,7 @@ class OptionBase(BaseModel):
     images: OptionImages = OptionImages()
     floor_plan_image: Optional[str] = None
     notes: Optional[str] = None
+    link: Optional[str] = None
     sort_order: int = 1
     is_active: bool = True
 

@@ -36,6 +36,7 @@ interface Option {
   option_type?: string
   vrf_benefits?: string[]
   vrf_tech_specs?: string[]
+  link?: string
 }
 
 interface SelectionItem {
@@ -1597,6 +1598,17 @@ function ComparisonCard({
       {/* ── Header bar ── */}
       <div className="cmp-header">
         <span className="cmp-title">{opt.option_name ?? opt.space ?? opt.option_id}</span>
+        {opt.link && (
+          <a
+            href={opt.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="cmp-collection-link"
+            onClick={e => e.stopPropagation()}
+          >
+            View Collection ↗
+          </a>
+        )}
       </div>
 
       {/* ── Labels row (above panels) ── */}
