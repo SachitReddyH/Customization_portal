@@ -111,10 +111,11 @@ export function generateQuotation(data: QuotationData): void {
 
   let rowIdx = 0
   for (const [cat, items] of Object.entries(groups)) {
-    // Category header row
+    // Category header row — label in column B so it has full width
     push(
+      E(),
       c(cat.toUpperCase(), { bold: true, sz: 8.5, color: 'C85A3A', bg: 'FFF8F5' }),
-      E(), E(), E(),
+      E(), E(),
     )
 
     for (const item of items) {
@@ -189,7 +190,7 @@ export function generateQuotation(data: QuotationData): void {
 
   // Column widths — generous so nothing gets cut off
   ws['!cols'] = [
-    { wch: 5  },   // A  gutter
+    { wch: 14 },   // A  labels / gutter
     { wch: 52 },   // B  Option / Selection
     { wch: 38 },   // C  Room / Location
     { wch: 22 },   // D  Price
