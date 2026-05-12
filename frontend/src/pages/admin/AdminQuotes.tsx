@@ -332,15 +332,7 @@ export default function AdminQuotes() {
                     </div>
                   </div>
 
-                  <div className="admin-form-field">
-                    <label>Admin Notes</label>
-                    <textarea
-                      placeholder="Add internal notes or comments…"
-                      value={es.admin_notes}
-                      onChange={e => setEditField(q.id, 'admin_notes', e.target.value)}
-                      rows={3}
-                    />
-                  </div>
+
 
                   {saveError[q.id] && <div className="admin-error" style={{ margin: 0 }}>{saveError[q.id]}</div>}
 
