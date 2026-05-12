@@ -336,6 +336,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+  height: 36px;
   font-family: var(--font-body);
   font-size: 11px;
   font-weight: 600;
@@ -345,7 +346,7 @@ body {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 6px;
-  padding: 7px 13px;
+  padding: 0 13px;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -3048,6 +3049,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+  height: 36px;
   font-family: var(--font-body);
   font-size: 11px;
   font-weight: 600;
@@ -3057,7 +3059,7 @@ body {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 6px;
-  padding: 7px 13px;
+  padding: 0 13px;
   cursor: pointer;
   transition: all 0.2s;
 }
