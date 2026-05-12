@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Plus, Trash2, Eye, X } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import {
   listCustomers,
   createCustomer,
@@ -59,8 +58,6 @@ function formatVilla(villa: Villa): string {
 }
 
 export default function AdminCustomers() {
-  const navigate = useNavigate()
-
   const [customers, setCustomers] = useState<Customer[]>([])
   const [villas, setVillas] = useState<Villa[]>([])
   const [loading, setLoading] = useState(true)
@@ -142,15 +139,6 @@ export default function AdminCustomers() {
     } finally {
       setDeleting(false)
     }
-  }
-
-  const formatDeadline = (d?: string) => {
-    if (!d) return '—'
-    const utc = d.endsWith('Z') || d.includes('+') ? d : d + 'Z'
-    return new Date(utc).toLocaleDateString('en-IN', {
-      day: '2-digit', month: 'short', year: 'numeric',
-      timeZone: 'Asia/Kolkata'
-    })
   }
 
   return (
