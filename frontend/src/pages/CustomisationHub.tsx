@@ -144,6 +144,10 @@ export default function CustomisationHub() {
     try {
       await requestQuote({})
       setQuoteSuccess(true)
+      // Refresh quote state so the bell reflects the new request immediately
+      getMyQuotes().then((quotes: any[]) => {
+        if (quotes?.length) setMyQuote(quotes[0])
+      }).catch(() => {})
     } catch (e: any) {
       setQuoteError(e?.response?.data?.detail || 'Something went wrong. Please try again.')
     } finally {
@@ -285,7 +289,13 @@ export default function CustomisationHub() {
         {/* ── Bell notification button ── */}
         <button
           className={`hub-topbar-bell ${hasQuoteNotification ? 'hub-topbar-bell--active' : ''} ${isQuoteAccepted ? 'hub-topbar-bell--accepted' : ''}`}
-          onClick={() => setQuotePanelOpen(true)}
+          onClick={() => {
+            // Always re-fetch on bell click so the panel shows the latest data
+            getMyQuotes().then((quotes: any[]) => {
+              if (quotes?.length) setMyQuote(quotes[0])
+            }).catch(() => {})
+            setQuotePanelOpen(true)
+          }}
           title={isQuoteAccepted ? 'Quotation Accepted' : hasQuoteNotification ? 'You have a new quotation' : 'Quotation'}
         >
           {isQuoteAccepted

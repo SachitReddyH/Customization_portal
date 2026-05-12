@@ -149,6 +149,9 @@ export const sendQuoteToCustomer = (id: string, data: {
   status: string; item_prices?: any[]; quoted_price?: number
 }) => api.post(`/quotes/${id}/send`, data).then(r => r.data)
 
+export const adminInitiateQuote = (customerId: string) =>
+  api.post(`/quotes/admin/initiate/${customerId}`).then(r => r.data)
+
 export const acceptQuote = (id: string) =>
   api.post(`/quotes/${id}/accept`).then(r => r.data)
 

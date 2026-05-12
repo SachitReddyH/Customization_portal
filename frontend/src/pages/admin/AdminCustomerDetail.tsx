@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, FileText } from 'lucide-react'
 import {
   getCustomerSelections,
   getCategories,
   listAllVillas,
   getAllLocations,
+  adminInitiateQuote,
 } from '../../services/api'
 import api from '../../services/api'
 
@@ -66,6 +67,8 @@ export default function AdminCustomerDetail() {
   const [villas, setVillas] = useState<Villa[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [quoteInitiating, setQuoteInitiating] = useState(false)
+  const [quoteInitError, setQuoteInitError] = useState('')
 
   useEffect(() => {
     if (!customerId) return
@@ -151,6 +154,19 @@ export default function AdminCustomerDetail() {
     })
   }
 
+  const handlePrepareQuote = async () => {
+    if (!customerId) return
+    setQuoteInitiating(true)
+    setQuoteInitError('')
+    try {
+      await adminInitiateQuote(customerId)
+      navigate('/admin/quotes')
+    } catch (e: any) {
+      setQuoteInitError(e?.response?.data?.detail || 'Failed to prepare quote.')
+      setQuoteInitiating(false)
+    }
+  }
+
   if (loading) return <div className="admin-loading">Loading customer data…</div>
   if (error)   return <div className="admin-error">{error}</div>
   if (!data)   return null
@@ -182,9 +198,25 @@ export default function AdminCustomerDetail() {
           </div>
         </div>
 
-        <span className={`acd-status-badge ${status === 'submitted' ? 'acd-status-badge--submitted' : 'acd-status-badge--progress'}`}>
-          {status === 'submitted' ? 'Submitted' : 'In Progress'}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <span className={`acd-status-badge ${status === 'submitted' ? 'acd-status-badge--submitted' : 'acd-status-badge--progress'}`}>
+            {status === 'submitted' ? 'Submitted' : 'In Progress'}
+          </span>
+          {selections.length > 0 && (
+            <button
+              className="admin-btn admin-btn--send admin-btn--sm"
+              onClick={handlePrepareQuote}
+              disabled={quoteInitiating}
+              title="Create a quote from this customer's current selections, then go to Quotes to enter prices and send"
+            >
+              <FileText size={13} />
+              {quoteInitiating ? 'Preparing…' : 'Prepare Quote'}
+            </button>
+          )}
+        </div>
+        {quoteInitError && (
+          <p style={{ color: '#d94f4f', fontSize: 12, marginTop: 6, width: '100%' }}>{quoteInitError}</p>
+        )}
       </div>
 
       {/* ── Selections card ── */}

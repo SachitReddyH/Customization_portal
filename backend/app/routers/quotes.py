@@ -170,6 +170,59 @@ async def list_quotes(user=Depends(require_admin)):
     return [await _enrich(db, q) for q in quotes]
 
 
+@router.post("/admin/initiate/{customer_id}", response_model=QuoteRequestResponse)
+async def admin_initiate_quote(customer_id: str, user=Depends(require_admin)):
+    """
+    Admin creates (or refreshes) a quote for any customer directly, using their
+    current selections as the snapshot.  This lets the admin quote a customer
+    even if they never clicked 'Request for Quote' themselves.
+    """
+    db  = get_db()
+    now = datetime.now(timezone.utc)
+
+    customer = await db.users.find_one({"_id": ObjectId(customer_id)})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    snapshot = await _build_snapshot(db, customer)
+
+    existing = await db.quote_requests.find_one(
+        {"customer_id": ObjectId(customer_id)},
+        sort=[("requested_at", -1)],
+    )
+
+    if existing:
+        result = await db.quote_requests.find_one_and_update(
+            {"_id": existing["_id"]},
+            {"$set": {
+                "selection_snapshot": snapshot,
+                "notification_type":  "new",
+                "status":             "pending",
+                "updated_at":         now,
+            }},
+            return_document=True,
+        )
+    else:
+        doc = {
+            "customer_id":        ObjectId(customer_id),
+            "villa_id":           customer.get("villa_id"),
+            "status":             "pending",
+            "notification_type":  "new",
+            "customer_notes":     None,
+            "admin_notes":        None,
+            "quoted_price":       None,
+            "selection_snapshot": snapshot,
+            "requested_at":       now,
+            "updated_at":         None,
+            "reviewed_at":        None,
+            "reviewed_by":        None,
+        }
+        ins    = await db.quote_requests.insert_one(doc)
+        result = await db.quote_requests.find_one({"_id": ins.inserted_id})
+
+    return await _enrich(db, result)
+
+
 @router.get("/{quote_id}", response_model=QuoteRequestResponse)
 async def get_quote(quote_id: str, user=Depends(get_current_user)):
     db = get_db()
@@ -197,9 +250,21 @@ async def mark_quote_read(quote_id: str, user=Depends(require_admin)):
 
 @router.post("/{quote_id}/send", response_model=QuoteRequestResponse)
 async def send_quote_to_customer(quote_id: str, payload: QuoteStatusUpdate, user=Depends(require_admin)):
-    """Admin saves prices and sends the quotation to the customer (triggers bell notification)."""
+    """Admin saves prices and sends the quotation to the customer (triggers bell notification).
+    Always rebuilds the selection snapshot from the customer's CURRENT selections so the
+    customer sees their latest items even if they never used the Request-for-Quote button.
+    """
     db  = get_db()
     now = datetime.now(timezone.utc)
+
+    # Fetch existing quote first so we know the customer
+    existing = await db.quote_requests.find_one({"_id": ObjectId(quote_id)})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Quote not found")
+
+    # Rebuild snapshot from customer's current selections
+    customer = await db.users.find_one({"_id": existing["customer_id"]})
+    fresh_snapshot = await _build_snapshot(db, customer) if customer else []
 
     update: dict = {
         "status":                "quoted",
@@ -207,6 +272,7 @@ async def send_quote_to_customer(quote_id: str, payload: QuoteStatusUpdate, user
         "customer_notification": "quoted",      # trigger customer bell
         "reviewed_at":           now,
         "reviewed_by":           user["_id"],
+        "selection_snapshot":    fresh_snapshot,  # always use latest selections
     }
     if payload.admin_notes is not None:
         update["admin_notes"] = payload.admin_notes
