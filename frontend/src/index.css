@@ -2,6 +2,9 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 :root {
@@ -22,6 +25,24 @@ body {
   color: var(--dark);
   background: var(--white);
   overflow-x: hidden;
+}
+
+/* Restore pointer cursor for interactive elements */
+a, button, [role="button"],
+select, label[for],
+input[type="checkbox"], input[type="radio"],
+input[type="file"], input[type="submit"],
+input[type="button"], input[type="reset"] {
+  cursor: pointer;
+}
+
+/* Restore text cursor for actual text inputs */
+input[type="text"], input[type="email"], input[type="password"],
+input[type="number"], input[type="search"], input[type="tel"],
+input[type="url"], textarea {
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 /* ══════════════════════════════════════════════════
