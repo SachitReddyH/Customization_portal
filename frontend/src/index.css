@@ -211,6 +211,9 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* App-level persistent video (always mounted, shown only on /hub) */
@@ -3763,6 +3766,9 @@ body {
   flex-direction: column;
   box-shadow: -8px 0 40px rgba(0,0,0,0.15);
   animation: drawerSlideIn 0.25s ease;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
 }
 @keyframes drawerSlideIn {
   from { transform: translateX(100%); }
@@ -4099,6 +4105,9 @@ body {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
   overflow: hidden;
   font-family: var(--font-body);
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Header */
