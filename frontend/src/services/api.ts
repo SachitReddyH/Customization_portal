@@ -155,6 +155,9 @@ export const acceptQuote = (id: string) =>
 export const requestQuoteChanges = (id: string) =>
   api.post(`/quotes/${id}/request_changes`).then(r => r.data)
 
+export const unfreezeQuote = (id: string) =>
+  api.post(`/quotes/${id}/unfreeze`).then(r => r.data)
+
 /* ── Admin Options ────────────────────────────────── */
 export const listOptions = (categoryId: string) =>
   api.get(`/options/${categoryId}`).then(r => r.data)

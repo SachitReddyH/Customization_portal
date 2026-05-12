@@ -305,6 +305,36 @@ async def request_changes(quote_id: str, user=Depends(get_current_user)):
     return await _enrich(db, result)
 
 
+@router.post("/{quote_id}/unfreeze", response_model=QuoteRequestResponse)
+async def unfreeze_quote(quote_id: str, user=Depends(require_admin)):
+    """Admin unfreezes an accepted quote — unlocks selections so customer can edit again."""
+    db  = get_db()
+    now = datetime.now(timezone.utc)
+    result = await db.quote_requests.find_one_and_update(
+        {"_id": ObjectId(quote_id)},
+        {"$set": {
+            "status":                "pending",
+            "customer_notification": None,
+            "notification_type":     None,
+            "item_prices":           [],
+            "quoted_price":          None,
+            "accepted_at":           None,
+        }},
+        return_document=True,
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="Quote not found")
+    # Find the customer and unlock their selections
+    try:
+        await db.customer_selections.update_one(
+            {"customer_id": result["customer_id"]},
+            {"$set": {"status": "in_progress", "last_updated": now}},
+        )
+    except Exception:
+        pass
+    return await _enrich(db, result)
+
+
 @router.patch("/{quote_id}", response_model=QuoteRequestResponse)
 async def update_quote(quote_id: str, payload: QuoteStatusUpdate, user=Depends(require_admin)):
     """Admin updates status / price / notes — also clears notification so it moves to 'seen'."""

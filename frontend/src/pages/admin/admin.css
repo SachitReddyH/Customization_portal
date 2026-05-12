@@ -862,6 +862,49 @@ table.admin-table tr:hover td {
 .quote-row--new td { background: #fff8f8; }
 .quote-row--updated td { background: #fffcf3; }
 
+/* ── Frozen / accepted quote state ─────────────── */
+.quote-frozen-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #e6f4ea;
+  color: #1b5e20;
+  border: 1px solid #b6e4c9;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.quote-item-price-wrap--frozen {
+  background: #f5f3f0;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  pointer-events: none;
+}
+
+.quote-item-price-frozen {
+  display: flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 10px 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 80px;
+}
+
+.admin-btn--unfreeze {
+  background: #fff8e1;
+  color: #7c5a00;
+  border-color: #ffe082;
+}
+
+.admin-btn--unfreeze:hover {
+  background: #fff0b3;
+  border-color: #f9a825;
+}
+
 /* Notification badge in table */
 .notif-badge {
   display: inline-block;

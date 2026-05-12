@@ -1,6 +1,6 @@
 import { useEffect, useState, Fragment } from 'react'
-import { ChevronDown, ChevronUp, Save, Download, Send } from 'lucide-react'
-import { listQuotes, updateQuote, sendQuoteToCustomer, markQuoteRead, getAllLocations } from '../../services/api'
+import { ChevronDown, ChevronUp, Save, Download, Send, Lock, Unlock } from 'lucide-react'
+import { listQuotes, updateQuote, sendQuoteToCustomer, markQuoteRead, getAllLocations, unfreezeQuote } from '../../services/api'
 import { generateQuotation } from '../../utils/generateQuotation'
 
 interface Quote {
@@ -95,6 +95,7 @@ export default function AdminQuotes() {
   const [editStates, setEditStates] = useState<Record<string, EditState>>({})
   const [saving, setSaving] = useState<string | null>(null)
   const [sending, setSending] = useState<string | null>(null)
+  const [unfreezing, setUnfreezing] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<Record<string, string>>({})
 
   const load = async () => {
@@ -237,6 +238,16 @@ export default function AdminQuotes() {
     })
   }
 
+  const handleUnfreeze = async (id: string) => {
+    setUnfreezing(id); setSaveError(prev => ({ ...prev, [id]: '' }))
+    try {
+      await unfreezeQuote(id)
+      await load(); setExpandedId(null)
+    } catch (err: any) {
+      setSaveError(prev => ({ ...prev, [id]: err.response?.data?.detail || 'Failed to unfreeze.' }))
+    } finally { setUnfreezing(null) }
+  }
+
   const fmtDate = (d?: string) => {
     if (!d) return '—'
     const utc = d.endsWith('Z') || d.includes('+') ? d : d + 'Z'
@@ -254,6 +265,7 @@ export default function AdminQuotes() {
     const es = getEditState(q)
     const snapshotCount = Array.isArray(q.selection_snapshot) ? q.selection_snapshot.length : 0
     const snapshot = q.selection_snapshot || []
+    const isFrozen = q.status === 'accepted'
 
     // Build groups with flat indices
     const groups: Record<string, { item: any; idx: number }[]> = {}
@@ -264,7 +276,17 @@ export default function AdminQuotes() {
       groups[key].push({ item: s, idx: flatIdx++ })
     })
 
-    const total = computeTotal(snapshot, es.item_prices)
+    // For frozen quotes use saved item_prices to display (keyed by option_id+location_id)
+    const savedPriceMap: Record<string, number> = {}
+    if (isFrozen && q.item_prices) {
+      q.item_prices.forEach(ip => {
+        savedPriceMap[`${ip.option_id}__${ip.location_id ?? ''}`] = ip.price
+      })
+    }
+
+    const total = isFrozen
+      ? (q.quoted_price ?? null)
+      : computeTotal(snapshot, es.item_prices)
 
     return (
       <Fragment key={q.id}>
@@ -293,7 +315,7 @@ export default function AdminQuotes() {
               onClick={() => handleToggle(q.id)}
             >
               {isOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-              Review
+              {isFrozen ? 'View' : 'Review'}
             </button>
           </td>
         </tr>
@@ -304,7 +326,15 @@ export default function AdminQuotes() {
               <div className="quote-expand-panel">
                 <div className="quote-expand-inner quote-expand-inner--wide">
 
-                  {/* Selections snapshot with per-item prices */}
+                  {/* ── Frozen banner ── */}
+                  {isFrozen && (
+                    <div className="quote-frozen-banner">
+                      <Lock size={14} />
+                      <span>This quote has been <strong>accepted and frozen</strong> by the customer. Prices and selections are locked.</span>
+                    </div>
+                  )}
+
+                  {/* Selections snapshot */}
                   {snapshot.length > 0 && (
                     <div className="quote-snapshot">
                       <div className="quote-snapshot-header-row">
@@ -320,6 +350,30 @@ export default function AdminQuotes() {
                           <p className="quote-snapshot-cat">{cat}</p>
                           {entries.map(({ item: s, idx: i }) => {
                             const room = s.room_label || (s.location_id ? locationMap[s.location_id] : null)
+
+                            // Frozen: display saved price as plain text
+                            if (isFrozen) {
+                              const savedPrice = savedPriceMap[`${s.option_id}__${s.location_id ?? ''}`]
+                              return (
+                                <div key={i} className="quote-snapshot-row">
+                                  <div className="quote-snapshot-name-block">
+                                    <span className="quote-snapshot-name">{resolveSnapshotName(s)}</span>
+                                    {room && <span className="quote-snapshot-room">{room}</span>}
+                                  </div>
+                                  <span className={`quote-snapshot-type ${s.selection_type}`}>
+                                    {s.selection_type === 'upgrade' ? 'Upgrade' : 'Standard'}
+                                  </span>
+                                  <div className="quote-item-price-wrap quote-item-price-wrap--frozen">
+                                    <span className="quote-item-price-sym">₹</span>
+                                    <span className="quote-item-price-frozen">
+                                      {savedPrice != null ? savedPrice.toLocaleString('en-IN') : <span style={{ color: '#bbb' }}>—</span>}
+                                    </span>
+                                  </div>
+                                </div>
+                              )
+                            }
+
+                            // Editable
                             const priceVal = es.item_prices[i] !== undefined
                               ? es.item_prices[i]
                               : (s.price_inr != null ? String(s.price_inr) : '')
@@ -350,7 +404,7 @@ export default function AdminQuotes() {
                         </div>
                       ))}
 
-                      {/* Running total */}
+                      {/* Total */}
                       <div className="quote-total-row">
                         <span className="quote-total-label">Total</span>
                         <span className="quote-total-value">
@@ -368,35 +422,57 @@ export default function AdminQuotes() {
                     </div>
                   )}
 
-                  {/* Admin fields */}
-                  <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 8 }}>
-                    <div className="admin-form-field" style={{ flex: '0 0 180px' }}>
-                      <label>Status</label>
-                      <select value={es.status} onChange={e => setEditField(q.id, 'status', e.target.value)}>
-                        {STATUS_OPTIONS.map(s => (
-                          <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-                        ))}
-                      </select>
+                  {/* Admin fields — hidden when frozen */}
+                  {!isFrozen && (
+                    <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 8 }}>
+                      <div className="admin-form-field" style={{ flex: '0 0 180px' }}>
+                        <label>Status</label>
+                        <select value={es.status} onChange={e => setEditField(q.id, 'status', e.target.value)}>
+                          {STATUS_OPTIONS.map(s => (
+                            <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
-                  </div>
-
-
+                  )}
 
                   {saveError[q.id] && <div className="admin-error" style={{ margin: 0 }}>{saveError[q.id]}</div>}
 
                   <div className="quote-expand-actions">
-                    <button className="admin-btn admin-btn--primary admin-btn--sm" onClick={() => handleSave(q.id)} disabled={saving === q.id || sending === q.id}>
-                      <Save size={13} /> {saving === q.id ? 'Saving…' : 'Save Changes'}
-                    </button>
-                    <button className="admin-btn admin-btn--send admin-btn--sm" onClick={() => handleSendToCustomer(q.id)} disabled={saving === q.id || sending === q.id}>
-                      <Send size={13} /> {sending === q.id ? 'Sending…' : 'Send to Customer'}
-                    </button>
-                    <button className="admin-btn admin-btn--download admin-btn--sm" onClick={() => handleDownload(q, es)} disabled={saving === q.id || sending === q.id}>
-                      <Download size={13} /> Download Quotation
-                    </button>
-                    <button className="admin-btn admin-btn--ghost admin-btn--sm" onClick={() => setExpandedId(null)} disabled={saving === q.id || sending === q.id}>
-                      Cancel
-                    </button>
+                    {isFrozen ? (
+                      /* Frozen: only Download + Unfreeze */
+                      <>
+                        <button className="admin-btn admin-btn--download admin-btn--sm" onClick={() => handleDownload(q, es)}>
+                          <Download size={13} /> Download Quotation
+                        </button>
+                        <button
+                          className="admin-btn admin-btn--unfreeze admin-btn--sm"
+                          onClick={() => handleUnfreeze(q.id)}
+                          disabled={unfreezing === q.id}
+                        >
+                          <Unlock size={13} /> {unfreezing === q.id ? 'Unfreezing…' : 'Unfreeze Quote'}
+                        </button>
+                        <button className="admin-btn admin-btn--ghost admin-btn--sm" onClick={() => setExpandedId(null)}>
+                          Close
+                        </button>
+                      </>
+                    ) : (
+                      /* Normal: Save + Send + Download + Cancel */
+                      <>
+                        <button className="admin-btn admin-btn--primary admin-btn--sm" onClick={() => handleSave(q.id)} disabled={saving === q.id || sending === q.id}>
+                          <Save size={13} /> {saving === q.id ? 'Saving…' : 'Save Changes'}
+                        </button>
+                        <button className="admin-btn admin-btn--send admin-btn--sm" onClick={() => handleSendToCustomer(q.id)} disabled={saving === q.id || sending === q.id}>
+                          <Send size={13} /> {sending === q.id ? 'Sending…' : 'Send to Customer'}
+                        </button>
+                        <button className="admin-btn admin-btn--download admin-btn--sm" onClick={() => handleDownload(q, es)} disabled={saving === q.id || sending === q.id}>
+                          <Download size={13} /> Download Quotation
+                        </button>
+                        <button className="admin-btn admin-btn--ghost admin-btn--sm" onClick={() => setExpandedId(null)} disabled={saving === q.id || sending === q.id}>
+                          Cancel
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
