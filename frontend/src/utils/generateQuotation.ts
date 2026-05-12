@@ -26,7 +26,8 @@ function fmtDate(d: string): string {
   })
 }
 
-// Cell factory — 4-column layout (A gutter | B Option | C Room | D Price)
+// Cell factory
+// Layout: 4 columns — A (Option/label) | B (Room/value) | C (label2) | D (Price/value2)
 function c(
   v: string | number,
   opts: {
@@ -59,14 +60,14 @@ function c(
   return cell
 }
 
-const E = () => c('')  // empty cell
+const E = () => c('')
 
 // ── Main export ───────────────────────────────────────────────────
 export function generateQuotation(data: QuotationData): void {
   const rows: any[][] = []
   const push = (...cells: any[]) => rows.push(cells)
 
-  // ── Row 1: title banner ──────────────────────────────────────
+  // ── Row 1: title banner (spans A:D) ──────────────────────────
   push(
     c('CAPSTONE LIFE — Villa Customisation Quotation', {
       bold: true, sz: 16, color: 'FFFFFF', bg: 'F05E3E', align: 'center',
@@ -77,9 +78,9 @@ export function generateQuotation(data: QuotationData): void {
   // ── Row 2: spacer ────────────────────────────────────────────
   push(E(), E(), E(), E())
 
-  // ── Rows 3-4: customer info (no Reference, no Status) ────────
+  // ── Rows 3-4: info block  A=label | B=value | C=label | D=value
   const infoRows: [string, string, string, string][] = [
-    ['Customer', data.customerName,        'Villa', data.villaName || '—'],
+    ['Customer', data.customerName,         'Villa', data.villaName || '—'],
     ['Date',     fmtDate(data.requestedAt), 'Items', String(data.items.length)],
   ]
   for (const [l1, v1, l2, v2] of infoRows) {
@@ -94,12 +95,12 @@ export function generateQuotation(data: QuotationData): void {
   // ── Row: spacer ──────────────────────────────────────────────
   push(E(), E(), E(), E())
 
-  // ── Table header ─────────────────────────────────────────────
+  // ── Table header  A=Option | B=Room | C=Price | D=empty ──────
   push(
-    c('',                  { bold: true, sz: 9.5, color: 'FFFFFF', bg: '1A1A1A', border: true }),
-    c('Option / Selection',{ bold: true, sz: 9.5, color: 'FFFFFF', bg: '1A1A1A', border: true }),
-    c('Room / Location',   { bold: true, sz: 9.5, color: 'FFFFFF', bg: '1A1A1A', border: true }),
-    c('Price (INR)',        { bold: true, sz: 9.5, color: 'FFFFFF', bg: '1A1A1A', align: 'right', border: true }),
+    c('Option / Selection', { bold: true, sz: 9.5, color: 'FFFFFF', bg: '1A1A1A', border: true }),
+    c('Room / Location',    { bold: true, sz: 9.5, color: 'FFFFFF', bg: '1A1A1A', border: true }),
+    c('Price (INR)',         { bold: true, sz: 9.5, color: 'FFFFFF', bg: '1A1A1A', align: 'right', border: true }),
+    E(),
   )
 
   // ── Group by category ─────────────────────────────────────────
@@ -111,11 +112,10 @@ export function generateQuotation(data: QuotationData): void {
 
   let rowIdx = 0
   for (const [cat, items] of Object.entries(groups)) {
-    // Category header row — label in column B so it has full width
+    // Category header — spans A:C
     push(
-      E(),
       c(cat.toUpperCase(), { bold: true, sz: 8.5, color: 'C85A3A', bg: 'FFF8F5' }),
-      E(), E(),
+      E(), E(), E(),
     )
 
     for (const item of items) {
@@ -124,12 +124,12 @@ export function generateQuotation(data: QuotationData): void {
       const priceIsNum = item.price !== null
 
       push(
-        c('',               { bg }),
         c(item.optionName,  { sz: 10, bg }),
         c(item.room || '—', { sz: 9.5, color: '6B6B6B', bg }),
         priceIsNum
           ? c(item.price!, { sz: 10, bold: true, bg, align: 'right', numFmt: '₹#,##0' })
           : c('On Request', { sz: 9.5, italic: true, color: '999999', bg, align: 'right' }),
+        E(),
       )
     }
   }
@@ -140,11 +140,11 @@ export function generateQuotation(data: QuotationData): void {
   // ── Total row ─────────────────────────────────────────────────
   push(
     c('', { bg: 'F05E3E' }),
-    c('', { bg: 'F05E3E' }),
     c('TOTAL QUOTED PRICE', { bold: true, sz: 11, color: 'FFFFFF', bg: 'F05E3E', align: 'right' }),
     data.total !== null
-      ? c(data.total,    { bold: true, sz: 12, color: 'FFFFFF', bg: 'F05E3E', align: 'right', numFmt: '₹#,##0' })
-      : c('On Request',  { bold: true, sz: 11, color: 'FFFFFF', bg: 'F05E3E', align: 'right' }),
+      ? c(data.total,   { bold: true, sz: 12, color: 'FFFFFF', bg: 'F05E3E', align: 'right', numFmt: '₹#,##0' })
+      : c('On Request', { bold: true, sz: 11, color: 'FFFFFF', bg: 'F05E3E', align: 'right' }),
+    E(),
   )
 
   // ── Spacer ────────────────────────────────────────────────────
@@ -183,17 +183,17 @@ export function generateQuotation(data: QuotationData): void {
 
   ws['!ref'] = `A1:D${rows.length}`
 
-  // Merge title banner across all 4 columns
+  // Merges: title spans A:D
   ws['!merges'] = [
     { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
   ]
 
-  // Column widths — generous so nothing gets cut off
+  // Column widths
   ws['!cols'] = [
-    { wch: 14 },   // A  labels / gutter
-    { wch: 52 },   // B  Option / Selection
-    { wch: 38 },   // C  Room / Location
-    { wch: 22 },   // D  Price
+    { wch: 52 },   // A  Option / Selection (also info labels)
+    { wch: 38 },   // B  Room / Location (also info values)
+    { wch: 22 },   // C  Price (also info label2)
+    { wch: 18 },   // D  empty for table / info value2
   ]
 
   // Row heights
