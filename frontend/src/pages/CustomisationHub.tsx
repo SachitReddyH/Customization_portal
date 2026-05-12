@@ -92,6 +92,11 @@ function fmtINR(n: number) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n)
 }
 
+/** Strip trailing location codes like "— GF-KT" or "— FF-MBR-T" */
+function stripCode(label: string): string {
+  return label.replace(/\s*—\s*[A-Z0-9-]+$/, '').trim()
+}
+
 /* ════════════════════════════════════════════════ */
 
 export default function CustomisationHub() {
@@ -542,7 +547,7 @@ export default function CustomisationHub() {
                             {item.option_name || item.option_id}
                           </span>
                           {item.room_label && (
-                            <span className="qn-item-room">{item.room_label}</span>
+                            <span className="qn-item-room">{stripCode(item.room_label)}</span>
                           )}
                         </div>
                         <span className="qn-item-price">

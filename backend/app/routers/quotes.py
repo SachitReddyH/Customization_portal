@@ -82,8 +82,7 @@ async def _build_snapshot(db, user) -> list:
             loc = await db.locations.find_one({"location_id": loc_id})
             if loc:
                 space     = loc.get("space") or ""
-                room_code = loc.get("room_code") or ""
-                room_label = f"{space} — {room_code}".strip(" —") if space or room_code else loc_id
+                room_label = space if space else loc_id
 
         enriched.append({
             **sel,
