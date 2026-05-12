@@ -1,17 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Users, Home, CheckCircle, Clock, ClipboardList, Bell
+  Users, Home, CheckCircle, Clock, ClipboardList, Bell, Send
 } from 'lucide-react'
 import { getDashboard, listInterests } from '../../services/api'
 
 interface DashboardData {
-  total_customers: number
   total_villas: number
-  assigned_villas: number
   pending_quotes: number
-  submitted_selections: number
-  category_interests: number
+  quoted_quotes: number
+  accepted_quotes: number
 }
 
 interface InterestItem {
@@ -63,22 +61,10 @@ export default function AdminDashboard() {
       {/* ── Stat cards ── */}
       <div className="admin-stats-row">
         <StatCard
-          icon={<Users size={20} />}
-          iconClass="stat-card-icon--blue"
-          value={data.total_customers}
-          label="Total Customers"
-        />
-        <StatCard
           icon={<Home size={20} />}
           iconClass="stat-card-icon--green"
           value={data.total_villas}
           label="Total Villas"
-        />
-        <StatCard
-          icon={<CheckCircle size={20} />}
-          iconClass="stat-card-icon--green"
-          value={data.assigned_villas}
-          label="Assigned Villas"
         />
         <StatCard
           icon={<Clock size={20} />}
@@ -87,16 +73,16 @@ export default function AdminDashboard() {
           label="Pending Quotes"
         />
         <StatCard
-          icon={<ClipboardList size={20} />}
-          iconClass="stat-card-icon--purple"
-          value={data.submitted_selections}
-          label="Submitted Selections"
+          icon={<Send size={20} />}
+          iconClass="stat-card-icon--blue"
+          value={data.quoted_quotes}
+          label="Quotes Sent"
         />
         <StatCard
-          icon={<Bell size={20} />}
-          iconClass="stat-card-icon--orange"
-          value={data.category_interests ?? 0}
-          label="Category Interests"
+          icon={<CheckCircle size={20} />}
+          iconClass="stat-card-icon--green"
+          value={data.accepted_quotes}
+          label="Accepted Quotes"
         />
       </div>
 

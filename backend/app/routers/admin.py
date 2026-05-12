@@ -235,19 +235,14 @@ async def update_category(category_id: str, payload: CategoryUpdate, user=Depend
 @router.get("/dashboard")
 async def dashboard(user=Depends(require_admin)):
     db = get_db()
-    total_customers = await db.users.count_documents({"role": "customer"})
-    total_villas = await db.villas.count_documents({})
-    assigned_villas = await db.villas.count_documents({"is_assigned": True})
-    pending_quotes = await db.quote_requests.count_documents({"status": "pending"})
-    submitted_selections = await db.customer_selections.count_documents({"status": "submitted"})
-
-    category_interests = await db.interests.count_documents({})
+    total_villas    = await db.villas.count_documents({})
+    pending_quotes  = await db.quote_requests.count_documents({"status": "pending"})
+    quoted_quotes   = await db.quote_requests.count_documents({"status": "quoted"})
+    accepted_quotes = await db.quote_requests.count_documents({"status": "accepted"})
 
     return {
-        "total_customers": total_customers,
-        "total_villas": total_villas,
-        "assigned_villas": assigned_villas,
-        "pending_quotes": pending_quotes,
-        "submitted_selections": submitted_selections,
-        "category_interests": category_interests,
+        "total_villas":    total_villas,
+        "pending_quotes":  pending_quotes,
+        "quoted_quotes":   quoted_quotes,
+        "accepted_quotes": accepted_quotes,
     }
