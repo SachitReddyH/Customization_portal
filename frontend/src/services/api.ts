@@ -1,7 +1,8 @@
 import axios from 'axios'
 
-// Priority: runtime config.js (server-editable) → build-time env var → localhost dev
-export const BASE = (window as any).__API_URL__ || import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// In production VITE_API_URL is set in the Vercel dashboard
+// In local dev it falls back to localhost
+export const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 const api = axios.create({ baseURL: BASE })
 
