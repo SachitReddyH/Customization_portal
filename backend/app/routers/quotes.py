@@ -17,12 +17,18 @@ async def _enrich(db, quote: dict) -> dict:
     if quote.get("reviewed_by"):
         quote["reviewed_by"] = str(quote["reviewed_by"])
 
-    customer = await db.users.find_one({"_id": ObjectId(quote["customer_id"])})
-    quote["customer_name"] = customer["full_name"] if customer else None
+    try:
+        customer = await db.users.find_one({"_id": ObjectId(quote["customer_id"])})
+        quote["customer_name"] = customer.get("full_name") if customer else None
+    except Exception:
+        quote["customer_name"] = None
 
     if quote.get("villa_id"):
-        villa = await db.villas.find_one({"_id": ObjectId(quote["villa_id"])})
-        quote["villa_name"] = villa["villa_name"] if villa else None
+        try:
+            villa = await db.villas.find_one({"_id": ObjectId(quote["villa_id"])})
+            quote["villa_name"] = villa.get("villa_name") or villa.get("villa_number") if villa else None
+        except Exception:
+            quote["villa_name"] = None
     else:
         quote["villa_name"] = None
 
@@ -152,9 +158,22 @@ async def create_or_update_quote(payload: QuoteRequestCreate, user=Depends(get_c
 async def my_quotes(user=Depends(get_current_user)):
     """Customer views their own quote requests."""
     db = get_db()
-    cursor = db.quote_requests.find({"customer_id": user["_id"]}).sort("requested_at", -1)
+    # Try both ObjectId and string forms of customer_id to handle any type mismatch in the DB
+    from bson import ObjectId as OID
+    customer_oid = user["_id"]  # ObjectId from JWT
+    cursor = db.quote_requests.find({"customer_id": customer_oid}).sort("requested_at", -1)
     quotes = await cursor.to_list(length=None)
-    return [await _enrich(db, q) for q in quotes]
+    # Fallback: also search by string form in case some records stored it as string
+    if not quotes:
+        cursor2 = db.quote_requests.find({"customer_id": str(customer_oid)}).sort("requested_at", -1)
+        quotes = await cursor2.to_list(length=None)
+    results = []
+    for q in quotes:
+        try:
+            results.append(await _enrich(db, q))
+        except Exception:
+            pass  # skip unserializable records rather than killing the whole response
+    return results
 
 
 @router.get("/", response_model=List[QuoteRequestResponse])
@@ -169,58 +188,6 @@ async def list_quotes(user=Depends(require_admin)):
     quotes = await cursor.to_list(length=None)
     return [await _enrich(db, q) for q in quotes]
 
-
-@router.post("/admin/initiate/{customer_id}", response_model=QuoteRequestResponse)
-async def admin_initiate_quote(customer_id: str, user=Depends(require_admin)):
-    """
-    Admin creates (or refreshes) a quote for any customer directly, using their
-    current selections as the snapshot.  This lets the admin quote a customer
-    even if they never clicked 'Request for Quote' themselves.
-    """
-    db  = get_db()
-    now = datetime.now(timezone.utc)
-
-    customer = await db.users.find_one({"_id": ObjectId(customer_id)})
-    if not customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
-
-    snapshot = await _build_snapshot(db, customer)
-
-    existing = await db.quote_requests.find_one(
-        {"customer_id": ObjectId(customer_id)},
-        sort=[("requested_at", -1)],
-    )
-
-    if existing:
-        result = await db.quote_requests.find_one_and_update(
-            {"_id": existing["_id"]},
-            {"$set": {
-                "selection_snapshot": snapshot,
-                "notification_type":  "new",
-                "status":             "pending",
-                "updated_at":         now,
-            }},
-            return_document=True,
-        )
-    else:
-        doc = {
-            "customer_id":        ObjectId(customer_id),
-            "villa_id":           customer.get("villa_id"),
-            "status":             "pending",
-            "notification_type":  "new",
-            "customer_notes":     None,
-            "admin_notes":        None,
-            "quoted_price":       None,
-            "selection_snapshot": snapshot,
-            "requested_at":       now,
-            "updated_at":         None,
-            "reviewed_at":        None,
-            "reviewed_by":        None,
-        }
-        ins    = await db.quote_requests.insert_one(doc)
-        result = await db.quote_requests.find_one({"_id": ins.inserted_id})
-
-    return await _enrich(db, result)
 
 
 @router.get("/{quote_id}", response_model=QuoteRequestResponse)
@@ -250,29 +217,16 @@ async def mark_quote_read(quote_id: str, user=Depends(require_admin)):
 
 @router.post("/{quote_id}/send", response_model=QuoteRequestResponse)
 async def send_quote_to_customer(quote_id: str, payload: QuoteStatusUpdate, user=Depends(require_admin)):
-    """Admin saves prices and sends the quotation to the customer (triggers bell notification).
-    Always rebuilds the selection snapshot from the customer's CURRENT selections so the
-    customer sees their latest items even if they never used the Request-for-Quote button.
-    """
+    """Admin saves prices and sends the quotation to the customer (triggers bell notification)."""
     db  = get_db()
     now = datetime.now(timezone.utc)
 
-    # Fetch existing quote first so we know the customer
-    existing = await db.quote_requests.find_one({"_id": ObjectId(quote_id)})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Quote not found")
-
-    # Rebuild snapshot from customer's current selections
-    customer = await db.users.find_one({"_id": existing["customer_id"]})
-    fresh_snapshot = await _build_snapshot(db, customer) if customer else []
-
     update: dict = {
         "status":                "quoted",
-        "notification_type":     None,          # clear admin notification
-        "customer_notification": "quoted",      # trigger customer bell
+        "notification_type":     None,
+        "customer_notification": "quoted",
         "reviewed_at":           now,
         "reviewed_by":           user["_id"],
-        "selection_snapshot":    fresh_snapshot,  # always use latest selections
     }
     if payload.admin_notes is not None:
         update["admin_notes"] = payload.admin_notes
