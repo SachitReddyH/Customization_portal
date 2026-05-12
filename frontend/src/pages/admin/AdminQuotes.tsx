@@ -357,7 +357,6 @@ export default function AdminQuotes() {
                       <div className="quote-snapshot-header-row">
                         <p className="quote-snapshot-title" style={{ margin: 0 }}>Customer Selections</p>
                         <div className="quote-snapshot-col-labels">
-                          <span>Type</span>
                           <span>Price (INR)</span>
                         </div>
                       </div>
@@ -377,9 +376,6 @@ export default function AdminQuotes() {
                                     <span className="quote-snapshot-name">{resolveSnapshotName(s)}</span>
                                     {room && <span className="quote-snapshot-room">{room}</span>}
                                   </div>
-                                  <span className={`quote-snapshot-type ${s.selection_type}`}>
-                                    {s.selection_type === 'upgrade' ? 'Upgrade' : 'Standard'}
-                                  </span>
                                   <div className="quote-item-price-wrap quote-item-price-wrap--frozen">
                                     <span className="quote-item-price-sym">₹</span>
                                     <span className="quote-item-price-frozen">
@@ -400,9 +396,6 @@ export default function AdminQuotes() {
                                   <span className="quote-snapshot-name">{resolveSnapshotName(s)}</span>
                                   {room && <span className="quote-snapshot-room">{room}</span>}
                                 </div>
-                                <span className={`quote-snapshot-type ${s.selection_type}`}>
-                                  {s.selection_type === 'upgrade' ? 'Upgrade' : 'Standard'}
-                                </span>
                                 <div className="quote-item-price-wrap">
                                   <span className="quote-item-price-sym">₹</span>
                                   <input

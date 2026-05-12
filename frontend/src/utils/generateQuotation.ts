@@ -32,7 +32,7 @@ function fmtDate(d: string): string {
   })
 }
 
-// Cell factory
+// Cell factory — 4-column layout (A gutter | B Option | C Room | D Price)
 function c(
   v: string | number,
   opts: {
@@ -54,7 +54,7 @@ function c(
   cell.s.alignment = {
     horizontal: opts.align ?? 'left',
     vertical: 'center',
-    wrapText: false,
+    wrapText: true,
   }
 
   if (opts.border) {
@@ -65,12 +65,11 @@ function c(
   return cell
 }
 
-const EMPTY = () => c('')
+const E = () => c('')  // empty cell
 
 // ── Main export ───────────────────────────────────────────────────
 export function generateQuotation(data: QuotationData): void {
   const rows: any[][] = []
-
   const push = (...cells: any[]) => rows.push(cells)
 
   // ── Row 1: title banner ──────────────────────────────────────
@@ -78,41 +77,35 @@ export function generateQuotation(data: QuotationData): void {
     c('CAPSTONE LIFE — Villa Customisation Quotation', {
       bold: true, sz: 16, color: 'FFFFFF', bg: 'F05E3E', align: 'center',
     }),
-    EMPTY(), EMPTY(), EMPTY(), EMPTY(),
+    E(), E(), E(),
   )
 
   // ── Row 2: spacer ────────────────────────────────────────────
-  push(EMPTY(), EMPTY(), EMPTY(), EMPTY(), EMPTY())
+  push(E(), E(), E(), E())
 
-  // ── Rows 3-5: customer info ───────────────────────────────────
-  const ref = `QT-${data.requestedAt.slice(0,10).replace(/-/g,'')}-${data.customerName.replace(/\s/g,'').toUpperCase().slice(0,4)}`
-  const status = data.status.charAt(0).toUpperCase() + data.status.slice(1)
-
-  const infoRows: [string,string,string,string][] = [
-    ['Customer',  data.customerName,    'Villa',   data.villaName || '—'],
-    ['Date',      fmtDate(data.requestedAt), 'Status', status],
-    ['Reference', ref,                  'Items',   String(data.items.length)],
+  // ── Rows 3-4: customer info (no Reference, no Status) ────────
+  const infoRows: [string, string, string, string][] = [
+    ['Customer', data.customerName,        'Villa', data.villaName || '—'],
+    ['Date',     fmtDate(data.requestedAt), 'Items', String(data.items.length)],
   ]
   for (const [l1, v1, l2, v2] of infoRows) {
     push(
-      c(l1,  { bold: true, sz: 9, color: '888888', bg: 'FAF9F7' }),
-      c(v1,  { bold: true, sz: 10, bg: 'FAF9F7' }),
-      EMPTY(),
-      c(l2,  { bold: true, sz: 9, color: '888888', bg: 'FAF9F7' }),
-      c(v2,  { bold: true, sz: 10, bg: 'FAF9F7' }),
+      c(l1, { bold: true, sz: 9, color: '888888', bg: 'FAF9F7' }),
+      c(v1, { bold: true, sz: 10, bg: 'FAF9F7' }),
+      c(l2, { bold: true, sz: 9, color: '888888', bg: 'FAF9F7' }),
+      c(v2, { bold: true, sz: 10, bg: 'FAF9F7' }),
     )
   }
 
   // ── Row: spacer ──────────────────────────────────────────────
-  push(EMPTY(), EMPTY(), EMPTY(), EMPTY(), EMPTY())
+  push(E(), E(), E(), E())
 
   // ── Table header ─────────────────────────────────────────────
   push(
-    c('',              { bold: true, sz: 9.5, color: 'FFFFFF', bg: '1A1A1A', border: true }),
-    c('Option / Selection', { bold: true, sz: 9.5, color: 'FFFFFF', bg: '1A1A1A', border: true }),
-    c('Room / Location',    { bold: true, sz: 9.5, color: 'FFFFFF', bg: '1A1A1A', border: true }),
-    c('Type',               { bold: true, sz: 9.5, color: 'FFFFFF', bg: '1A1A1A', border: true }),
-    c('Price (INR)',         { bold: true, sz: 9.5, color: 'FFFFFF', bg: '1A1A1A', align: 'right', border: true }),
+    c('',                  { bold: true, sz: 9.5, color: 'FFFFFF', bg: '1A1A1A', border: true }),
+    c('Option / Selection',{ bold: true, sz: 9.5, color: 'FFFFFF', bg: '1A1A1A', border: true }),
+    c('Room / Location',   { bold: true, sz: 9.5, color: 'FFFFFF', bg: '1A1A1A', border: true }),
+    c('Price (INR)',        { bold: true, sz: 9.5, color: 'FFFFFF', bg: '1A1A1A', align: 'right', border: true }),
   )
 
   // ── Group by category ─────────────────────────────────────────
@@ -124,49 +117,43 @@ export function generateQuotation(data: QuotationData): void {
 
   let rowIdx = 0
   for (const [cat, items] of Object.entries(groups)) {
-    // Category header
+    // Category header row
     push(
       c(cat.toUpperCase(), { bold: true, sz: 8.5, color: 'C85A3A', bg: 'FFF8F5' }),
-      EMPTY(), EMPTY(), EMPTY(), EMPTY(),
+      E(), E(), E(),
     )
 
     for (const item of items) {
       rowIdx++
       const bg = rowIdx % 2 === 0 ? 'FFFFFF' : 'FCFBFA'
-      const priceDisplay = item.price !== null ? fmtINR(item.price) : 'On Request'
-      const priceIsNum   = item.price !== null
+      const priceIsNum = item.price !== null
 
       push(
-        c('', { bg }),
+        c('',               { bg }),
         c(item.optionName,  { sz: 10, bg }),
         c(item.room || '—', { sz: 9.5, color: '6B6B6B', bg }),
-        c(item.type === 'upgrade' ? 'Upgrade' : 'Standard', {
-          sz: 9, bold: item.type === 'upgrade',
-          color: item.type === 'upgrade' ? 'C85A3A' : '888888', bg,
-        }),
         priceIsNum
           ? c(item.price!, { sz: 10, bold: true, bg, align: 'right', numFmt: '₹#,##0' })
-          : c(priceDisplay, { sz: 9.5, italic: true, color: '999999', bg, align: 'right' }),
+          : c('On Request', { sz: 9.5, italic: true, color: '999999', bg, align: 'right' }),
       )
     }
   }
 
   // ── Spacer ────────────────────────────────────────────────────
-  push(EMPTY(), EMPTY(), EMPTY(), EMPTY(), EMPTY())
+  push(E(), E(), E(), E())
 
   // ── Total row ─────────────────────────────────────────────────
   push(
     c('', { bg: 'F05E3E' }),
     c('', { bg: 'F05E3E' }),
-    c('', { bg: 'F05E3E' }),
     c('TOTAL QUOTED PRICE', { bold: true, sz: 11, color: 'FFFFFF', bg: 'F05E3E', align: 'right' }),
     data.total !== null
-      ? c(data.total, { bold: true, sz: 12, color: 'FFFFFF', bg: 'F05E3E', align: 'right', numFmt: '₹#,##0' })
-      : c('On Request',     { bold: true, sz: 11, color: 'FFFFFF', bg: 'F05E3E', align: 'right' }),
+      ? c(data.total,    { bold: true, sz: 12, color: 'FFFFFF', bg: 'F05E3E', align: 'right', numFmt: '₹#,##0' })
+      : c('On Request',  { bold: true, sz: 11, color: 'FFFFFF', bg: 'F05E3E', align: 'right' }),
   )
 
   // ── Spacer ────────────────────────────────────────────────────
-  push(EMPTY(), EMPTY(), EMPTY(), EMPTY(), EMPTY())
+  push(E(), E(), E(), E())
 
   // ── Notes ─────────────────────────────────────────────────────
   const notes = [
@@ -176,22 +163,22 @@ export function generateQuotation(data: QuotationData): void {
     '* For queries, contact: admin@capstonelife.com',
   ]
   for (const note of notes) {
-    push(c(note, { italic: true, sz: 8.5, color: 'AAAAAA' }), EMPTY(), EMPTY(), EMPTY(), EMPTY())
+    push(c(note, { italic: true, sz: 8.5, color: 'AAAAAA' }), E(), E(), E())
   }
 
-  push(EMPTY(), EMPTY(), EMPTY(), EMPTY(), EMPTY())
+  push(E(), E(), E(), E())
 
   push(
     c(
       `Generated by Capstone Life Admin Portal  ·  ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' })}`,
       { italic: true, sz: 8, color: 'CCCCCC', align: 'center', bg: 'FAF9F7' }
     ),
-    EMPTY(), EMPTY(), EMPTY(), EMPTY(),
+    E(), E(), E(),
   )
 
   // ── Build worksheet ───────────────────────────────────────────
   const ws: any = {}
-  const cols = ['A','B','C','D','E']
+  const cols = ['A', 'B', 'C', 'D']
 
   rows.forEach((row, ri) => {
     row.forEach((cell, ci) => {
@@ -199,25 +186,24 @@ export function generateQuotation(data: QuotationData): void {
     })
   })
 
-  ws['!ref'] = `A1:E${rows.length}`
+  ws['!ref'] = `A1:D${rows.length}`
 
-  // Merge title row across all columns
+  // Merge title banner across all 4 columns
   ws['!merges'] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },   // title banner
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
   ]
 
-  // Column widths
+  // Column widths — generous so nothing gets cut off
   ws['!cols'] = [
-    { wch: 4  },   // A gutter
-    { wch: 34 },   // B Option
-    { wch: 28 },   // C Room
-    { wch: 14 },   // D Type
-    { wch: 18 },   // E Price
+    { wch: 5  },   // A  gutter
+    { wch: 52 },   // B  Option / Selection
+    { wch: 38 },   // C  Room / Location
+    { wch: 22 },   // D  Price
   ]
 
   // Row heights
   const heights: Record<number, number> = { 0: 32, 1: 6 }
-  ws['!rows'] = rows.map((_, i) => ({ hpt: heights[i] ?? 18 }))
+  ws['!rows'] = rows.map((_, i) => ({ hpt: heights[i] ?? 20 }))
 
   // ── Build workbook & download ─────────────────────────────────
   const wb = XLSXStyle.utils.book_new()
