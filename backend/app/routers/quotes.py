@@ -11,6 +11,7 @@ router = APIRouter(prefix="/quotes", tags=["quotes"])
 
 async def _enrich(db, quote: dict) -> dict:
     quote["id"] = str(quote["_id"])
+    del quote["_id"]          # remove ObjectId so JSON serialisation never chokes on it
     quote["customer_id"] = str(quote["customer_id"])
     if quote.get("villa_id"):
         quote["villa_id"] = str(quote["villa_id"])

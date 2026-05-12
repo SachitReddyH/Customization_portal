@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import {
   getMyVilla, getMySelections, getAllLocations, getDirectOptions,
-  requestQuote, getMyQuotes, acceptQuote, requestQuoteChanges,
+  requestQuote, getMyQuotes, acceptQuote, requestQuoteChanges, getMe,
 } from '../services/api'
 
 const CATEGORIES = [
@@ -163,6 +163,11 @@ export default function CustomisationHub() {
   }
 
   useEffect(() => {
+    // Guard: if an admin token is active redirect to home
+    getMe().then((me: any) => {
+      if (me?.role === 'admin') { sessionStorage.clear(); navigate('/') }
+    }).catch(() => {})
+
     getMyVilla().then((villas: any[]) => { if (villas?.length) setVilla(villas[0]) }).catch(() => {})
 
     getMySelections().then((data: any) => {
@@ -272,7 +277,7 @@ export default function CustomisationHub() {
     }
   }
 
-  const handleLogout = () => { localStorage.clear(); navigate('/') }
+  const handleLogout = () => { localStorage.clear(); sessionStorage.clear(); navigate('/') }
 
   return (
     <div className="hub-page">
