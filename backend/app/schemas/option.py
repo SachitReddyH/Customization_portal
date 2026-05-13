@@ -113,6 +113,7 @@ class OptionUpdate(BaseModel):
     detailed_spec: Optional[str] = None
     images: Optional[OptionImages] = None
     notes: Optional[str] = None
+    link: Optional[str] = None
     is_active: Optional[bool] = None
     sort_order: Optional[int] = None
     villa_type_applicable: Optional[List[str]] = None
