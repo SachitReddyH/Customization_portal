@@ -564,6 +564,74 @@ input[type="url"], textarea {
   border-color: var(--dark);
 }
 
+/* ── Category progress tabs ─────────────────────── */
+.cat-tabs {
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  background: #fff;
+  border-bottom: 1px solid #e8e4e0;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+.cat-tabs::-webkit-scrollbar { display: none; }
+
+.cat-tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 14px;
+  height: 42px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #aaa;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.cat-tab:hover {
+  color: var(--dark);
+  background: #faf8f6;
+}
+.cat-tab--active {
+  color: var(--dark);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.cat-tab-step {
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  background: #edebe8;
+  color: #999;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.cat-tab--active .cat-tab-step {
+  background: var(--accent);
+  color: #fff;
+}
+.cat-tab:hover:not(.cat-tab--active) .cat-tab-step {
+  background: #ddd;
+  color: var(--dark);
+}
+
+.cat-tab-label { /* inherits font from .cat-tab */ }
+
 /* ── Content wrapper (columns) ───────────────────── */
 .cat-content {
   display: flex;

@@ -763,6 +763,21 @@ export default function CategoryPage() {
         </div>
       </nav>
 
+      {/* ── Category tabs ── */}
+      <div className="cat-tabs">
+        {CATEGORY_ORDER.map((cat, idx) => (
+          <button
+            key={cat.id}
+            className={`cat-tab${cat.id === categoryId ? ' cat-tab--active' : ''}`}
+            onClick={() => navigate(`/category/${cat.id}`)}
+            title={cat.name}
+          >
+            <span className="cat-tab-step">{idx + 1}</span>
+            <span className="cat-tab-label">{cat.name}</span>
+          </button>
+        ))}
+      </div>
+
       {/* ── Content ── */}
       <div className="cat-content">
 
