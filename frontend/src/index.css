@@ -519,9 +519,9 @@ input[type="url"], textarea {
   flex: 1;
   text-align: center;
   font-family: var(--font-display);
-  font-size: 38px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   color: var(--dark);
 }
 
