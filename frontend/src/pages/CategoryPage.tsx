@@ -56,10 +56,10 @@ const CATEGORY_ORDER = [
   { id: 'CAT001', name: 'Space Customisations'    },
   { id: 'CAT002', name: 'Flooring Upgrades'        },
   { id: 'CAT003', name: 'Bathroom Upgrades'        },
-  { id: 'CAT004', name: 'Lift Interior Refinement' },
-  { id: 'CAT005', name: 'Landscape Packages'       },
-  { id: 'CAT006', name: 'Smart Home'               },
   { id: 'CAT007', name: 'VRF Cooling System'       },
+  { id: 'CAT006', name: 'Smart Home'               },
+  { id: 'CAT005', name: 'Landscape Packages'       },
+  { id: 'CAT004', name: 'Lift Interior Refinement' },
   { id: 'CAT008', name: 'Home Theatre'             },
 ]
 const FLOOR_SUFFIX: Record<string, string> = {
