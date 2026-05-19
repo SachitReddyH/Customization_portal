@@ -27,6 +27,13 @@ async def require_admin(user=Depends(get_current_user)):
     return user
 
 
+async def require_any_admin(user=Depends(get_current_user)):
+    """Allows both full admin and crm_admin (read + limited write)."""
+    if user.get("role") not in ("admin", "crm_admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    return user
+
+
 async def require_customer(user=Depends(get_current_user)):
     if user.get("role") != "customer":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Customer access required")

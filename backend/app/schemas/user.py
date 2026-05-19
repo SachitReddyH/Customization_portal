@@ -8,7 +8,7 @@ class UserCreate(BaseModel):
     password: str
     full_name: str
     phone: Optional[str] = None
-    role: Literal["admin", "customer"] = "customer"
+    role: Literal["admin", "crm_admin", "customer"] = "customer"
     villa_id: Optional[str] = None           # Required for customers
     customization_deadline: Optional[datetime] = None
 

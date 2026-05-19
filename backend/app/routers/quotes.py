@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.database import get_db
-from app.core.deps import get_current_user, require_admin
+from app.core.deps import get_current_user, require_admin, require_any_admin
 from app.schemas.quote import QuoteRequestCreate, QuoteRequestResponse, QuoteStatusUpdate, ItemPrice
 from bson import ObjectId
 from datetime import datetime, timezone
@@ -177,7 +177,7 @@ async def my_quotes(user=Depends(get_current_user)):
 
 
 @router.get("/", response_model=List[QuoteRequestResponse])
-async def list_quotes(user=Depends(require_admin)):
+async def list_quotes(user=Depends(require_any_admin)):
     db = get_db()
     # Sort: new/updated first, then by requested_at desc
     cursor = db.quote_requests.find().sort([

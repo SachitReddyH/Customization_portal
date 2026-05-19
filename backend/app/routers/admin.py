@@ -1,7 +1,7 @@
 """Admin-only routes: manage customers, options, and view all selections."""
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from app.database import get_db
-from app.core.deps import require_admin
+from app.core.deps import require_admin, require_any_admin
 from app.core.security import hash_password
 from app.schemas.user import UserCreate, UserUpdate, UserResponse
 from app.schemas.option import OptionCreate, OptionUpdate, OptionResponse
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 # ── Customer Management ────────────────────────────────────────────────────
 
 @router.get("/customers", response_model=List[UserResponse])
-async def list_customers(user=Depends(require_admin)):
+async def list_customers(user=Depends(require_any_admin)):
     db = get_db()
     cursor = db.users.find({"role": "customer"}).sort("created_at", -1)
     customers = await cursor.to_list(length=None)
@@ -31,7 +31,7 @@ async def list_customers(user=Depends(require_admin)):
 
 
 @router.post("/customers", response_model=UserResponse, status_code=201)
-async def create_customer(payload: UserCreate, user=Depends(require_admin)):
+async def create_customer(payload: UserCreate, user=Depends(require_any_admin)):
     db = get_db()
     if await db.users.find_one({"email": payload.email}):
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -106,7 +106,7 @@ async def delete_customer(customer_id: str, user=Depends(require_admin)):
 
 
 @router.get("/customers/{customer_id}/selections")
-async def get_customer_selections(customer_id: str, user=Depends(require_admin)):
+async def get_customer_selections(customer_id: str, user=Depends(require_any_admin)):
     db = get_db()
     customer = await db.users.find_one({"_id": ObjectId(customer_id)})
     if not customer:

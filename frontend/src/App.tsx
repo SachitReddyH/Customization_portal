@@ -9,6 +9,9 @@ import AdminCustomers from './pages/admin/AdminCustomers'
 import AdminCustomerDetail from './pages/admin/AdminCustomerDetail'
 import AdminQuotes from './pages/admin/AdminQuotes'
 import AdminOptions from './pages/admin/AdminOptions'
+import CRMLayout from './pages/crm/CRMLayout'
+import CRMCustomers from './pages/crm/CRMCustomers'
+import CRMQuotes from './pages/crm/CRMQuotes'
 import './index.css'
 
 // Module-level blob cache — survives all navigations for the session
@@ -72,6 +75,11 @@ function AppContent() {
           <Route path="customers/:customerId" element={<AdminCustomerDetail />} />
           <Route path="quotes" element={<AdminQuotes />} />
           <Route path="options" element={<AdminOptions />} />
+        </Route>
+        <Route path="/crm" element={<CRMLayout />}>
+          <Route index element={<Navigate to="/crm/customers" replace />} />
+          <Route path="customers" element={<CRMCustomers />} />
+          <Route path="quotes" element={<CRMQuotes />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -19,12 +19,15 @@ export default function LandingPage() {
     try {
       const data = await login(email, password)
       // Admin sessions are per-tab (sessionStorage); customer sessions persist (localStorage)
-      const store = data.role === 'admin' ? sessionStorage : localStorage
+      const isAdminRole = data.role === 'admin' || data.role === 'crm_admin'
+      const store = isAdminRole ? sessionStorage : localStorage
       store.setItem('access_token', data.access_token)
       store.setItem('refresh_token', data.refresh_token)
       store.setItem('user_role', data.role)
       store.setItem('user_name', data.full_name)
-      navigate(data.role === 'admin' ? '/admin' : '/hub')
+      if (data.role === 'admin') navigate('/admin')
+      else if (data.role === 'crm_admin') navigate('/crm')
+      else navigate('/hub')
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Invalid email or password.')
     } finally {
