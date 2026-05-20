@@ -1,12 +1,13 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Users, FileText, LogOut, Settings2 } from 'lucide-react'
+import { LayoutDashboard, Users, FileText, LogOut, Settings2, FolderOpen } from 'lucide-react'
 import './admin.css'
 
 const NAV_ITEMS = [
   { to: '/admin',          label: 'Dashboard',      icon: LayoutDashboard, end: true  },
   { to: '/admin/customers',label: 'Customers',       icon: Users,           end: false },
   { to: '/admin/quotes',   label: 'Quote Requests',  icon: FileText,        end: false },
-  { to: '/admin/options',  label: 'Options Manager', icon: Settings2,       end: false },
+  { to: '/admin/options',  label: 'Options Manager',   icon: Settings2,  end: false },
+  { to: '/admin/drawing',  label: 'Drawing Register',  icon: FolderOpen, end: false },
 ]
 
 function getPageTitle(pathname: string): string {
@@ -17,6 +18,7 @@ function getPageTitle(pathname: string): string {
   if (pathname.startsWith('/admin/customers')) return 'Customers'
   if (pathname.startsWith('/admin/quotes')) return 'Quote Requests'
   if (pathname.startsWith('/admin/options')) return 'Options Manager'
+  if (pathname.startsWith('/admin/drawing')) return 'Drawing Register'
   return 'Admin'
 }
 

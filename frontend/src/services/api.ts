@@ -174,6 +174,22 @@ export const updateOption = (optionId: string, data: any) =>
 export const deleteOption = (optionId: string) =>
   api.delete(`/admin/options/${optionId}`)
 
+/* ── Drawing Register ─────────────────────────── */
+export const listDrawingRegister = () =>
+  api.get('/drawing-register/').then(r => r.data)
+
+export const getMyDrawingPlans = () =>
+  api.get('/drawing-register/my').then(r => r.data)
+
+export const uploadFloorPlan = (villaId: string, file: File, planType: 'standard' | 'updated') => {
+  const form = new FormData()
+  form.append('file', file)
+  form.append('plan_type', planType)
+  return api.post(`/drawing-register/${villaId}/upload`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }).then(r => r.data)
+}
+
 export const uploadOptionImage = (file: File, categoryId: string) => {
   const form = new FormData()
   form.append('file', file)

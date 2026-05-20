@@ -9,7 +9,9 @@ import AdminCustomers from './pages/admin/AdminCustomers'
 import AdminCustomerDetail from './pages/admin/AdminCustomerDetail'
 import AdminQuotes from './pages/admin/AdminQuotes'
 import AdminOptions from './pages/admin/AdminOptions'
+import AdminDrawingRegister from './pages/admin/AdminDrawingRegister'
 import CRMLayout from './pages/crm/CRMLayout'
+import DesignLayout from './pages/design/DesignLayout'
 import CRMCustomers from './pages/crm/CRMCustomers'
 import CRMQuotes from './pages/crm/CRMQuotes'
 import './index.css'
@@ -75,11 +77,16 @@ function AppContent() {
           <Route path="customers/:customerId" element={<AdminCustomerDetail />} />
           <Route path="quotes" element={<AdminQuotes />} />
           <Route path="options" element={<AdminOptions />} />
+          <Route path="drawing" element={<AdminDrawingRegister />} />
         </Route>
         <Route path="/crm" element={<CRMLayout />}>
           <Route index element={<Navigate to="/crm/customers" replace />} />
           <Route path="customers" element={<CRMCustomers />} />
           <Route path="quotes" element={<CRMQuotes />} />
+        </Route>
+        <Route path="/design" element={<DesignLayout />}>
+          <Route index element={<Navigate to="/design/drawing" replace />} />
+          <Route path="drawing" element={<AdminDrawingRegister />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

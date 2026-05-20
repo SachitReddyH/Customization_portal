@@ -34,6 +34,13 @@ async def require_any_admin(user=Depends(get_current_user)):
     return user
 
 
+async def require_drawing_access(user=Depends(get_current_user)):
+    """Allows admin and design_admin to manage drawing register."""
+    if user.get("role") not in ("admin", "design_admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Drawing register access required")
+    return user
+
+
 async def require_customer(user=Depends(get_current_user)):
     if user.get("role") != "customer":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Customer access required")

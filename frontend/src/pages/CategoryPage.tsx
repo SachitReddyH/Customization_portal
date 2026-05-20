@@ -6,7 +6,7 @@ import {
   getCategory, getCategories, getFloors, getRooms, getRoomOptions,
   getDirectOptions, getFlooringPackages,
   getMyVilla, getMySelections, upsertSelection, removeSelection, clearAllSelections,
-  requestQuote, submitInterest,
+  requestQuote, submitInterest, getMyDrawingPlans,
   BASE,
 } from '../services/api'
 
@@ -313,6 +313,13 @@ export default function CategoryPage() {
     }
   }
 
+  // Drawing register floor plans (CAT001 only)
+  const [drawingPlans, setDrawingPlans] = useState<{
+    standard_plan: { url: string; uploaded_at: string } | null
+    updated_plan:  { url: string; uploaded_at: string } | null
+  } | null>(null)
+  const [floorPlanLightbox, setFloorPlanLightbox] = useState<string | null>(null)
+
   // Floor plan lightbox
   const [lightboxUrl, setLightboxUrl] = useState('')
 
@@ -410,6 +417,14 @@ export default function CategoryPage() {
     setFloorsError(false)
 
     getCategory(categoryId).then(d => { if (active) setCategory(d) }).catch(console.error)
+
+    // Fetch drawing register floor plans for Space Customisations
+    if (categoryId === 'CAT001') {
+      setDrawingPlans(null)
+      getMyDrawingPlans()
+        .then(d => { if (active) setDrawingPlans(d) })
+        .catch(() => {})
+    }
 
     // Refresh selections in background; cart already shows cached values instantly
     getMySelections().then(async d => {
@@ -847,6 +862,82 @@ export default function CategoryPage() {
 
         {/* ══ MIDDLE — Options panel ══ */}
         <main className={`options-panel ${(!isRoomBased || isPackageTab || isAddonTab) ? 'options-panel--wide' : ''}`}>
+
+          {/* ── Drawing Register Floor Plans (CAT001 only) ── */}
+          {categoryId === 'CAT001' && drawingPlans && (drawingPlans.standard_plan || drawingPlans.updated_plan) && (
+            <div className="dr-customer-section">
+              <h3 className="dr-customer-heading">Your Floor Plans</h3>
+              <div className="dr-customer-cards">
+                {drawingPlans.standard_plan && (
+                  <div className="dr-customer-card">
+                    <div className="dr-customer-card-label">Standard Floor Plan</div>
+                    <div
+                      className="dr-customer-thumb"
+                      onClick={() => setFloorPlanLightbox(drawingPlans.standard_plan!.url)}
+                    >
+                      {drawingPlans.standard_plan.url.endsWith('.pdf') ? (
+                        <a
+                          href={`${BASE}${drawingPlans.standard_plan.url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="dr-customer-pdf"
+                        >
+                          View PDF
+                        </a>
+                      ) : (
+                        <img
+                          src={`${BASE}${drawingPlans.standard_plan.url}`}
+                          alt="Standard Floor Plan"
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+                {drawingPlans.updated_plan && (
+                  <div className="dr-customer-card dr-customer-card--updated">
+                    <div className="dr-customer-card-label">
+                      Updated Floor Plan
+                      <span className="dr-customer-badge">Latest</span>
+                    </div>
+                    <div
+                      className="dr-customer-thumb"
+                      onClick={() => setFloorPlanLightbox(drawingPlans.updated_plan!.url)}
+                    >
+                      {drawingPlans.updated_plan.url.endsWith('.pdf') ? (
+                        <a
+                          href={`${BASE}${drawingPlans.updated_plan.url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="dr-customer-pdf"
+                        >
+                          View PDF
+                        </a>
+                      ) : (
+                        <img
+                          src={`${BASE}${drawingPlans.updated_plan.url}`}
+                          alt="Updated Floor Plan"
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Floor plan lightbox */}
+          {floorPlanLightbox && (
+            <div className="dr-lightbox" onClick={() => setFloorPlanLightbox(null)}>
+              <button className="dr-lightbox-close" onClick={() => setFloorPlanLightbox(null)}>
+                <X size={20} />
+              </button>
+              <img
+                src={`${BASE}${floorPlanLightbox}`}
+                alt="Floor Plan"
+                onClick={e => e.stopPropagation()}
+              />
+            </div>
+          )}
 
           {/* Sub-section tabs */}
           {tabs.length > 0 && (
