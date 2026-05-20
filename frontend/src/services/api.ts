@@ -184,6 +184,9 @@ export const getMyDrawingPlans = () =>
 export const markFloorPlanViewed = () =>
   api.post('/drawing-register/mark-viewed').then(r => r.data)
 
+export const skipSpaceCustomisation = () =>
+  api.post('/drawing-register/skip-space-customisation').then(r => r.data)
+
 export const uploadFloorPlan = (villaId: string, file: File, planType: 'standard' | 'updated') => {
   const form = new FormData()
   form.append('file', file)

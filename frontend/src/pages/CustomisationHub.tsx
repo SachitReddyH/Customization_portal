@@ -8,7 +8,8 @@ import {
 import {
   getMyVilla, getMySelections, getAllLocations, getDirectOptions,
   requestQuote, getMyQuotes, acceptQuote, requestQuoteChanges, getMe,
-  getMyDrawingPlans, markFloorPlanViewed as apiMarkFloorPlanViewed, BASE,
+  getMyDrawingPlans, markFloorPlanViewed as apiMarkFloorPlanViewed,
+  skipSpaceCustomisation as apiSkipSpaceCustomisation, BASE,
 } from '../services/api'
 
 const CATEGORIES = [
@@ -150,12 +151,25 @@ export default function CustomisationHub() {
   } | null>(null)
   const [floorPlanOpen, setFloorPlanOpen]     = useState(false)
   const [fpLightbox,    setFpLightbox]        = useState<string | null>(null)
-  const [hasViewedFloorPlan, setHasViewedFloorPlan] = useState(false)
+  const [hasViewedFloorPlan,       setHasViewedFloorPlan]       = useState(false)
+  const [spaceCustomisationSkipped, setSpaceCustomisationSkipped] = useState(false)
+  const [skipConfirmOpen,           setSkipConfirmOpen]           = useState(false)
+  const [skipLoading,               setSkipLoading]               = useState(false)
 
   const markFloorPlanViewed = () => {
     if (hasViewedFloorPlan) return
     setHasViewedFloorPlan(true)
     apiMarkFloorPlanViewed().catch(() => {})
+  }
+
+  const handleSkipSpaceCustomisation = async () => {
+    setSkipLoading(true)
+    try {
+      await apiSkipSpaceCustomisation()
+      setSpaceCustomisationSkipped(true)
+      setSkipConfirmOpen(false)
+    } catch { /* ignore */ }
+    finally { setSkipLoading(false) }
   }
 
   // Cart quote state
@@ -197,7 +211,8 @@ export default function CustomisationHub() {
 
     getMyDrawingPlans().then(d => {
       setDrawingPlans(d)
-      if (d?.floor_plan_viewed) setHasViewedFloorPlan(true)
+      if (d?.floor_plan_viewed)           setHasViewedFloorPlan(true)
+      if (d?.space_customisation_skipped) setSpaceCustomisationSkipped(true)
     }).catch(() => {})
 
     getMySelections().then((data: any) => {
@@ -394,9 +409,14 @@ export default function CustomisationHub() {
               {row.map((cat, colIdx) => {
                 const globalIdx  = rowIdx * 3 + colIdx
                 const Icon       = cat.icon
-                const isFloorPlan    = cat.id === 'FLOOR_PLAN'
-                // Only CAT001 unlocks after viewing floor plan; all others remain disabled
-                const isNotUnlocked  = !isFloorPlan && !(cat.id === 'CAT001' && hasViewedFloorPlan)
+                const isFloorPlan         = cat.id === 'FLOOR_PLAN'
+                const hasCAT001Selection  = selections.some((s: any) => s.category_id === 'CAT001')
+                const otherCatsUnlocked   = spaceCustomisationSkipped || hasCAT001Selection
+                const isNotUnlocked = !isFloorPlan && (
+                  cat.id === 'CAT001'
+                    ? !(hasViewedFloorPlan && !spaceCustomisationSkipped)
+                    : !otherCatsUnlocked
+                )
                 return (
                   <div
                     key={cat.id}
@@ -528,13 +548,23 @@ export default function CustomisationHub() {
               ) : (
                 <>
                   {quoteError && <p className="hub-cart-quote-error">{quoteError}</p>}
-                  <button
-                    className="hub-cart-quote-btn"
-                    disabled={selections.length === 0 || quoteSubmitting}
-                    onClick={handleRequestQuote}
-                  >
-                    {quoteSubmitting ? 'Submitting…' : 'Request for Quote'}
-                  </button>
+                  {selections.length > 0 && (
+                    <button
+                      className="hub-cart-quote-btn"
+                      disabled={quoteSubmitting}
+                      onClick={handleRequestQuote}
+                    >
+                      {quoteSubmitting ? 'Submitting…' : 'Request for Quote'}
+                    </button>
+                  )}
+                  {hasViewedFloorPlan && !spaceCustomisationSkipped && !selections.some((s: any) => s.category_id === 'CAT001') && (
+                    <button
+                      className="hub-cart-skip-btn"
+                      onClick={() => { setCartOpen(false); setSkipConfirmOpen(true) }}
+                    >
+                      Keep Standard Floor Plan &amp; Continue
+                    </button>
+                  )}
                 </>
               )}
             </div>
@@ -722,6 +752,36 @@ export default function CustomisationHub() {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Skip Space Customisation confirmation popup ── */}
+      {skipConfirmOpen && (
+        <div className="qn-overlay" onClick={() => !skipLoading && setSkipConfirmOpen(false)}>
+          <div className="hub-skip-modal" onClick={e => e.stopPropagation()}>
+            <h3 className="hub-skip-modal-title">Keep Standard Floor Plan?</h3>
+            <p className="hub-skip-modal-body">
+              If you confirm, you will <strong>no longer have access</strong> to Space Customisations.
+              Your villa will proceed with the standard floor plan, and all other customisation
+              categories will be unlocked.
+            </p>
+            <div className="hub-skip-modal-actions">
+              <button
+                className="hub-skip-modal-confirm"
+                onClick={handleSkipSpaceCustomisation}
+                disabled={skipLoading}
+              >
+                {skipLoading ? 'Please wait…' : 'Yes, Keep Standard Plan'}
+              </button>
+              <button
+                className="hub-skip-modal-cancel"
+                onClick={() => setSkipConfirmOpen(false)}
+                disabled={skipLoading}
+              >
+                Go Back
+              </button>
             </div>
           </div>
         </div>

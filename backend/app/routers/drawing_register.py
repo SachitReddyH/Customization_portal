@@ -96,11 +96,24 @@ async def my_drawing_register(user=Depends(get_current_user)):
 
     std = doc.get("standard_plan") or {}
     upd = doc.get("updated_plan")  or {}
+    space_customisation_skipped = bool(user.get("space_customisation_skipped", False))
     return {
-        "standard_plan":    _plan_doc(std or None),
-        "updated_plan":     _plan_doc(upd or None),
-        "floor_plan_viewed": floor_plan_viewed,
+        "standard_plan":             _plan_doc(std or None),
+        "updated_plan":              _plan_doc(upd or None),
+        "floor_plan_viewed":         floor_plan_viewed,
+        "space_customisation_skipped": space_customisation_skipped,
     }
+
+
+@router.post("/skip-space-customisation")
+async def skip_space_customisation(user=Depends(get_current_user)):
+    """Customer chose to keep standard floor plan and skip Space Customisations."""
+    db = get_db()
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"space_customisation_skipped": True, "space_customisation_skipped_at": datetime.now(timezone.utc)}},
+    )
+    return {"space_customisation_skipped": True}
 
 
 @router.post("/mark-viewed")
