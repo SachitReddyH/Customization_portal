@@ -4195,6 +4195,14 @@ input[type="url"], textarea {
   background: #d94e31 !important;
 }
 
+/* ── Cards locked until floor plan viewed ── */
+.card--not-unlocked {
+  opacity: 0.35;
+  cursor: not-allowed !important;
+  pointer-events: none;
+  filter: grayscale(0.3);
+}
+
 /* ── Disclaimer above cards ── */
 .hub-fp-disclaimer {
   font-family: var(--font-body);

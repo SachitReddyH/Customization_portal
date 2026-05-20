@@ -150,6 +150,14 @@ export default function CustomisationHub() {
   } | null>(null)
   const [floorPlanOpen, setFloorPlanOpen]     = useState(false)
   const [fpLightbox,    setFpLightbox]        = useState<string | null>(null)
+  const [hasViewedFloorPlan, setHasViewedFloorPlan] = useState(
+    () => localStorage.getItem('floor_plan_viewed') === 'true'
+  )
+
+  const markFloorPlanViewed = () => {
+    localStorage.setItem('floor_plan_viewed', 'true')
+    setHasViewedFloorPlan(true)
+  }
 
   // Cart quote state
   const [quoteSubmitting, setQuoteSubmitting] = useState(false)
@@ -373,7 +381,7 @@ export default function CustomisationHub() {
 
       {/* ── Category cards ── */}
       <div className="categories-overlay">
-        {expanded && (
+        {expanded && !hasViewedFloorPlan && (
           <p className="hub-fp-disclaimer">
             Please view your floor plans before beginning your villa customisations.
           </p>
@@ -382,24 +390,25 @@ export default function CustomisationHub() {
           {ROWS.map((row, rowIdx) => (
             <div className="cards-row" key={rowIdx}>
               {row.map((cat, colIdx) => {
-                const globalIdx = rowIdx * 3 + colIdx
-                const Icon = cat.icon
-                const isFloorPlan = cat.id === 'FLOOR_PLAN'
+                const globalIdx  = rowIdx * 3 + colIdx
+                const Icon       = cat.icon
+                const isFloorPlan    = cat.id === 'FLOOR_PLAN'
+                const isNotUnlocked  = !isFloorPlan && !hasViewedFloorPlan
                 return (
                   <div
                     key={cat.id}
-                    className={`card ${expanded ? 'visible' : ''} ${!isFloorPlan && isAccepted ? 'card--locked' : ''}`}
+                    className={`card ${expanded ? 'visible' : ''} ${!isFloorPlan && isAccepted ? 'card--locked' : ''} ${isNotUnlocked ? 'card--not-unlocked' : ''}`}
                     style={{
                       transitionDelay: settled ? '0ms' : expanded ? `${globalIdx * 60}ms` : '0ms',
                       ...(isFloorPlan ? { background: '#F05E3E', border: 'none' } : {}),
                     }}
                     onClick={() => {
                       if (isFloorPlan) setFloorPlanOpen(true)
-                      else if (!isAccepted) navigate(`/category/${cat.id}`)
+                      else if (!isNotUnlocked && !isAccepted) navigate(`/category/${cat.id}`)
                     }}
                   >
                     <span className="card-icon">
-                      <Icon size={26} strokeWidth={1.5} color={isFloorPlan ? '#fff' : isAccepted ? '#bbb' : '#F05E3E'} />
+                      <Icon size={26} strokeWidth={1.5} color={isFloorPlan ? '#fff' : (isAccepted || isNotUnlocked) ? '#bbb' : '#F05E3E'} />
                     </span>
                     <p className="card-name" style={isFloorPlan ? { color: '#fff' } : {}}>
                       {cat.name}
@@ -668,6 +677,7 @@ export default function CustomisationHub() {
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{ color: '#F05E3E', fontFamily: 'var(--font-body)', fontSize: 14, textDecoration: 'underline' }}
+                          onClick={markFloorPlanViewed}
                         >
                           View PDF
                         </a>
@@ -676,7 +686,7 @@ export default function CustomisationHub() {
                           src={`${BASE}${drawingPlans.standard_plan.url}`}
                           alt="Standard Floor Plan"
                           style={{ width: '100%', borderRadius: 8, cursor: 'zoom-in', display: 'block' }}
-                          onClick={() => setFpLightbox(drawingPlans!.standard_plan!.url)}
+                          onClick={() => { markFloorPlanViewed(); setFpLightbox(drawingPlans!.standard_plan!.url) }}
                         />
                       )}
                     </div>
@@ -693,6 +703,7 @@ export default function CustomisationHub() {
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{ color: '#F05E3E', fontFamily: 'var(--font-body)', fontSize: 14, textDecoration: 'underline' }}
+                          onClick={markFloorPlanViewed}
                         >
                           View PDF
                         </a>
@@ -701,7 +712,7 @@ export default function CustomisationHub() {
                           src={`${BASE}${drawingPlans.updated_plan.url}`}
                           alt="Updated Floor Plan"
                           style={{ width: '100%', borderRadius: 8, cursor: 'zoom-in', display: 'block' }}
-                          onClick={() => setFpLightbox(drawingPlans!.updated_plan!.url)}
+                          onClick={() => { markFloorPlanViewed(); setFpLightbox(drawingPlans!.updated_plan!.url) }}
                         />
                       )}
                     </div>
