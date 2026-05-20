@@ -22,10 +22,14 @@ const CATEGORIES = [
   { id: 'CAT008', name: 'Home Theatre',             tagline: 'Cinema, Curated for You',                             icon: Tv2           },
 ]
 
+const FLOOR_PLAN_CARD = { id: 'FLOOR_PLAN', name: 'View Floor Plans', tagline: "Your villa's blueprints", icon: Map }
+
+const ALL_HUB_CARDS = [FLOOR_PLAN_CARD, ...CATEGORIES]
+
 const ROWS = [
-  CATEGORIES.slice(0, 3),
-  CATEGORIES.slice(3, 6),
-  CATEGORIES.slice(6, 8),
+  ALL_HUB_CARDS.slice(0, 3),
+  ALL_HUB_CARDS.slice(3, 6),
+  ALL_HUB_CARDS.slice(6, 9),
 ]
 
 /* ── Mock villa image gallery ─────────────────────── */
@@ -369,45 +373,46 @@ export default function CustomisationHub() {
 
       {/* ── Category cards ── */}
       <div className="categories-overlay">
+        {expanded && (
+          <p className="hub-fp-disclaimer">
+            Please view your floor plans before beginning your villa customisations.
+          </p>
+        )}
         <div className="categories-grid">
           {ROWS.map((row, rowIdx) => (
             <div className="cards-row" key={rowIdx}>
               {row.map((cat, colIdx) => {
                 const globalIdx = rowIdx * 3 + colIdx
                 const Icon = cat.icon
+                const isFloorPlan = cat.id === 'FLOOR_PLAN'
                 return (
                   <div
                     key={cat.id}
-                    className={`card ${expanded ? 'visible' : ''} ${isAccepted ? 'card--locked' : ''}`}
-                    style={{ transitionDelay: settled ? '0ms' : expanded ? `${globalIdx * 60}ms` : '0ms' }}
-                    onClick={() => !isAccepted && navigate(`/category/${cat.id}`)}
+                    className={`card ${expanded ? 'visible' : ''} ${!isFloorPlan && isAccepted ? 'card--locked' : ''}`}
+                    style={{
+                      transitionDelay: settled ? '0ms' : expanded ? `${globalIdx * 60}ms` : '0ms',
+                      ...(isFloorPlan ? { background: '#F05E3E', border: 'none' } : {}),
+                    }}
+                    onClick={() => {
+                      if (isFloorPlan) setFloorPlanOpen(true)
+                      else if (!isAccepted) navigate(`/category/${cat.id}`)
+                    }}
                   >
-                    <span className="card-icon"><Icon size={26} strokeWidth={1.5} color={isAccepted ? '#bbb' : '#F05E3E'} /></span>
-                    <p className="card-name">{cat.name}</p>
-                    <p className="card-tagline">{cat.tagline}</p>
-                    {isAccepted && <Lock size={14} className="card-lock-icon" color="#bbb" />}
+                    <span className="card-icon">
+                      <Icon size={26} strokeWidth={1.5} color={isFloorPlan ? '#fff' : isAccepted ? '#bbb' : '#F05E3E'} />
+                    </span>
+                    <p className="card-name" style={isFloorPlan ? { color: '#fff' } : {}}>
+                      {cat.name}
+                    </p>
+                    <p className="card-tagline" style={isFloorPlan ? { color: 'rgba(255,255,255,0.75)' } : {}}>
+                      {cat.tagline}
+                    </p>
+                    {!isFloorPlan && isAccepted && <Lock size={14} className="card-lock-icon" color="#bbb" />}
                   </div>
                 )
               })}
             </div>
           ))}
-
-          {/* ── Floor Plans card (always accessible, full orange) ── */}
-          <div className="cards-row">
-            <div
-              className={`card card--floor-plan ${expanded ? 'visible' : ''}`}
-              style={{
-                transitionDelay: settled ? '0ms' : expanded ? `${CATEGORIES.length * 60}ms` : '0ms',
-                background: '#F05E3E',
-                border: 'none',
-              }}
-              onClick={() => setFloorPlanOpen(true)}
-            >
-              <span className="card-icon"><Map size={26} strokeWidth={1.5} color="#fff" /></span>
-              <p className="card-name" style={{ color: '#fff' }}>View Floor Plans</p>
-              <p className="card-tagline" style={{ color: 'rgba(255,255,255,0.75)' }}>Your villa's blueprints</p>
-            </div>
-          </div>
         </div>
       </div>
 

@@ -4188,13 +4188,20 @@ input[type="url"], textarea {
   right: 12px;
 }
 
-/* ── Floor Plans card ── */
-.card--floor-plan {
-  max-width: 320px;
-  flex: 0 0 320px;
-}
-.card--floor-plan:hover {
+/* ── Floor Plans card hover ── */
+.card[style*="F05E3E"]:hover {
   background: #d94e31 !important;
+}
+
+/* ── Disclaimer above cards ── */
+.hub-fp-disclaimer {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  letter-spacing: 0.02em;
+  margin: 0 0 10px;
+  padding: 0 16px;
 }
 
 /* ══════════════════════════════════════════════════
