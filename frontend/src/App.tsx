@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Component } from 'react'
+import type { ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import LandingPage from './pages/LandingPage'
 import CustomisationHub from './pages/CustomisationHub'
@@ -94,10 +95,25 @@ function AppContent() {
   )
 }
 
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: string }> {
+  constructor(props: any) { super(props); this.state = { error: '' } }
+  static getDerivedStateFromError(e: any) { return { error: String(e) } }
+  render() {
+    if (this.state.error) return (
+      <div style={{ padding: 40, fontFamily: 'monospace', color: '#c00', whiteSpace: 'pre-wrap' }}>
+        <b>App crash — please share this with the developer:</b>{'\n\n'}{this.state.error}
+      </div>
+    )
+    return this.props.children
+  }
+}
+
 export default function App() {
   return (
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }
