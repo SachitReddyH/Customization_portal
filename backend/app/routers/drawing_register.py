@@ -25,15 +25,19 @@ def _plan_doc(plan: Optional[dict], uploader_name: Optional[str] = None) -> Opti
 
 @router.get("/")
 async def list_drawing_register(user=Depends(require_drawing_access)):
-    """List all villas with their drawing register status — 2 bulk queries total."""
+    """List all villas with their drawing register status — 4 bulk queries total."""
     db = get_db()
 
-    # Single query: all villas
-    villas = await db.villas.find().sort("villa_number", 1).to_list(length=None)
-
-    # Single query: all existing register docs
+    # Bulk fetch: villas, register docs, customers
+    villas   = await db.villas.find().sort("villa_number", 1).to_list(length=None)
     reg_docs = await db.drawing_register.find().to_list(length=None)
-    reg_map = {str(d["villa_id"]): d for d in reg_docs}
+    customers = await db.users.find(
+        {"role": "customer", "villa_id": {"$ne": None}}
+    ).to_list(length=None)
+
+    reg_map      = {str(d["villa_id"]): d for d in reg_docs}
+    # Map villa_id → customer
+    customer_map = {str(c["villa_id"]): c for c in customers if c.get("villa_id")}
 
     # Collect uploader IDs and fetch names in one query
     uploader_ids = set()
@@ -47,29 +51,31 @@ async def list_drawing_register(user=Depends(require_drawing_access)):
 
     user_map = {}
     if uploader_ids:
-        users = await db.users.find(
+        uploaders = await db.users.find(
             {"_id": {"$in": list(uploader_ids)}}
         ).to_list(length=None)
-        user_map = {str(u["_id"]): u.get("full_name", "") for u in users}
+        user_map = {str(u["_id"]): u.get("full_name", "") for u in uploaders}
 
     result = []
     for villa in villas:
-        vid     = str(villa["_id"])
-        reg     = reg_map.get(vid)
-        std     = (reg.get("standard_plan") or {}) if reg else {}
-        upd     = (reg.get("updated_plan")  or {}) if reg else {}
-
-        std_by  = str(std.get("uploaded_by", ""))
-        upd_by  = str(upd.get("uploaded_by", ""))
+        vid      = str(villa["_id"])
+        reg      = reg_map.get(vid)
+        std      = (reg.get("standard_plan") or {}) if reg else {}
+        upd      = (reg.get("updated_plan")  or {}) if reg else {}
+        std_by   = str(std.get("uploaded_by", ""))
+        upd_by   = str(upd.get("uploaded_by", ""))
+        customer = customer_map.get(vid)
 
         result.append({
-            "villa_id":      vid,
-            "villa_number":  villa.get("villa_number"),
-            "villa_name":    villa.get("villa_name"),
-            "villa_type":    villa.get("villa_type"),
-            "standard_plan": _plan_doc(std or None, user_map.get(std_by)),
-            "updated_plan":  _plan_doc(upd or None, user_map.get(upd_by)),
-            "updated_at":    reg["updated_at"].isoformat() if reg and reg.get("updated_at") else None,
+            "villa_id":       vid,
+            "villa_number":   villa.get("villa_number"),
+            "villa_name":     villa.get("villa_name"),
+            "villa_type":     villa.get("villa_type"),
+            "customer_name":  customer.get("full_name") if customer else None,
+            "customer_email": customer.get("email") if customer else None,
+            "standard_plan":  _plan_doc(std or None, user_map.get(std_by)),
+            "updated_plan":   _plan_doc(upd or None, user_map.get(upd_by)),
+            "updated_at":     reg["updated_at"].isoformat() if reg and reg.get("updated_at") else None,
         })
 
     return result

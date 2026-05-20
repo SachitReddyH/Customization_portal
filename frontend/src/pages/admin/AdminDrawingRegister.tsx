@@ -14,6 +14,8 @@ interface VillaEntry {
   villa_number?: string | number
   villa_name?: string
   villa_type?: string
+  customer_name?: string
+  customer_email?: string
   standard_plan: Plan | null
   updated_plan:  Plan | null
 }
@@ -163,8 +165,10 @@ export default function AdminDrawingRegister() {
     const q = search.toLowerCase()
     return (
       String(e.villa_number ?? '').toLowerCase().includes(q) ||
-      (e.villa_name  ?? '').toLowerCase().includes(q) ||
-      (e.villa_type  ?? '').toLowerCase().includes(q)
+      (e.villa_name     ?? '').toLowerCase().includes(q) ||
+      (e.villa_type     ?? '').toLowerCase().includes(q) ||
+      (e.customer_name  ?? '').toLowerCase().includes(q) ||
+      (e.customer_email ?? '').toLowerCase().includes(q)
     )
   })
 
@@ -207,9 +211,10 @@ export default function AdminDrawingRegister() {
             <thead>
               <tr>
                 <th>Villa</th>
+                <th>Customer</th>
                 <th>Type</th>
-                <th style={{ width: 280 }}>Standard Floor Plan</th>
-                <th style={{ width: 280 }}>Updated Floor Plan</th>
+                <th style={{ width: 260 }}>Standard Floor Plan</th>
+                <th style={{ width: 260 }}>Updated Floor Plan</th>
               </tr>
             </thead>
             <tbody>
@@ -222,6 +227,15 @@ export default function AdminDrawingRegister() {
                         {entry.villa_name}
                       </div>
                     )}
+                  </td>
+                  <td>
+                    {entry.customer_name
+                      ? <>
+                          <div style={{ fontWeight: 500, fontSize: 13 }}>{entry.customer_name}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{entry.customer_email}</div>
+                        </>
+                      : <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Unassigned</span>
+                    }
                   </td>
                   <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                     {entry.villa_type ?? '—'}
