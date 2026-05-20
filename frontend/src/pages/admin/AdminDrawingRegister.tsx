@@ -11,7 +11,7 @@ interface Plan {
 interface VillaEntry {
   id?: string
   villa_id: string
-  villa_number?: string
+  villa_number?: string | number
   villa_name?: string
   villa_type?: string
   standard_plan: Plan | null
@@ -162,7 +162,7 @@ export default function AdminDrawingRegister() {
   const filtered = entries.filter(e => {
     const q = search.toLowerCase()
     return (
-      (e.villa_number ?? '').toLowerCase().includes(q) ||
+      String(e.villa_number ?? '').toLowerCase().includes(q) ||
       (e.villa_name  ?? '').toLowerCase().includes(q) ||
       (e.villa_type  ?? '').toLowerCase().includes(q)
     )
