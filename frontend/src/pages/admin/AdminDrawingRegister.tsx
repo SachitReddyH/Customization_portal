@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { Upload, FileImage, CheckCircle, RefreshCw, Eye, X } from 'lucide-react'
+import { Upload, FileImage, CheckCircle, RefreshCw, Eye, X, AlertCircle } from 'lucide-react'
 import { listDrawingRegister, uploadFloorPlan, BASE } from '../../services/api'
 
 interface Plan {
@@ -142,7 +142,12 @@ export default function AdminDrawingRegister() {
     try {
       const data = await listDrawingRegister()
       setEntries(data)
-    } catch { setError('Failed to load drawing register.') }
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail
+        || (err?.code === 'ECONNABORTED' ? 'Request timed out — the server may be waking up. Please retry.' : null)
+        || 'Failed to load drawing register.'
+      setError(msg)
+    }
     finally { setLoading(false) }
   }
 
@@ -178,9 +183,21 @@ export default function AdminDrawingRegister() {
         </div>
 
         {loading ? (
-          <div className="admin-loading">Loading drawing register…</div>
+          <div className="admin-loading">
+            Loading drawing register…
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
+              This may take up to 30 seconds if the server is waking up.
+            </div>
+          </div>
         ) : error ? (
-          <div className="admin-error" style={{ margin: 16 }}>{error}</div>
+          <div style={{ margin: 20, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10 }}>
+            <div className="admin-error" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <AlertCircle size={14} /> {error}
+            </div>
+            <button className="admin-btn admin-btn--primary admin-btn--sm" onClick={load}>
+              <RefreshCw size={13} /> Retry
+            </button>
+          </div>
         ) : entries.length === 0 ? (
           <div className="admin-table-empty">No villas found.</div>
         ) : filtered.length === 0 ? (

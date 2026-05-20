@@ -176,7 +176,7 @@ export const deleteOption = (optionId: string) =>
 
 /* ── Drawing Register ─────────────────────────── */
 export const listDrawingRegister = () =>
-  api.get('/drawing-register/').then(r => r.data)
+  api.get('/drawing-register/', { timeout: 20000 }).then(r => r.data)
 
 export const getMyDrawingPlans = () =>
   api.get('/drawing-register/my').then(r => r.data)
