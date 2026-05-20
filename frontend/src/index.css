@@ -4188,6 +4188,15 @@ input[type="url"], textarea {
   right: 12px;
 }
 
+/* ── Floor Plans card ── */
+.card--floor-plan {
+  max-width: 320px;
+  flex: 0 0 320px;
+}
+.card--floor-plan:hover {
+  background: #d94e31 !important;
+}
+
 /* ══════════════════════════════════════════════════
    QUOTE NOTIFICATION PANEL
 ══════════════════════════════════════════════════ */

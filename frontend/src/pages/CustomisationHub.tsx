@@ -3,11 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutGrid, Layers, Bath, ArrowUpSquare,
   Leaf, Wifi, Wind, Tv2, LogOut, Images, X, ChevronLeft, ChevronRight,
-  ShoppingCart, Bell, CheckCircle, Lock,
+  ShoppingCart, Bell, CheckCircle, Lock, Map,
 } from 'lucide-react'
 import {
   getMyVilla, getMySelections, getAllLocations, getDirectOptions,
   requestQuote, getMyQuotes, acceptQuote, requestQuoteChanges, getMe,
+  getMyDrawingPlans, BASE,
 } from '../services/api'
 
 const CATEGORIES = [
@@ -138,6 +139,14 @@ export default function CustomisationHub() {
   const [acceptError,      setAcceptError]      = useState('')
   const [editLoading,      setEditLoading]      = useState(false)
 
+  // Floor plans
+  const [drawingPlans, setDrawingPlans] = useState<{
+    standard_plan: { url: string; uploaded_at: string } | null
+    updated_plan:  { url: string; uploaded_at: string } | null
+  } | null>(null)
+  const [floorPlanOpen, setFloorPlanOpen]     = useState(false)
+  const [fpLightbox,    setFpLightbox]        = useState<string | null>(null)
+
   // Cart quote state
   const [quoteSubmitting, setQuoteSubmitting] = useState(false)
   const [quoteSuccess,    setQuoteSuccess]    = useState(false)
@@ -174,6 +183,8 @@ export default function CustomisationHub() {
     }).catch(() => {})
 
     getMyVilla().then((villas: any[]) => { if (villas?.length) setVilla(villas[0]) }).catch(() => {})
+
+    getMyDrawingPlans().then(d => setDrawingPlans(d)).catch(() => {})
 
     getMySelections().then((data: any) => {
       const sels: any[] = data?.selections ?? []
@@ -380,6 +391,23 @@ export default function CustomisationHub() {
               })}
             </div>
           ))}
+
+          {/* ── Floor Plans card (always accessible, full orange) ── */}
+          <div className="cards-row">
+            <div
+              className={`card card--floor-plan ${expanded ? 'visible' : ''}`}
+              style={{
+                transitionDelay: settled ? '0ms' : expanded ? `${CATEGORIES.length * 60}ms` : '0ms',
+                background: '#F05E3E',
+                border: 'none',
+              }}
+              onClick={() => setFloorPlanOpen(true)}
+            >
+              <span className="card-icon"><Map size={26} strokeWidth={1.5} color="#fff" /></span>
+              <p className="card-name" style={{ color: '#fff' }}>View Floor Plans</p>
+              <p className="card-tagline" style={{ color: 'rgba(255,255,255,0.75)' }}>Your villa's blueprints</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -603,6 +631,93 @@ export default function CustomisationHub() {
             )}
 
           </div>
+        </div>
+      )}
+
+      {/* ── Floor Plans Modal ── */}
+      {floorPlanOpen && (
+        <div className="mv-overlay" onClick={() => setFloorPlanOpen(false)}>
+          <div className="mv-panel" style={{ maxWidth: 720 }} onClick={e => e.stopPropagation()}>
+            <div className="mv-header">
+              <div>
+                <h2 className="mv-title">Your Floor Plans</h2>
+                <p className="mv-subtitle">Official floor plans for your villa</p>
+              </div>
+              <button className="mv-close" onClick={() => setFloorPlanOpen(false)}><X size={20} /></button>
+            </div>
+            <div className="mv-body">
+              {(!drawingPlans?.standard_plan && !drawingPlans?.updated_plan) ? (
+                <p style={{ color: '#aaa', padding: '20px 0', fontFamily: 'var(--font-body)' }}>
+                  No floor plans have been uploaded yet. Please check back later.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+                  {drawingPlans?.standard_plan && (
+                    <div style={{ flex: 1, minWidth: 220 }}>
+                      <p style={{ fontWeight: 600, marginBottom: 10, fontFamily: 'var(--font-body)', fontSize: 14 }}>
+                        Standard Floor Plan
+                      </p>
+                      {drawingPlans.standard_plan.url.endsWith('.pdf') ? (
+                        <a
+                          href={`${BASE}${drawingPlans.standard_plan.url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#F05E3E', fontFamily: 'var(--font-body)', fontSize: 14, textDecoration: 'underline' }}
+                        >
+                          View PDF
+                        </a>
+                      ) : (
+                        <img
+                          src={`${BASE}${drawingPlans.standard_plan.url}`}
+                          alt="Standard Floor Plan"
+                          style={{ width: '100%', borderRadius: 8, cursor: 'zoom-in', display: 'block' }}
+                          onClick={() => setFpLightbox(drawingPlans!.standard_plan!.url)}
+                        />
+                      )}
+                    </div>
+                  )}
+                  {drawingPlans?.updated_plan && (
+                    <div style={{ flex: 1, minWidth: 220 }}>
+                      <p style={{ fontWeight: 600, marginBottom: 10, fontFamily: 'var(--font-body)', fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        Updated Floor Plan
+                        <span style={{ background: '#F05E3E', color: '#fff', fontSize: 10, padding: '2px 7px', borderRadius: 4, fontWeight: 500 }}>Latest</span>
+                      </p>
+                      {drawingPlans.updated_plan.url.endsWith('.pdf') ? (
+                        <a
+                          href={`${BASE}${drawingPlans.updated_plan.url}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#F05E3E', fontFamily: 'var(--font-body)', fontSize: 14, textDecoration: 'underline' }}
+                        >
+                          View PDF
+                        </a>
+                      ) : (
+                        <img
+                          src={`${BASE}${drawingPlans.updated_plan.url}`}
+                          alt="Updated Floor Plan"
+                          style={{ width: '100%', borderRadius: 8, cursor: 'zoom-in', display: 'block' }}
+                          onClick={() => setFpLightbox(drawingPlans!.updated_plan!.url)}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Floor plan image lightbox ── */}
+      {fpLightbox && (
+        <div className="mv-lightbox" onClick={() => setFpLightbox(null)}>
+          <button className="mv-lightbox-close" onClick={() => setFpLightbox(null)}><X size={24} /></button>
+          <img
+            src={`${BASE}${fpLightbox}`}
+            alt="Floor Plan"
+            className="mv-lightbox-img"
+            onClick={e => e.stopPropagation()}
+          />
         </div>
       )}
 
