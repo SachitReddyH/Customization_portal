@@ -4,7 +4,7 @@ from app.core.deps import get_current_user, require_drawing_access
 from bson import ObjectId
 from datetime import datetime, timezone
 from typing import Optional
-import os, shutil, uuid
+import os, shutil
 
 router = APIRouter(prefix="/drawing-register", tags=["drawing-register"])
 
@@ -17,70 +17,67 @@ def _plan_doc(plan: Optional[dict], uploader_name: Optional[str] = None) -> Opti
     if not plan:
         return None
     return {
-        "url":            plan.get("url"),
-        "uploaded_at":    plan.get("uploaded_at").isoformat() if plan.get("uploaded_at") else None,
-        "uploaded_by_name": uploader_name or plan.get("uploaded_by_name"),
-    }
-
-
-async def _enrich_register(db, doc: dict) -> dict:
-    """Add villa info and uploader names to a register document."""
-    villa = None
-    if doc.get("villa_id"):
-        try:
-            villa = await db.villas.find_one({"_id": ObjectId(str(doc["villa_id"]))})
-        except Exception:
-            pass
-
-    async def uploader_name(user_id):
-        if not user_id:
-            return None
-        try:
-            u = await db.users.find_one({"_id": ObjectId(str(user_id))})
-            return u.get("full_name") if u else None
-        except Exception:
-            return None
-
-    std = doc.get("standard_plan") or {}
-    upd = doc.get("updated_plan") or {}
-
-    return {
-        "id":           str(doc["_id"]),
-        "villa_id":     str(doc["villa_id"]) if doc.get("villa_id") else None,
-        "villa_number": villa.get("villa_number") if villa else None,
-        "villa_name":   villa.get("villa_name") if villa else None,
-        "villa_type":   villa.get("villa_type") if villa else None,
-        "standard_plan": _plan_doc(std or None, await uploader_name(std.get("uploaded_by"))),
-        "updated_plan":  _plan_doc(upd or None, await uploader_name(upd.get("uploaded_by"))),
-        "updated_at":   doc.get("updated_at").isoformat() if doc.get("updated_at") else None,
+        "url":              plan.get("url"),
+        "uploaded_at":      plan.get("uploaded_at").isoformat() if plan.get("uploaded_at") else None,
+        "uploaded_by_name": uploader_name,
     }
 
 
 @router.get("/")
 async def list_drawing_register(user=Depends(require_drawing_access)):
-    """List all villas with their drawing register status."""
+    """List all villas with their drawing register status — 2 bulk queries total."""
     db = get_db()
+
+    # Single query: all villas
     villas = await db.villas.find().sort("villa_number", 1).to_list(length=None)
+
+    # Single query: all existing register docs
+    reg_docs = await db.drawing_register.find().to_list(length=None)
+    reg_map = {str(d["villa_id"]): d for d in reg_docs}
+
+    # Collect uploader IDs and fetch names in one query
+    uploader_ids = set()
+    for d in reg_docs:
+        std = d.get("standard_plan") or {}
+        upd = d.get("updated_plan") or {}
+        if std.get("uploaded_by"):
+            uploader_ids.add(std["uploaded_by"])
+        if upd.get("uploaded_by"):
+            uploader_ids.add(upd["uploaded_by"])
+
+    user_map = {}
+    if uploader_ids:
+        users = await db.users.find(
+            {"_id": {"$in": list(uploader_ids)}}
+        ).to_list(length=None)
+        user_map = {str(u["_id"]): u.get("full_name", "") for u in users}
+
     result = []
     for villa in villas:
-        villa_id = villa["_id"]
-        doc = await db.drawing_register.find_one({"villa_id": villa_id})
-        if not doc:
-            doc = {
-                "_id": ObjectId(),
-                "villa_id": villa_id,
-                "standard_plan": None,
-                "updated_plan":  None,
-                "updated_at":    None,
-            }
-        enriched = await _enrich_register(db, doc)
-        result.append(enriched)
+        vid     = str(villa["_id"])
+        reg     = reg_map.get(vid)
+        std     = (reg.get("standard_plan") or {}) if reg else {}
+        upd     = (reg.get("updated_plan")  or {}) if reg else {}
+
+        std_by  = str(std.get("uploaded_by", ""))
+        upd_by  = str(upd.get("uploaded_by", ""))
+
+        result.append({
+            "villa_id":      vid,
+            "villa_number":  villa.get("villa_number"),
+            "villa_name":    villa.get("villa_name"),
+            "villa_type":    villa.get("villa_type"),
+            "standard_plan": _plan_doc(std or None, user_map.get(std_by)),
+            "updated_plan":  _plan_doc(upd or None, user_map.get(upd_by)),
+            "updated_at":    reg["updated_at"].isoformat() if reg and reg.get("updated_at") else None,
+        })
+
     return result
 
 
 @router.get("/my")
 async def my_drawing_register(user=Depends(get_current_user)):
-    """Return floor plans for the current user's villa (any authenticated user)."""
+    """Return floor plans for the current user's villa."""
     db = get_db()
     villa_id = user.get("villa_id")
     if not villa_id:
@@ -91,7 +88,7 @@ async def my_drawing_register(user=Depends(get_current_user)):
         return {"standard_plan": None, "updated_plan": None}
 
     std = doc.get("standard_plan") or {}
-    upd = doc.get("updated_plan") or {}
+    upd = doc.get("updated_plan")  or {}
     return {
         "standard_plan": _plan_doc(std or None),
         "updated_plan":  _plan_doc(upd or None),
@@ -101,7 +98,7 @@ async def my_drawing_register(user=Depends(get_current_user)):
 @router.post("/{villa_id}/upload")
 async def upload_floor_plan(
     villa_id: str,
-    plan_type: str = Form(...),   # "standard" | "updated"
+    plan_type: str = Form(...),
     file: UploadFile = File(...),
     user=Depends(require_drawing_access),
 ):
@@ -118,20 +115,15 @@ async def upload_floor_plan(
         raise HTTPException(status_code=404, detail="Villa not found")
 
     os.makedirs(PLAN_DIR, exist_ok=True)
-    filename  = f"{villa_id}_{plan_type}{ext}"
-    dest      = os.path.join(PLAN_DIR, filename)
+    filename = f"{villa_id}_{plan_type}{ext}"
+    dest     = os.path.join(PLAN_DIR, filename)
     with open(dest, 'wb') as f:
         shutil.copyfileobj(file.file, f)
 
-    url  = f"/static/drawing_register/{filename}"
-    now  = datetime.now(timezone.utc)
+    url        = f"/static/drawing_register/{filename}"
+    now        = datetime.now(timezone.utc)
     plan_field = "standard_plan" if plan_type == "standard" else "updated_plan"
-
-    plan_data = {
-        "url":         url,
-        "uploaded_at": now,
-        "uploaded_by": user["_id"],
-    }
+    plan_data  = {"url": url, "uploaded_at": now, "uploaded_by": user["_id"]}
 
     existing = await db.drawing_register.find_one({"villa_id": villa["_id"]})
     if existing:
@@ -147,5 +139,23 @@ async def upload_floor_plan(
             "updated_at":    now,
         })
 
-    doc = await db.drawing_register.find_one({"villa_id": villa["_id"]})
-    return await _enrich_register(db, doc)
+    # Return updated entry for this villa only
+    doc    = await db.drawing_register.find_one({"villa_id": villa["_id"]})
+    std    = (doc.get("standard_plan") or {}) if doc else {}
+    upd    = (doc.get("updated_plan")  or {}) if doc else {}
+
+    uploader_name = None
+    by_id = (std if plan_type == "standard" else upd).get("uploaded_by")
+    if by_id:
+        u = await db.users.find_one({"_id": by_id})
+        uploader_name = u.get("full_name") if u else None
+
+    return {
+        "villa_id":      str(villa["_id"]),
+        "villa_number":  villa.get("villa_number"),
+        "villa_name":    villa.get("villa_name"),
+        "villa_type":    villa.get("villa_type"),
+        "standard_plan": _plan_doc(std or None, uploader_name if plan_type == "standard" else None),
+        "updated_plan":  _plan_doc(upd or None, uploader_name if plan_type == "updated" else None),
+        "updated_at":    now.isoformat(),
+    }
