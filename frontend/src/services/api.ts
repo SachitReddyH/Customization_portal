@@ -181,6 +181,9 @@ export const listDrawingRegister = () =>
 export const getMyDrawingPlans = () =>
   api.get('/drawing-register/my').then(r => r.data)
 
+export const markFloorPlanViewed = () =>
+  api.post('/drawing-register/mark-viewed').then(r => r.data)
+
 export const uploadFloorPlan = (villaId: string, file: File, planType: 'standard' | 'updated') => {
   const form = new FormData()
   form.append('file', file)

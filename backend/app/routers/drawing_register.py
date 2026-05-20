@@ -83,22 +83,35 @@ async def list_drawing_register(user=Depends(require_drawing_access)):
 
 @router.get("/my")
 async def my_drawing_register(user=Depends(get_current_user)):
-    """Return floor plans for the current user's villa."""
+    """Return floor plans for the current user's villa plus viewed status."""
     db = get_db()
+    floor_plan_viewed = bool(user.get("floor_plan_viewed", False))
     villa_id = user.get("villa_id")
     if not villa_id:
-        return {"standard_plan": None, "updated_plan": None}
+        return {"standard_plan": None, "updated_plan": None, "floor_plan_viewed": floor_plan_viewed}
 
     doc = await db.drawing_register.find_one({"villa_id": villa_id})
     if not doc:
-        return {"standard_plan": None, "updated_plan": None}
+        return {"standard_plan": None, "updated_plan": None, "floor_plan_viewed": floor_plan_viewed}
 
     std = doc.get("standard_plan") or {}
     upd = doc.get("updated_plan")  or {}
     return {
-        "standard_plan": _plan_doc(std or None),
-        "updated_plan":  _plan_doc(upd or None),
+        "standard_plan":    _plan_doc(std or None),
+        "updated_plan":     _plan_doc(upd or None),
+        "floor_plan_viewed": floor_plan_viewed,
     }
+
+
+@router.post("/mark-viewed")
+async def mark_floor_plan_viewed(user=Depends(get_current_user)):
+    """Record that the customer has viewed their floor plan."""
+    db = get_db()
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"floor_plan_viewed": True, "floor_plan_viewed_at": datetime.now(timezone.utc)}},
+    )
+    return {"floor_plan_viewed": True}
 
 
 @router.post("/{villa_id}/upload")

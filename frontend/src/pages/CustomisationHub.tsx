@@ -8,7 +8,7 @@ import {
 import {
   getMyVilla, getMySelections, getAllLocations, getDirectOptions,
   requestQuote, getMyQuotes, acceptQuote, requestQuoteChanges, getMe,
-  getMyDrawingPlans, BASE,
+  getMyDrawingPlans, markFloorPlanViewed as apiMarkFloorPlanViewed, BASE,
 } from '../services/api'
 
 const CATEGORIES = [
@@ -150,13 +150,12 @@ export default function CustomisationHub() {
   } | null>(null)
   const [floorPlanOpen, setFloorPlanOpen]     = useState(false)
   const [fpLightbox,    setFpLightbox]        = useState<string | null>(null)
-  const [hasViewedFloorPlan, setHasViewedFloorPlan] = useState(
-    () => localStorage.getItem('floor_plan_viewed') === 'true'
-  )
+  const [hasViewedFloorPlan, setHasViewedFloorPlan] = useState(false)
 
   const markFloorPlanViewed = () => {
-    localStorage.setItem('floor_plan_viewed', 'true')
+    if (hasViewedFloorPlan) return
     setHasViewedFloorPlan(true)
+    apiMarkFloorPlanViewed().catch(() => {})
   }
 
   // Cart quote state
@@ -196,7 +195,10 @@ export default function CustomisationHub() {
 
     getMyVilla().then((villas: any[]) => { if (villas?.length) setVilla(villas[0]) }).catch(() => {})
 
-    getMyDrawingPlans().then(d => setDrawingPlans(d)).catch(() => {})
+    getMyDrawingPlans().then(d => {
+      setDrawingPlans(d)
+      if (d?.floor_plan_viewed) setHasViewedFloorPlan(true)
+    }).catch(() => {})
 
     getMySelections().then((data: any) => {
       const sels: any[] = data?.selections ?? []
@@ -393,7 +395,8 @@ export default function CustomisationHub() {
                 const globalIdx  = rowIdx * 3 + colIdx
                 const Icon       = cat.icon
                 const isFloorPlan    = cat.id === 'FLOOR_PLAN'
-                const isNotUnlocked  = !isFloorPlan && !hasViewedFloorPlan
+                // Only CAT001 unlocks after viewing floor plan; all others remain disabled
+                const isNotUnlocked  = !isFloorPlan && !(cat.id === 'CAT001' && hasViewedFloorPlan)
                 return (
                   <div
                     key={cat.id}
