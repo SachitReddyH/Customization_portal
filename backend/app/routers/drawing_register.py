@@ -3,6 +3,7 @@ from app.database import get_db
 from app.core.deps import get_current_user, require_drawing_access
 from bson import ObjectId
 from datetime import datetime, timezone
+from typing import Optional
 import os, shutil, uuid
 
 router = APIRouter(prefix="/drawing-register", tags=["drawing-register"])
@@ -12,7 +13,7 @@ STATIC_ROOT  = os.path.join(os.path.dirname(__file__), '..', '..', 'static')
 PLAN_DIR     = os.path.join(STATIC_ROOT, 'drawing_register')
 
 
-def _plan_doc(plan: dict | None, uploader_name: str | None = None) -> dict | None:
+def _plan_doc(plan: Optional[dict], uploader_name: Optional[str] = None) -> Optional[dict]:
     if not plan:
         return None
     return {
