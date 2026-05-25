@@ -41,8 +41,9 @@ async def upload_to_cloudinary(file: UploadFile, folder: str, public_id: str) ->
         )
 
     try:
-        # Run blocking Cloudinary call in a thread to avoid blocking the async event loop
-        result = await asyncio.to_thread(_do_upload)
+        # Run blocking Cloudinary call in a thread pool (compatible with Python 3.7+)
+        loop = asyncio.get_running_loop()
+        result = await loop.run_in_executor(None, _do_upload)
         return result['secure_url']
     except Exception as e:
         logger.error(f"Cloudinary upload failed: {e}")
