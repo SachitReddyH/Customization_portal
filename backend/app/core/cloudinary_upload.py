@@ -2,6 +2,9 @@ import os
 import cloudinary
 import cloudinary.uploader
 from fastapi import UploadFile
+import logging
+
+logger = logging.getLogger(__name__)
 
 cloudinary.config(
     cloud_name=os.environ.get("CLOUDINARY_CLOUD_NAME"),
@@ -29,17 +32,16 @@ async def upload_to_cloudinary(file: UploadFile, folder: str, public_id: str) ->
     # e.g. "villa_42_standard.pdf" → .../drawing_register/villa_42_standard.pdf
     public_id_with_ext = f"{public_id}{ext}"
 
-    extra: dict = {}
-    if ext == '.pdf':
-        # Force correct Content-Type so browsers render PDFs inline instead of downloading
-        extra['headers'] = ["Content-Type: application/pdf"]
-
-    result = cloudinary.uploader.upload(
-        contents,
-        folder=folder,
-        public_id=public_id_with_ext,
-        resource_type=resource_type,
-        overwrite=True,
-        **extra,
-    )
-    return result['secure_url']
+    try:
+        result = cloudinary.uploader.upload(
+            contents,
+            folder=folder,
+            public_id=public_id_with_ext,
+            resource_type=resource_type,
+            overwrite=True,
+        )
+        return result['secure_url']
+    except Exception as e:
+        logger.error(f"Cloudinary upload failed: {e}")
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
