@@ -1,16 +1,13 @@
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from app.database import get_db
 from app.core.deps import get_current_user, require_drawing_access
+from app.core.cloudinary_upload import upload_to_cloudinary
 from bson import ObjectId
 from datetime import datetime, timezone
 from typing import Optional
-import os, shutil
+import os
 
 router = APIRouter(prefix="/drawing-register", tags=["drawing-register"])
-
-ALLOWED_EXTS = {'.jpg', '.jpeg', '.png', '.webp', '.pdf'}
-STATIC_ROOT  = os.path.join(os.path.dirname(__file__), '..', '..', 'static')
-PLAN_DIR     = os.path.join(STATIC_ROOT, 'drawing_register')
 
 
 def _plan_doc(plan: Optional[dict], uploader_name: Optional[str] = None) -> Optional[dict]:
@@ -137,22 +134,13 @@ async def upload_floor_plan(
     if plan_type not in ("standard", "updated"):
         raise HTTPException(status_code=400, detail="plan_type must be 'standard' or 'updated'")
 
-    ext = os.path.splitext(file.filename or '')[1].lower()
-    if ext not in ALLOWED_EXTS:
-        raise HTTPException(status_code=400, detail="Only jpg, jpeg, png, webp, pdf allowed")
-
     db = get_db()
     villa = await db.villas.find_one({"_id": ObjectId(villa_id)})
     if not villa:
         raise HTTPException(status_code=404, detail="Villa not found")
 
-    os.makedirs(PLAN_DIR, exist_ok=True)
-    filename = f"{villa_id}_{plan_type}{ext}"
-    dest     = os.path.join(PLAN_DIR, filename)
-    with open(dest, 'wb') as f:
-        shutil.copyfileobj(file.file, f)
-
-    url        = f"/static/drawing_register/{filename}"
+    public_id = f"{villa_id}_{plan_type}"
+    url = await upload_to_cloudinary(file, folder="drawing_register", public_id=public_id)
     now        = datetime.now(timezone.utc)
     plan_field = "standard_plan" if plan_type == "standard" else "updated_plan"
     plan_data  = {"url": url, "uploaded_at": now, "uploaded_by": user["_id"]}

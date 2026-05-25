@@ -9,7 +9,8 @@ from app.schemas.category import CategoryUpdate, CategoryResponse
 from bson import ObjectId
 from datetime import datetime, timezone
 from typing import List
-import os, shutil, uuid
+import os, uuid
+from app.core.cloudinary_upload import upload_to_cloudinary
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -192,25 +193,15 @@ async def delete_option(option_id: str, user=Depends(require_admin)):
 
 # ── Image Upload ──────────────────────────────────────────────────────────
 
-ALLOWED_EXTS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
-STATIC_ROOT = os.path.join(os.path.dirname(__file__), '..', '..', 'static')
-
 @router.post("/upload")
 async def upload_image(
     file: UploadFile = File(...),
     category_id: str = Form(...),
     user=Depends(require_admin),
 ):
-    ext = os.path.splitext(file.filename or '')[1].lower()
-    if ext not in ALLOWED_EXTS:
-        raise HTTPException(status_code=400, detail="Only jpg, jpeg, png, webp, gif allowed")
-    safe_name = f"{uuid.uuid4().hex}{ext}"
-    folder = os.path.join(STATIC_ROOT, 'options', category_id)
-    os.makedirs(folder, exist_ok=True)
-    dest = os.path.join(folder, safe_name)
-    with open(dest, 'wb') as f:
-        shutil.copyfileobj(file.file, f)
-    return {"path": f"/static/options/{category_id}/{safe_name}"}
+    public_id = f"{category_id}_{uuid.uuid4().hex}"
+    url = await upload_to_cloudinary(file, folder=f"options/{category_id}", public_id=public_id)
+    return {"path": url}
 
 
 # ── Category Management ────────────────────────────────────────────────────
