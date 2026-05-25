@@ -1,11 +1,12 @@
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi.responses import Response
 from app.database import get_db
 from app.core.deps import get_current_user, require_drawing_access
 from app.core.cloudinary_upload import upload_to_cloudinary
 from bson import ObjectId
 from datetime import datetime, timezone
 from typing import Optional
-import os
+import os, asyncio, urllib.request
 
 router = APIRouter(prefix="/drawing-register", tags=["drawing-register"])
 
@@ -100,6 +101,44 @@ async def my_drawing_register(user=Depends(get_current_user)):
         "floor_plan_viewed":         floor_plan_viewed,
         "space_customisation_skipped": space_customisation_skipped,
     }
+
+
+@router.get("/view-plan/{plan_type}")
+async def view_floor_plan(plan_type: str, user=Depends(get_current_user)):
+    """Proxy the PDF from Cloudinary so the browser receives correct Content-Type headers."""
+    if plan_type not in ("standard", "updated"):
+        raise HTTPException(status_code=400, detail="plan_type must be 'standard' or 'updated'")
+
+    db = get_db()
+    villa_id = user.get("villa_id")
+    if not villa_id:
+        raise HTTPException(status_code=404, detail="No villa assigned")
+
+    doc = await db.drawing_register.find_one({"villa_id": villa_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="No floor plans found")
+
+    plan = doc.get(f"{plan_type}_plan") or {}
+    url = plan.get("url")
+    if not url:
+        raise HTTPException(status_code=404, detail="Plan not uploaded yet")
+
+    def _fetch():
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return resp.read()
+
+    try:
+        loop = asyncio.get_running_loop()
+        content = await loop.run_in_executor(None, _fetch)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Could not fetch plan: {str(e)}")
+
+    return Response(
+        content=content,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "inline; filename=floor_plan.pdf"},
+    )
 
 
 @router.post("/skip-space-customisation")

@@ -148,8 +148,8 @@ export default function CustomisationHub() {
   const resolveUrl = (url: string) => url.startsWith('http') ? url : `${BASE}${url}`
   // Detect PDF: local paths end in .pdf; Cloudinary raw uploads use /raw/upload/ in the URL
   const isPdf = (url: string) => url.toLowerCase().includes('.pdf') || url.includes('/raw/upload/')
-  // Wrap PDF URL with Google Docs Viewer so it renders in-browser regardless of content-type
-  const pdfViewerHref = (url: string) => `https://docs.google.com/viewer?url=${encodeURIComponent(resolveUrl(url))}`
+  // Use backend proxy so PDF is served with correct Content-Type regardless of Cloudinary settings
+  const pdfViewerHref = (planType: 'standard' | 'updated') => `${BASE}/drawing-register/view-plan/${planType}`
 
   // Floor plans
   const [drawingPlans, setDrawingPlans] = useState<{
@@ -713,7 +713,7 @@ export default function CustomisationHub() {
                       </p>
                       {isPdf(drawingPlans.standard_plan.url) ? (
                         <a
-                          href={pdfViewerHref(drawingPlans.standard_plan.url)}
+                          href={pdfViewerHref('standard')}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{ color: '#F05E3E', fontFamily: 'var(--font-body)', fontSize: 14, textDecoration: 'underline' }}
@@ -739,7 +739,7 @@ export default function CustomisationHub() {
                       </p>
                       {isPdf(drawingPlans.updated_plan.url) ? (
                         <a
-                          href={pdfViewerHref(drawingPlans.updated_plan.url)}
+                          href={pdfViewerHref('updated')}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{ color: '#F05E3E', fontFamily: 'var(--font-body)', fontSize: 14, textDecoration: 'underline' }}
