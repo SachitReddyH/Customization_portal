@@ -29,11 +29,17 @@ async def upload_to_cloudinary(file: UploadFile, folder: str, public_id: str) ->
     # e.g. "villa_42_standard.pdf" → .../drawing_register/villa_42_standard.pdf
     public_id_with_ext = f"{public_id}{ext}"
 
+    extra: dict = {}
+    if ext == '.pdf':
+        # Force correct Content-Type so browsers render PDFs inline instead of downloading
+        extra['headers'] = ["Content-Type: application/pdf"]
+
     result = cloudinary.uploader.upload(
         contents,
         folder=folder,
         public_id=public_id_with_ext,
         resource_type=resource_type,
         overwrite=True,
+        **extra,
     )
     return result['secure_url']
