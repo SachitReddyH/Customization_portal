@@ -37,7 +37,7 @@ function PlanCell({
   const [preview, setPreview]     = useState(false)
 
   const label  = planType === 'standard' ? 'Standard Floor Plan' : 'Updated Floor Plan'
-  const isPDF  = plan?.url ? (plan.url.toLowerCase().includes('.pdf') || plan.url.includes('/raw/upload/')) : false
+  const isPDF  = (plan as any)?.is_pdf === true || (plan?.url ? plan.url.toLowerCase().includes('.pdf') : false)
 
   const openPdf = async () => {
     try {

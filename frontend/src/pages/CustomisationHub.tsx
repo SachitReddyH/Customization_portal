@@ -166,8 +166,8 @@ export default function CustomisationHub() {
 
   // Floor plans
   const [drawingPlans, setDrawingPlans] = useState<{
-    standard_plan: { url: string; uploaded_at: string } | null
-    updated_plan:  { url: string; uploaded_at: string } | null
+    standard_plan: { url: string; is_pdf: boolean; uploaded_at: string } | null
+    updated_plan:  { url: string; is_pdf: boolean; uploaded_at: string } | null
   } | null>(null)
   const [floorPlanOpen, setFloorPlanOpen]     = useState(false)
   const [fpLightbox,    setFpLightbox]        = useState<string | null>(null)
@@ -724,7 +724,7 @@ export default function CustomisationHub() {
                       <p style={{ fontWeight: 600, marginBottom: 10, fontFamily: 'var(--font-body)', fontSize: 14 }}>
                         Standard Floor Plan
                       </p>
-                      {isPdf(drawingPlans.standard_plan.url) ? (
+                      {drawingPlans.standard_plan.is_pdf ? (
                         <button
                           style={{ color: '#F05E3E', fontFamily: 'var(--font-body)', fontSize: 14, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                           onClick={() => openPdf('standard')}
@@ -747,7 +747,7 @@ export default function CustomisationHub() {
                         Updated Floor Plan
                         <span style={{ background: '#F05E3E', color: '#fff', fontSize: 10, padding: '2px 7px', borderRadius: 4, fontWeight: 500 }}>Latest</span>
                       </p>
-                      {isPdf(drawingPlans.updated_plan.url) ? (
+                      {drawingPlans.updated_plan.is_pdf ? (
                         <button
                           style={{ color: '#F05E3E', fontFamily: 'var(--font-body)', fontSize: 14, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                           onClick={() => openPdf('updated')}

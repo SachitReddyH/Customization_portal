@@ -10,7 +10,7 @@ from bson import ObjectId
 from datetime import datetime, timezone
 from typing import List
 import os, uuid
-from app.core.cloudinary_upload import upload_to_cloudinary
+from app.core.cloudinary_upload import upload_image_to_cloudinary
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -200,7 +200,7 @@ async def upload_image(
     user=Depends(require_admin),
 ):
     public_id = f"{category_id}_{uuid.uuid4().hex}"
-    url = await upload_to_cloudinary(file, folder=f"options/{category_id}", public_id=public_id)
+    url = await upload_image_to_cloudinary(file, folder=f"options/{category_id}", public_id=public_id)
     return {"path": url}
 
 
