@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { Upload, FileImage, CheckCircle, RefreshCw, Eye, X, AlertCircle } from 'lucide-react'
-import { listDrawingRegister, uploadFloorPlan, BASE } from '../../services/api'
+import { listDrawingRegister, uploadFloorPlan, BASE, getToken } from '../../services/api'
 
 interface Plan {
   url: string
@@ -37,7 +37,21 @@ function PlanCell({
   const [preview, setPreview]     = useState(false)
 
   const label  = planType === 'standard' ? 'Standard Floor Plan' : 'Updated Floor Plan'
-  const isPDF  = plan?.url?.endsWith('.pdf')
+  const isPDF  = plan?.url ? (plan.url.toLowerCase().includes('.pdf') || plan.url.includes('/raw/upload/')) : false
+
+  const openPdf = async () => {
+    try {
+      const token = getToken()
+      const resp = await fetch(`${BASE}/drawing-register/${villaId}/view-plan/${planType}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      if (!resp.ok) throw new Error('fetch failed')
+      const blob = await resp.blob()
+      window.open(URL.createObjectURL(blob), '_blank')
+    } catch {
+      alert('Could not load floor plan. Please try again.')
+    }
+  }
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -80,9 +94,9 @@ function PlanCell({
             </div>
           )}
           {isPDF && (
-            <a href={fullUrl(plan.url)} target="_blank" rel="noopener noreferrer" className="dr-plan-pdf-link">
+            <button onClick={openPdf} className="dr-plan-pdf-link" style={{ cursor: 'pointer' }}>
               <FileImage size={18} /> View PDF
-            </a>
+            </button>
           )}
           <div className="dr-plan-meta">
             <span className="dr-plan-status dr-plan-status--uploaded">

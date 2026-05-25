@@ -163,6 +163,40 @@ async def mark_floor_plan_viewed(user=Depends(get_current_user)):
     return {"floor_plan_viewed": True}
 
 
+@router.get("/{villa_id}/view-plan/{plan_type}")
+async def admin_view_floor_plan(villa_id: str, plan_type: str, user=Depends(require_drawing_access)):
+    """Admin/design proxy: fetch PDF from Cloudinary and return with correct headers."""
+    if plan_type not in ("standard", "updated"):
+        raise HTTPException(status_code=400, detail="plan_type must be 'standard' or 'updated'")
+
+    db = get_db()
+    doc = await db.drawing_register.find_one({"villa_id": ObjectId(villa_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="No floor plans found")
+
+    plan = doc.get(f"{plan_type}_plan") or {}
+    url = plan.get("url")
+    if not url:
+        raise HTTPException(status_code=404, detail="Plan not uploaded yet")
+
+    def _fetch():
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return resp.read()
+
+    try:
+        loop = asyncio.get_running_loop()
+        content = await loop.run_in_executor(None, _fetch)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Could not fetch plan: {str(e)}")
+
+    return Response(
+        content=content,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "inline; filename=floor_plan.pdf"},
+    )
+
+
 @router.post("/{villa_id}/upload")
 async def upload_floor_plan(
     villa_id: str,

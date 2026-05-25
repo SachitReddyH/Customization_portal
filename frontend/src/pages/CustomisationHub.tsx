@@ -9,7 +9,7 @@ import {
   getMyVilla, getMySelections, getAllLocations, getDirectOptions,
   requestQuote, getMyQuotes, acceptQuote, requestQuoteChanges, getMe,
   getMyDrawingPlans, markFloorPlanViewed as apiMarkFloorPlanViewed,
-  skipSpaceCustomisation as apiSkipSpaceCustomisation, BASE,
+  skipSpaceCustomisation as apiSkipSpaceCustomisation, BASE, getToken,
 } from '../services/api'
 
 const CATEGORIES = [
@@ -148,8 +148,21 @@ export default function CustomisationHub() {
   const resolveUrl = (url: string) => url.startsWith('http') ? url : `${BASE}${url}`
   // Detect PDF: local paths end in .pdf; Cloudinary raw uploads use /raw/upload/ in the URL
   const isPdf = (url: string) => url.toLowerCase().includes('.pdf') || url.includes('/raw/upload/')
-  // Use backend proxy so PDF is served with correct Content-Type regardless of Cloudinary settings
-  const pdfViewerHref = (planType: 'standard' | 'updated') => `${BASE}/drawing-register/view-plan/${planType}`
+  // Fetch PDF via backend proxy (sends JWT automatically) then open as blob URL in new tab
+  const openPdf = async (planType: 'standard' | 'updated') => {
+    markFloorPlanViewed()
+    try {
+      const token = getToken()
+      const resp = await fetch(`${BASE}/drawing-register/view-plan/${planType}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      if (!resp.ok) throw new Error('fetch failed')
+      const blob = await resp.blob()
+      window.open(URL.createObjectURL(blob), '_blank')
+    } catch {
+      alert('Could not load floor plan. Please try again.')
+    }
+  }
 
   // Floor plans
   const [drawingPlans, setDrawingPlans] = useState<{
@@ -712,15 +725,12 @@ export default function CustomisationHub() {
                         Standard Floor Plan
                       </p>
                       {isPdf(drawingPlans.standard_plan.url) ? (
-                        <a
-                          href={pdfViewerHref('standard')}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ color: '#F05E3E', fontFamily: 'var(--font-body)', fontSize: 14, textDecoration: 'underline' }}
-                          onClick={markFloorPlanViewed}
+                        <button
+                          style={{ color: '#F05E3E', fontFamily: 'var(--font-body)', fontSize: 14, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                          onClick={() => openPdf('standard')}
                         >
                           View PDF
-                        </a>
+                        </button>
                       ) : (
                         <img
                           src={resolveUrl(drawingPlans.standard_plan.url)}
@@ -738,15 +748,12 @@ export default function CustomisationHub() {
                         <span style={{ background: '#F05E3E', color: '#fff', fontSize: 10, padding: '2px 7px', borderRadius: 4, fontWeight: 500 }}>Latest</span>
                       </p>
                       {isPdf(drawingPlans.updated_plan.url) ? (
-                        <a
-                          href={pdfViewerHref('updated')}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ color: '#F05E3E', fontFamily: 'var(--font-body)', fontSize: 14, textDecoration: 'underline' }}
-                          onClick={markFloorPlanViewed}
+                        <button
+                          style={{ color: '#F05E3E', fontFamily: 'var(--font-body)', fontSize: 14, textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                          onClick={() => openPdf('updated')}
                         >
                           View PDF
-                        </a>
+                        </button>
                       ) : (
                         <img
                           src={resolveUrl(drawingPlans.updated_plan.url)}
