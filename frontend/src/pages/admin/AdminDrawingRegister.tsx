@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
-import { Upload, FileImage, CheckCircle, RefreshCw, Eye, X, AlertCircle } from 'lucide-react'
-import { listDrawingRegister, uploadFloorPlan, BASE, getToken } from '../../services/api'
+import { Upload, FileImage, CheckCircle, RefreshCw, Eye, X, AlertCircle, Trash2 } from 'lucide-react'
+import { listDrawingRegister, uploadFloorPlan, removeFloorPlan, BASE, getToken } from '../../services/api'
 
 interface Plan {
   url: string
@@ -24,15 +24,17 @@ const fullUrl = (path: string) =>
   path.startsWith('/static/') ? `${BASE}${path}` : path
 
 function PlanCell({
-  villaId, planType, plan, onUploaded,
+  villaId, planType, plan, onUploaded, onRemoved,
 }: {
   villaId: string
   planType: 'standard' | 'updated'
   plan: Plan | null
   onUploaded: (entry: VillaEntry) => void
+  onRemoved: (villaId: string, planType: 'standard' | 'updated') => void
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [removing, setRemoving]   = useState(false)
   const [error, setError]         = useState('')
   const [preview, setPreview]     = useState(false)
 
@@ -50,6 +52,20 @@ function PlanCell({
       window.open(URL.createObjectURL(blob), '_blank')
     } catch {
       alert('Could not load floor plan. Please try again.')
+    }
+  }
+
+  const handleRemove = async () => {
+    const label = planType === 'standard' ? 'Standard Floor Plan' : 'Updated Floor Plan'
+    if (!window.confirm(`Remove ${label} for this villa? This cannot be undone.`)) return
+    setRemoving(true); setError('')
+    try {
+      await removeFloorPlan(villaId, planType)
+      onRemoved(villaId, planType)
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || 'Remove failed')
+    } finally {
+      setRemoving(false)
     }
   }
 
@@ -107,13 +123,23 @@ function PlanCell({
               <span className="dr-plan-by">by {plan.uploaded_by_name}</span>
             )}
           </div>
-          <button
-            className="admin-btn admin-btn--ghost admin-btn--sm dr-reupload-btn"
-            onClick={() => inputRef.current?.click()}
-            disabled={uploading}
-          >
-            <RefreshCw size={12} /> {uploading ? 'Uploading…' : 'Replace'}
-          </button>
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button
+              className="admin-btn admin-btn--ghost admin-btn--sm dr-reupload-btn"
+              onClick={() => inputRef.current?.click()}
+              disabled={uploading || removing}
+            >
+              <RefreshCw size={12} /> {uploading ? 'Uploading…' : 'Replace'}
+            </button>
+            <button
+              className="admin-btn admin-btn--danger admin-btn--sm"
+              onClick={handleRemove}
+              disabled={uploading || removing}
+              title="Remove floor plan"
+            >
+              <Trash2 size={12} /> {removing ? 'Removing…' : 'Remove'}
+            </button>
+          </div>
         </div>
       ) : (
         <div className="dr-plan-empty">
@@ -172,6 +198,14 @@ export default function AdminDrawingRegister() {
   const handleUploaded = (updated: VillaEntry) => {
     setEntries(prev => prev.map(e =>
       e.villa_id === updated.villa_id ? { ...e, ...updated } : e
+    ))
+  }
+
+  const handleRemoved = (villaId: string, planType: 'standard' | 'updated') => {
+    setEntries(prev => prev.map(e =>
+      e.villa_id === villaId
+        ? { ...e, [planType === 'standard' ? 'standard_plan' : 'updated_plan']: null }
+        : e
     ))
   }
 
@@ -260,6 +294,7 @@ export default function AdminDrawingRegister() {
                       planType="standard"
                       plan={entry.standard_plan}
                       onUploaded={handleUploaded}
+                      onRemoved={handleRemoved}
                     />
                   </td>
                   <td>
@@ -268,6 +303,7 @@ export default function AdminDrawingRegister() {
                       planType="updated"
                       plan={entry.updated_plan}
                       onUploaded={handleUploaded}
+                      onRemoved={handleRemoved}
                     />
                   </td>
                 </tr>

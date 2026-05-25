@@ -190,6 +190,27 @@ async def mark_floor_plan_viewed(user=Depends(get_current_user)):
     return {"floor_plan_viewed": True}
 
 
+# ── Remove floor plan ────────────────────────────────────────────────────────
+
+@router.delete("/{villa_id}/plan/{plan_type}", status_code=200)
+async def remove_floor_plan(villa_id: str, plan_type: str, user=Depends(require_drawing_access)):
+    """Clear a floor plan (standard or updated) for a villa."""
+    if plan_type not in ("standard", "updated"):
+        raise HTTPException(status_code=400, detail="plan_type must be 'standard' or 'updated'")
+
+    db = get_db()
+    plan_field = f"{plan_type}_plan"
+    result = await db.drawing_register.find_one_and_update(
+        {"villa_id": ObjectId(villa_id)},
+        {"$set": {plan_field: None, "updated_at": datetime.now(timezone.utc)}},
+        return_document=True,
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="No drawing register entry found for this villa")
+
+    return {"removed": True, "plan_type": plan_type}
+
+
 # ── Upload floor plan ─────────────────────────────────────────────────────────
 
 @router.post("/{villa_id}/upload")

@@ -196,6 +196,9 @@ export const uploadFloorPlan = (villaId: string, file: File, planType: 'standard
   }).then(r => r.data)
 }
 
+export const removeFloorPlan = (villaId: string, planType: 'standard' | 'updated') =>
+  api.delete(`/drawing-register/${villaId}/plan/${planType}`).then(r => r.data)
+
 export const uploadOptionImage = (file: File, categoryId: string) => {
   const form = new FormData()
   form.append('file', file)
