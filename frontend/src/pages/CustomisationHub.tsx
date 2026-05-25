@@ -148,6 +148,8 @@ export default function CustomisationHub() {
   const resolveUrl = (url: string) => url.startsWith('http') ? url : `${BASE}${url}`
   // Detect PDF: local paths end in .pdf; Cloudinary raw uploads use /raw/upload/ in the URL
   const isPdf = (url: string) => url.toLowerCase().includes('.pdf') || url.includes('/raw/upload/')
+  // Wrap PDF URL with Google Docs Viewer so it renders in-browser regardless of content-type
+  const pdfViewerHref = (url: string) => `https://docs.google.com/viewer?url=${encodeURIComponent(resolveUrl(url))}`
 
   // Floor plans
   const [drawingPlans, setDrawingPlans] = useState<{
@@ -711,7 +713,7 @@ export default function CustomisationHub() {
                       </p>
                       {isPdf(drawingPlans.standard_plan.url) ? (
                         <a
-                          href={resolveUrl(drawingPlans.standard_plan.url)}
+                          href={pdfViewerHref(drawingPlans.standard_plan.url)}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{ color: '#F05E3E', fontFamily: 'var(--font-body)', fontSize: 14, textDecoration: 'underline' }}
@@ -737,7 +739,7 @@ export default function CustomisationHub() {
                       </p>
                       {isPdf(drawingPlans.updated_plan.url) ? (
                         <a
-                          href={resolveUrl(drawingPlans.updated_plan.url)}
+                          href={pdfViewerHref(drawingPlans.updated_plan.url)}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{ color: '#F05E3E', fontFamily: 'var(--font-body)', fontSize: 14, textDecoration: 'underline' }}
