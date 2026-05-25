@@ -199,6 +199,36 @@ export const uploadFloorPlan = (villaId: string, file: File, planType: 'standard
 export const removeFloorPlan = (villaId: string, planType: 'standard' | 'updated') =>
   api.delete(`/drawing-register/${villaId}/plan/${planType}`).then(r => r.data)
 
+// Space Customisation quote workflow
+export const submitSpaceCustRequest = () =>
+  api.post('/space-cust/request').then(r => r.data)
+
+export const getMySpaceCustRequest = () =>
+  api.get('/space-cust/my').then(r => r.data)
+
+export const acceptSpaceCustQuote = () =>
+  api.post('/space-cust/my/accept').then(r => r.data)
+
+export const negotiateSpaceCustQuote = () =>
+  api.post('/space-cust/my/negotiate').then(r => r.data)
+
+export const denySpaceCustQuote = () =>
+  api.post('/space-cust/my/deny').then(r => r.data)
+
+export const listSpaceCustRequests = () =>
+  api.get('/space-cust/admin/all').then(r => r.data)
+
+export const respondToSpaceCustRequest = (requestId: string, data: FormData) =>
+  api.post(`/space-cust/admin/${requestId}/respond`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }).then(r => r.data)
+
+export const reopenSpaceCustRequest = (requestId: string) =>
+  api.post(`/space-cust/admin/${requestId}/reopen`).then(r => r.data)
+
+export const reactivateSpaceCust = (customerId: string) =>
+  api.post(`/admin/customers/${customerId}/reactivate-space-cust`).then(r => r.data)
+
 export const uploadOptionImage = (file: File, categoryId: string) => {
   const form = new FormData()
   form.append('file', file)

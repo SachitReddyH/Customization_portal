@@ -7,7 +7,9 @@ import {
   getDirectOptions, getFlooringPackages,
   getMyVilla, getMySelections, upsertSelection, removeSelection, clearAllSelections,
   requestQuote, submitInterest, skipSpaceCustomisation,
-  BASE,
+  submitSpaceCustRequest, getMySpaceCustRequest,
+  acceptSpaceCustQuote, negotiateSpaceCustQuote, denySpaceCustQuote,
+  BASE, getToken,
 } from '../services/api'
 
 /* ── Types ──────────────────────────────────────── */
@@ -304,6 +306,14 @@ export default function CategoryPage() {
   const [spaceConfirmOpen, setSpaceConfirmOpen] = useState(false)
   const [spaceLocking,     setSpaceLocking]     = useState(false)
 
+  // Space Customisation Quote workflow
+  const [spaceCustReq,      setSpaceCustReq]      = useState<any>(null)
+  const [spaceCustLoading,  setSpaceCustLoading]  = useState(false)
+  const [spaceCustError,    setSpaceCustError]    = useState('')
+  const [spaceSubmitting,   setSpaceSubmitting]   = useState(false)
+  const [spaceActionLoading, setSpaceActionLoading] = useState('')
+  const [spaceDenyConfirm,  setSpaceDenyConfirm]  = useState(false)
+
   const handleRequestQuote = async () => {
     setQuoteSubmitting(true)
     setQuoteError('')
@@ -424,6 +434,15 @@ export default function CategoryPage() {
     setFloorsError(false)
 
     getCategory(categoryId).then(d => { if (active) setCategory(d) }).catch(console.error)
+
+    // Load space cust request for CAT001
+    if (categoryId === 'CAT001') {
+      setSpaceCustLoading(true)
+      getMySpaceCustRequest()
+        .then(d => { if (active) setSpaceCustReq(d) })
+        .catch(() => {})
+        .finally(() => { if (active) setSpaceCustLoading(false) })
+    }
 
     // Refresh selections in background; cart already shows cached values instantly
     getMySelections().then(async d => {
@@ -752,6 +771,74 @@ export default function CategoryPage() {
       _stable.selections = []
       setSelections([])
     } catch (e) { console.error(e) }
+  }
+
+  // ── Space Cust Quote handlers ──────────────────────────────────────────────
+  const handleSubmitSpaceCustRequest = async () => {
+    setSpaceSubmitting(true)
+    setSpaceCustError('')
+    try {
+      const req = await submitSpaceCustRequest()
+      setSpaceCustReq(req)
+    } catch (e: any) {
+      setSpaceCustError(e?.response?.data?.detail || 'Failed to submit')
+    } finally {
+      setSpaceSubmitting(false)
+    }
+  }
+
+  const handleAcceptSpaceCust = async () => {
+    setSpaceActionLoading('accept')
+    try {
+      await acceptSpaceCustQuote()
+      setSpaceCustReq((r: any) => r ? { ...r, status: 'accepted', customer_notification: null } : r)
+      setSpaceConfirmOpen(false)
+      navigate('/category/CAT002')
+    } catch (e: any) {
+      setSpaceCustError(e?.response?.data?.detail || 'Failed to accept')
+    } finally {
+      setSpaceActionLoading('')
+    }
+  }
+
+  const handleNegotiateSpaceCust = async () => {
+    setSpaceActionLoading('negotiate')
+    try {
+      await negotiateSpaceCustQuote()
+      setSpaceCustReq((r: any) => r ? { ...r, status: 'negotiating', customer_notification: null } : r)
+    } catch (e: any) {
+      setSpaceCustError(e?.response?.data?.detail || 'Failed')
+    } finally {
+      setSpaceActionLoading('')
+    }
+  }
+
+  const handleDenySpaceCust = async () => {
+    setSpaceActionLoading('deny')
+    try {
+      await denySpaceCustQuote()
+      setSpaceCustReq((r: any) => r ? { ...r, status: 'denied', customer_notification: null } : r)
+      setSpaceDenyConfirm(false)
+      navigate('/category/CAT002')
+    } catch (e: any) {
+      setSpaceCustError(e?.response?.data?.detail || 'Failed')
+    } finally {
+      setSpaceActionLoading('')
+    }
+  }
+
+  const openSpaceCustPdf = async () => {
+    try {
+      const token = getToken()
+      const resp = await fetch(`${BASE}/drawing-register/view-plan/updated`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      if (!resp.ok) throw new Error('fetch failed')
+      const blob = await resp.blob()
+      window.open(URL.createObjectURL(blob), '_blank')
+    } catch {
+      alert('Could not load floor plan. Please try again.')
+    }
   }
 
   /* ── Render ──────────────────────────────────────── */
@@ -1158,28 +1245,146 @@ export default function CategoryPage() {
 
             {/* ── Navigation ── */}
             {categoryId === 'CAT001' ? (
-              /* Space Customisations — no Next; show Quote + Continue instead */
+              /* Space Customisations — smart quote workflow */
               <div className="cart-nav-section">
-                <div className="cart-nav-row" style={{ flexDirection: 'column', gap: 8 }}>
-                  {quoteSuccess ? (
-                    <div className="cart-nav-quote-success">✓ Quote submitted!</div>
-                  ) : (
-                    <button
-                      className="cart-nav-btn cart-nav-btn--quote cart-nav-btn--full"
-                      disabled={selections.length === 0 || quoteSubmitting}
-                      onClick={handleRequestQuote}
-                    >
-                      {quoteSubmitting ? 'Submitting…' : 'Request for Quote'}
-                    </button>
-                  )}
-                  <button
-                    className="cart-nav-btn cart-nav-btn--next cart-nav-btn--full"
-                    onClick={() => setSpaceConfirmOpen(true)}
-                  >
-                    Continue to Other Customisations →
-                  </button>
-                </div>
-                {quoteError && <p className="cart-nav-quote-error">{quoteError}</p>}
+                {spaceCustLoading ? (
+                  <p style={{ fontSize: 13, color: '#aaa', textAlign: 'center' }}>Loading…</p>
+                ) : (() => {
+                  const status = spaceCustReq?.status
+                  const cat001Sels = selections.filter(s => s.category_id === 'CAT001')
+
+                  // Case E — accepted or denied (shouldn't normally appear)
+                  if (status === 'accepted' || status === 'denied') {
+                    return (
+                      <p style={{ fontSize: 13, color: '#aaa', textAlign: 'center', padding: '8px 0' }}>
+                        Space Customisations are locked.
+                      </p>
+                    )
+                  }
+
+                  // Case C — quoted (customer_notification = "quote_ready")
+                  if (status === 'quoted') {
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div style={{ background: '#fff8f5', border: '1px solid #F05E3E', borderRadius: 8, padding: '10px 12px' }}>
+                          <p style={{ fontSize: 12.5, fontWeight: 700, color: '#F05E3E', marginBottom: 4 }}>
+                            Capstone Life has sent you a quotation
+                          </p>
+                          {spaceCustReq?.quoted_price != null && (
+                            <p style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a' }}>
+                              {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(spaceCustReq.quoted_price)}
+                            </p>
+                          )}
+                          {spaceCustReq?.admin_notes && (
+                            <p style={{ fontSize: 12, color: '#555', marginTop: 6 }}>{spaceCustReq.admin_notes}</p>
+                          )}
+                        </div>
+                        <button
+                          className="cart-nav-btn cart-nav-btn--prev cart-nav-btn--full"
+                          style={{ fontSize: 12.5, padding: '7px 12px', background: '#f4f1ee', color: '#1a1a1a' }}
+                          onClick={openSpaceCustPdf}
+                        >
+                          View Updated Floor Plan
+                        </button>
+                        <button
+                          className="cart-nav-btn cart-nav-btn--quote cart-nav-btn--full"
+                          onClick={handleAcceptSpaceCust}
+                          disabled={!!spaceActionLoading}
+                        >
+                          {spaceActionLoading === 'accept' ? 'Please wait…' : '✓ Accept Quotation'}
+                        </button>
+                        <button
+                          className="cart-nav-btn cart-nav-btn--next cart-nav-btn--full"
+                          style={{ background: '#f4f1ee', color: '#1a1a1a' }}
+                          onClick={handleNegotiateSpaceCust}
+                          disabled={!!spaceActionLoading}
+                        >
+                          {spaceActionLoading === 'negotiate' ? 'Please wait…' : 'Negotiate'}
+                        </button>
+                        <button
+                          className="cart-nav-btn cart-nav-btn--full"
+                          style={{ background: '#fff0ef', color: '#c0392b', border: '1px solid #f4a49e' }}
+                          onClick={() => setSpaceDenyConfirm(true)}
+                          disabled={!!spaceActionLoading}
+                        >
+                          Deny &amp; Continue
+                        </button>
+                        {spaceCustError && <p className="cart-nav-quote-error">{spaceCustError}</p>}
+                      </div>
+                    )
+                  }
+
+                  // Case D — negotiating
+                  if (status === 'negotiating') {
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div style={{ background: '#fff8e1', border: '1px solid #ffe082', borderRadius: 8, padding: '10px 12px' }}>
+                          <p style={{ fontSize: 12.5, color: '#795548' }}>
+                            Negotiation in progress — our team will contact you shortly.
+                          </p>
+                        </div>
+                        <button
+                          className="cart-nav-btn cart-nav-btn--next cart-nav-btn--full"
+                          onClick={() => setSpaceConfirmOpen(true)}
+                        >
+                          Continue Without Changes →
+                        </button>
+                      </div>
+                    )
+                  }
+
+                  // Case B — submitted, status = pending (waiting for admin)
+                  if (status === 'pending' && spaceCustReq) {
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div style={{ background: '#e8f5e9', border: '1px solid #a5d6a7', borderRadius: 8, padding: '10px 12px' }}>
+                          <p style={{ fontSize: 12.5, color: '#1b5e20' }}>
+                            Your request has been submitted. Awaiting response from Capstone Life.
+                          </p>
+                        </div>
+                        <button
+                          className="cart-nav-btn cart-nav-btn--quote cart-nav-btn--full"
+                          disabled={spaceSubmitting}
+                          onClick={handleSubmitSpaceCustRequest}
+                        >
+                          {spaceSubmitting ? 'Updating…' : 'Update Request'}
+                        </button>
+                        <button
+                          className="cart-nav-btn cart-nav-btn--next cart-nav-btn--full"
+                          onClick={() => setSpaceConfirmOpen(true)}
+                        >
+                          Continue Without Changes →
+                        </button>
+                        {spaceCustError && <p className="cart-nav-quote-error">{spaceCustError}</p>}
+                      </div>
+                    )
+                  }
+
+                  // Case A — no request yet (status is undefined / no spaceCustReq)
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <button
+                        className="cart-nav-btn cart-nav-btn--quote cart-nav-btn--full"
+                        disabled={cat001Sels.length === 0 || spaceSubmitting}
+                        onClick={handleSubmitSpaceCustRequest}
+                      >
+                        {spaceSubmitting ? 'Submitting…' : 'Request for Quote'}
+                      </button>
+                      {spaceCustError && <p className="cart-nav-quote-error">{spaceCustError}</p>}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '2px 0' }}>
+                        <div style={{ flex: 1, height: 1, background: '#e8e4e0' }} />
+                        <span style={{ fontSize: 11, color: '#aaa', flexShrink: 0 }}>OR</span>
+                        <div style={{ flex: 1, height: 1, background: '#e8e4e0' }} />
+                      </div>
+                      <button
+                        className="cart-nav-btn cart-nav-btn--next cart-nav-btn--full"
+                        onClick={() => setSpaceConfirmOpen(true)}
+                      >
+                        Continue Without Changes →
+                      </button>
+                    </div>
+                  )
+                })()}
               </div>
             ) : (
               /* All other categories — Prev / Next / Quote */
@@ -1253,6 +1458,35 @@ export default function CategoryPage() {
                 className="hub-skip-modal-cancel"
                 onClick={() => setSpaceConfirmOpen(false)}
                 disabled={spaceLocking}
+              >
+                Go Back
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Deny Space Cust confirm modal ── */}
+      {spaceDenyConfirm && (
+        <div className="qn-overlay" onClick={() => !spaceActionLoading && setSpaceDenyConfirm(false)}>
+          <div className="hub-skip-modal" onClick={e => e.stopPropagation()}>
+            <h3 className="hub-skip-modal-title">Deny Quotation &amp; Continue?</h3>
+            <p className="hub-skip-modal-body">
+              You are choosing to proceed with the <strong>standard floor plan</strong>.
+              Space Customisations will be permanently locked and you will move on to other upgrades.
+            </p>
+            <div className="hub-skip-modal-actions">
+              <button
+                className="hub-skip-modal-confirm"
+                onClick={handleDenySpaceCust}
+                disabled={!!spaceActionLoading}
+              >
+                {spaceActionLoading === 'deny' ? 'Please wait…' : 'Yes, Deny & Continue'}
+              </button>
+              <button
+                className="hub-skip-modal-cancel"
+                onClick={() => setSpaceDenyConfirm(false)}
+                disabled={!!spaceActionLoading}
               >
                 Go Back
               </button>

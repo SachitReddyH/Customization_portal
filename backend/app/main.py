@@ -6,7 +6,7 @@ import os
 
 from app.database import connect_db, close_db
 from app.config import settings
-from app.routers import auth, villas, categories, options, selections, quotes, admin, interests, drawing_register
+from app.routers import auth, villas, categories, options, selections, quotes, admin, interests, drawing_register, space_cust
 
 
 @asynccontextmanager
@@ -44,6 +44,7 @@ app.include_router(quotes.router)
 app.include_router(admin.router)
 app.include_router(interests.router)
 app.include_router(drawing_register.router)
+app.include_router(space_cust.router)
 
 
 @app.get("/", tags=["health"])

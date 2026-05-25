@@ -11,6 +11,7 @@ import AdminCustomerDetail from './pages/admin/AdminCustomerDetail'
 import AdminQuotes from './pages/admin/AdminQuotes'
 import AdminOptions from './pages/admin/AdminOptions'
 import AdminDrawingRegister from './pages/admin/AdminDrawingRegister'
+import AdminSpaceCust from './pages/admin/AdminSpaceCust'
 import CRMLayout from './pages/crm/CRMLayout'
 import DesignLayout from './pages/design/DesignLayout'
 import CRMCustomers from './pages/crm/CRMCustomers'
@@ -79,6 +80,7 @@ function AppContent() {
           <Route path="quotes" element={<AdminQuotes />} />
           <Route path="options" element={<AdminOptions />} />
           <Route path="drawing" element={<AdminDrawingRegister />} />
+          <Route path="space-cust" element={<AdminSpaceCust />} />
         </Route>
         <Route path="/crm" element={<CRMLayout />}>
           <Route index element={<Navigate to="/crm/customers" replace />} />

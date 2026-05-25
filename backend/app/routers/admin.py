@@ -223,6 +223,27 @@ async def update_category(category_id: str, payload: CategoryUpdate, user=Depend
 
 # ── Dashboard Summary ──────────────────────────────────────────────────────
 
+@router.post("/customers/{customer_id}/reactivate-space-cust")
+async def reactivate_space_cust(customer_id: str, user=Depends(require_admin)):
+    """Admin reactivates space customisation for a customer (resets skip/lock)."""
+    db = get_db()
+    result = await db.users.find_one_and_update(
+        {"_id": ObjectId(customer_id), "role": "customer"},
+        {"$set": {"space_customisation_skipped": False, "space_customisation_skipped_at": None}},
+        return_document=True,
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    # Also reset their space_cust_request if any
+    await db.space_cust_requests.update_one(
+        {"customer_id": ObjectId(customer_id)},
+        {"$set": {"status": "pending", "customer_notification": None,
+                  "admin_notification": None, "quoted_price": None,
+                  "admin_notes": None, "responded_at": None}},
+    )
+    return {"reactivated": True}
+
+
 @router.get("/dashboard")
 async def dashboard(user=Depends(require_admin)):
     db = get_db()

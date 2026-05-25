@@ -10,6 +10,7 @@ import {
   requestQuote, getMyQuotes, acceptQuote, requestQuoteChanges, getMe,
   getMyDrawingPlans, markFloorPlanViewed as apiMarkFloorPlanViewed,
   skipSpaceCustomisation as apiSkipSpaceCustomisation, BASE, getToken,
+  getMySpaceCustRequest,
 } from '../services/api'
 
 const CATEGORIES = [
@@ -173,6 +174,7 @@ export default function CustomisationHub() {
   const [spaceCustomisationSkipped, setSpaceCustomisationSkipped] = useState(false)
   const [skipConfirmOpen,           setSkipConfirmOpen]           = useState(false)
   const [skipLoading,               setSkipLoading]               = useState(false)
+  const [spaceCustNotification, setSpaceCustNotification] = useState(false)
 
   const markFloorPlanViewed = () => {
     if (hasViewedFloorPlan) return
@@ -231,6 +233,10 @@ export default function CustomisationHub() {
       setDrawingPlans(d)
       if (d?.floor_plan_viewed)           setHasViewedFloorPlan(true)
       if (d?.space_customisation_skipped) setSpaceCustomisationSkipped(true)
+    }).catch(() => {})
+
+    getMySpaceCustRequest().then(d => {
+      setSpaceCustNotification(d?.customer_notification === 'quote_ready')
     }).catch(() => {})
 
     getMySelections().then((data: any) => {
@@ -458,6 +464,9 @@ export default function CustomisationHub() {
                       {cat.tagline}
                     </p>
                     {!isFloorPlan && isAccepted && <Lock size={14} className="card-lock-icon" color="#bbb" />}
+                    {cat.id === 'CAT001' && spaceCustNotification && (
+                      <span className="card-notification-dot" />
+                    )}
                   </div>
                 )
               })}

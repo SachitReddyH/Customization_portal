@@ -428,6 +428,7 @@ input[type="url"], textarea {
   cursor: pointer;
   flex: 1;
   min-width: 0;
+  position: relative;
   /* start below the viewport */
   transform: translateY(100vh);
   transition: box-shadow 0.25s ease,
@@ -4499,3 +4500,21 @@ input[type="url"], textarea {
   color: var(--dark);
 }
 .qn-btn--edit:hover:not(:disabled) { background: #ece8e3; }
+
+/* ── Space Cust notification dot on hub card ── */
+.card-notification-dot {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 10px;
+  height: 10px;
+  background: #F05E3E;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(240, 94, 62, 0.5); }
+  70%  { box-shadow: 0 0 0 6px rgba(240, 94, 62, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(240, 94, 62, 0); }
+}
