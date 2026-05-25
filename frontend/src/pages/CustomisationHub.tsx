@@ -434,8 +434,7 @@ export default function CustomisationHub() {
                 const globalIdx  = rowIdx * 3 + colIdx
                 const Icon       = cat.icon
                 const isFloorPlan         = cat.id === 'FLOOR_PLAN'
-                const hasCAT001Selection  = selections.some((s: any) => s.category_id === 'CAT001')
-                const otherCatsUnlocked   = spaceCustomisationSkipped || hasCAT001Selection
+                const otherCatsUnlocked   = spaceCustomisationSkipped
                 const isNotUnlocked = !isFloorPlan && (
                   cat.id === 'CAT001'
                     ? !(hasViewedFloorPlan && !spaceCustomisationSkipped)
