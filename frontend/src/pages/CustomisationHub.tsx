@@ -144,6 +144,9 @@ export default function CustomisationHub() {
   const [acceptError,      setAcceptError]      = useState('')
   const [editLoading,      setEditLoading]      = useState(false)
 
+  // Resolve a plan URL — Cloudinary gives absolute URLs; old local uploads need BASE prepended
+  const resolveUrl = (url: string) => url.startsWith('http') ? url : `${BASE}${url}`
+
   // Floor plans
   const [drawingPlans, setDrawingPlans] = useState<{
     standard_plan: { url: string; uploaded_at: string } | null
@@ -704,9 +707,9 @@ export default function CustomisationHub() {
                       <p style={{ fontWeight: 600, marginBottom: 10, fontFamily: 'var(--font-body)', fontSize: 14 }}>
                         Standard Floor Plan
                       </p>
-                      {drawingPlans.standard_plan.url.endsWith('.pdf') ? (
+                      {drawingPlans.standard_plan.url.toLowerCase().includes('.pdf') ? (
                         <a
-                          href={`${BASE}${drawingPlans.standard_plan.url}`}
+                          href={resolveUrl(drawingPlans.standard_plan.url)}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{ color: '#F05E3E', fontFamily: 'var(--font-body)', fontSize: 14, textDecoration: 'underline' }}
@@ -716,7 +719,7 @@ export default function CustomisationHub() {
                         </a>
                       ) : (
                         <img
-                          src={`${BASE}${drawingPlans.standard_plan.url}`}
+                          src={resolveUrl(drawingPlans.standard_plan.url)}
                           alt="Standard Floor Plan"
                           style={{ width: '100%', borderRadius: 8, cursor: 'zoom-in', display: 'block' }}
                           onClick={() => { markFloorPlanViewed(); setFpLightbox(drawingPlans!.standard_plan!.url) }}
@@ -730,9 +733,9 @@ export default function CustomisationHub() {
                         Updated Floor Plan
                         <span style={{ background: '#F05E3E', color: '#fff', fontSize: 10, padding: '2px 7px', borderRadius: 4, fontWeight: 500 }}>Latest</span>
                       </p>
-                      {drawingPlans.updated_plan.url.endsWith('.pdf') ? (
+                      {drawingPlans.updated_plan.url.toLowerCase().includes('.pdf') ? (
                         <a
-                          href={`${BASE}${drawingPlans.updated_plan.url}`}
+                          href={resolveUrl(drawingPlans.updated_plan.url)}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{ color: '#F05E3E', fontFamily: 'var(--font-body)', fontSize: 14, textDecoration: 'underline' }}
@@ -742,7 +745,7 @@ export default function CustomisationHub() {
                         </a>
                       ) : (
                         <img
-                          src={`${BASE}${drawingPlans.updated_plan.url}`}
+                          src={resolveUrl(drawingPlans.updated_plan.url)}
                           alt="Updated Floor Plan"
                           style={{ width: '100%', borderRadius: 8, cursor: 'zoom-in', display: 'block' }}
                           onClick={() => { markFloorPlanViewed(); setFpLightbox(drawingPlans!.updated_plan!.url) }}
@@ -792,7 +795,7 @@ export default function CustomisationHub() {
         <div className="mv-lightbox" onClick={() => setFpLightbox(null)}>
           <button className="mv-lightbox-close" onClick={() => setFpLightbox(null)}><X size={24} /></button>
           <img
-            src={`${BASE}${fpLightbox}`}
+            src={resolveUrl(fpLightbox)}
             alt="Floor Plan"
             className="mv-lightbox-img"
             onClick={e => e.stopPropagation()}
