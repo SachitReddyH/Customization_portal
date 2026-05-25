@@ -146,8 +146,6 @@ export default function CustomisationHub() {
 
   // Resolve a plan URL — Cloudinary gives absolute URLs; old local uploads need BASE prepended
   const resolveUrl = (url: string) => url.startsWith('http') ? url : `${BASE}${url}`
-  // Detect PDF: local paths end in .pdf; Cloudinary raw uploads use /raw/upload/ in the URL
-  const isPdf = (url: string) => url.toLowerCase().includes('.pdf') || url.includes('/raw/upload/')
   // Fetch PDF via backend proxy (sends JWT automatically) then open as blob URL in new tab
   const openPdf = async (planType: 'standard' | 'updated') => {
     markFloorPlanViewed()
