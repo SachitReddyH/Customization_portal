@@ -1,7 +1,8 @@
 import os
+import asyncio
 import cloudinary
 import cloudinary.uploader
-from fastapi import UploadFile
+from fastapi import UploadFile, HTTPException
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,6 @@ async def upload_to_cloudinary(file: UploadFile, folder: str, public_id: str) ->
     """Upload a file to Cloudinary and return the secure URL."""
     ext = os.path.splitext(file.filename or '')[1].lower()
     if ext not in ALLOWED_EXTS:
-        from fastapi import HTTPException
         raise HTTPException(status_code=400, detail=f"File type {ext} not allowed")
 
     contents = await file.read()
@@ -28,20 +28,22 @@ async def upload_to_cloudinary(file: UploadFile, folder: str, public_id: str) ->
     # PDFs must use resource_type='raw'; images use 'image'
     resource_type = 'raw' if ext == '.pdf' else 'image'
 
-    # Include extension in public_id so Cloudinary preserves it in the URL
-    # e.g. "villa_42_standard.pdf" → .../drawing_register/villa_42_standard.pdf
+    # Include extension in public_id so Cloudinary URL preserves it
     public_id_with_ext = f"{public_id}{ext}"
 
-    try:
-        result = cloudinary.uploader.upload(
+    def _do_upload():
+        return cloudinary.uploader.upload(
             contents,
             folder=folder,
             public_id=public_id_with_ext,
             resource_type=resource_type,
             overwrite=True,
         )
+
+    try:
+        # Run blocking Cloudinary call in a thread to avoid blocking the async event loop
+        result = await asyncio.to_thread(_do_upload)
         return result['secure_url']
     except Exception as e:
         logger.error(f"Cloudinary upload failed: {e}")
-        from fastapi import HTTPException
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
