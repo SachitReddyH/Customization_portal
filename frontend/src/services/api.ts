@@ -220,7 +220,8 @@ export const listSpaceCustRequests = () =>
 
 export const respondToSpaceCustRequest = (requestId: string, data: FormData) =>
   api.post(`/space-cust/admin/${requestId}/respond`, data, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 120000, // 2 min — large PDFs stored in MongoDB can be slow on Render
   }).then(r => r.data)
 
 export const reopenSpaceCustRequest = (requestId: string) =>

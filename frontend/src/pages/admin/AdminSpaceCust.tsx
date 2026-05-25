@@ -59,7 +59,8 @@ export default function AdminSpaceCust() {
   // Per-row form state
   const [formData, setFormData] = useState<Record<string, { price: string; notes: string; file: File | null }>>({})
   const [submitting, setSubmitting] = useState<Record<string, boolean>>({})
-  const [rowError, setRowError] = useState<Record<string, string>>({})
+  const [rowError,   setRowError]   = useState<Record<string, string>>({})
+  const [rowSuccess, setRowSuccess] = useState<Record<string, boolean>>({})
 
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
@@ -125,11 +126,12 @@ export default function AdminSpaceCust() {
 
       const updated = await respondToSpaceCustRequest(req.id, fd)
       setRequests(prev => prev.map(r => r.id === req.id ? { ...r, ...updated } : r))
-      // Reset form
+      // Reset form and show success
       setFormData(prev => ({ ...prev, [req.id]: { price: '', notes: '', file: null } }))
-      if (fileInputRefs.current[req.id]) {
-        fileInputRefs.current[req.id]!.value = ''
-      }
+      if (fileInputRefs.current[req.id]) fileInputRefs.current[req.id]!.value = ''
+      setRowSuccess(prev => ({ ...prev, [req.id]: true }))
+      setTimeout(() => setRowSuccess(prev => ({ ...prev, [req.id]: false })), 4000)
+      setExpandedRows(prev => { const n = new Set(prev); n.delete(req.id); return n })
     } catch (e: any) {
       setRowError(prev => ({
         ...prev,
@@ -196,12 +198,13 @@ export default function AdminSpaceCust() {
           </thead>
           <tbody>
             {requests.map(req => {
-              const isExpanded = expandedRows.has(req.id)
-              const form = formData[req.id] || { price: '', notes: '', file: null }
+              const isExpanded  = expandedRows.has(req.id)
+              const form        = formData[req.id] || { price: '', notes: '', file: null }
               const isSubmitting = submitting[req.id] || false
-              const rowErr = rowError[req.id] || ''
-              const canRespond = req.status === 'pending' || req.status === 'negotiating'
-              const isLocked = req.status === 'quoted' || req.status === 'accepted' || req.status === 'denied'
+              const rowErr      = rowError[req.id] || ''
+              const didSucceed  = rowSuccess[req.id] || false
+              const canRespond  = req.status === 'pending' || req.status === 'negotiating'
+              const isLocked    = req.status === 'quoted' || req.status === 'accepted' || req.status === 'denied'
 
               return (
                 <>
@@ -259,7 +262,11 @@ export default function AdminSpaceCust() {
                       }
                     </td>
                     <td>
-                      {isLocked ? (
+                      {didSucceed ? (
+                        <span style={{ color: '#1b5e20', fontWeight: 600, fontSize: 13 }}>
+                          ✓ Sent successfully
+                        </span>
+                      ) : isLocked ? (
                         <button
                           className="admin-btn admin-btn--sm admin-btn--ghost"
                           onClick={() => handleReopen(req)}
@@ -407,14 +414,20 @@ export default function AdminSpaceCust() {
                                 )}
                               </div>
 
-                              <button
-                                className="admin-btn admin-btn--primary"
-                                onClick={() => handleRespond(req)}
-                                disabled={isSubmitting}
-                                style={{ alignSelf: 'flex-start' }}
-                              >
-                                {isSubmitting ? 'Sending…' : 'Send Response'}
-                              </button>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignSelf: 'flex-start' }}>
+                                <button
+                                  className="admin-btn admin-btn--primary"
+                                  onClick={() => handleRespond(req)}
+                                  disabled={isSubmitting}
+                                >
+                                  {isSubmitting ? 'Sending…' : 'Send Response'}
+                                </button>
+                                {isSubmitting && (
+                                  <span style={{ fontSize: 12, color: '#888' }}>
+                                    Uploading floor plan — this may take up to 30 seconds…
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           )}
 
