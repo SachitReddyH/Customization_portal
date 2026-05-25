@@ -38,6 +38,7 @@ async def upload_to_cloudinary(file: UploadFile, folder: str, public_id: str) ->
             public_id=public_id_with_ext,
             resource_type=resource_type,
             overwrite=True,
+            access_mode='public',
         )
 
     try:
