@@ -763,20 +763,22 @@ export default function CategoryPage() {
         </div>
       </nav>
 
-      {/* ── Category tabs ── */}
-      <div className="cat-tabs">
-        {CATEGORY_ORDER.map((cat, idx) => (
-          <button
-            key={cat.id}
-            className={`cat-tab${cat.id === categoryId ? ' cat-tab--active' : ''}`}
-            onClick={() => navigate(`/category/${cat.id}`)}
-            title={cat.name}
-          >
-            <span className="cat-tab-step">{idx + 1}</span>
-            <span className="cat-tab-label">{cat.name}</span>
-          </button>
-        ))}
-      </div>
+      {/* ── Category tabs — hidden on Space Customisations; CAT001 excluded from all other views ── */}
+      {categoryId !== 'CAT001' && (
+        <div className="cat-tabs">
+          {CATEGORY_ORDER.filter(c => c.id !== 'CAT001').map((cat, idx) => (
+            <button
+              key={cat.id}
+              className={`cat-tab${cat.id === categoryId ? ' cat-tab--active' : ''}`}
+              onClick={() => navigate(`/category/${cat.id}`)}
+              title={cat.name}
+            >
+              <span className="cat-tab-step">{idx + 1}</span>
+              <span className="cat-tab-label">{cat.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── Content ── */}
       <div className="cat-content">
@@ -1142,11 +1144,13 @@ export default function CategoryPage() {
 
             {/* ── Prev / Next navigation ── */}
             {(() => {
-              const currentIdx = CATEGORY_ORDER.findIndex(c => c.id === categoryId)
-              const prevCat    = CATEGORY_ORDER[currentIdx - 1]
-              const nextCat    = CATEGORY_ORDER[currentIdx + 1]
+              // CAT001 uses the full order; all other categories exclude CAT001 (so Flooring = first)
+              const navOrder   = categoryId === 'CAT001' ? CATEGORY_ORDER : CATEGORY_ORDER.filter(c => c.id !== 'CAT001')
+              const currentIdx = navOrder.findIndex(c => c.id === categoryId)
+              const prevCat    = navOrder[currentIdx - 1]
+              const nextCat    = navOrder[currentIdx + 1]
               const isFirst    = currentIdx === 0
-              const isLast     = currentIdx === CATEGORY_ORDER.length - 1
+              const isLast     = currentIdx === navOrder.length - 1
 
               return (
                 <div className="cart-nav-section">
