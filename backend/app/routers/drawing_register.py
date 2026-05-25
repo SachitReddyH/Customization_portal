@@ -2,11 +2,11 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from fastapi.responses import Response
 from app.database import get_db
 from app.core.deps import get_current_user, require_drawing_access
-from app.core.cloudinary_upload import upload_to_cloudinary
+from app.core.cloudinary_upload import upload_to_cloudinary, fetch_cloudinary_pdf
 from bson import ObjectId
 from datetime import datetime, timezone
 from typing import Optional
-import os, asyncio, urllib.request
+import os, asyncio
 
 router = APIRouter(prefix="/drawing-register", tags=["drawing-register"])
 
@@ -123,14 +123,9 @@ async def view_floor_plan(plan_type: str, user=Depends(get_current_user)):
     if not url:
         raise HTTPException(status_code=404, detail="Plan not uploaded yet")
 
-    def _fetch():
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            return resp.read()
-
     try:
         loop = asyncio.get_running_loop()
-        content = await loop.run_in_executor(None, _fetch)
+        content = await loop.run_in_executor(None, fetch_cloudinary_pdf, url)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Could not fetch plan: {str(e)}")
 
@@ -179,14 +174,9 @@ async def admin_view_floor_plan(villa_id: str, plan_type: str, user=Depends(requ
     if not url:
         raise HTTPException(status_code=404, detail="Plan not uploaded yet")
 
-    def _fetch():
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            return resp.read()
-
     try:
         loop = asyncio.get_running_loop()
-        content = await loop.run_in_executor(None, _fetch)
+        content = await loop.run_in_executor(None, fetch_cloudinary_pdf, url)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Could not fetch plan: {str(e)}")
 
