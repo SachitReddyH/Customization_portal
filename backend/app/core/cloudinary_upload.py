@@ -25,8 +25,9 @@ async def upload_to_cloudinary(file: UploadFile, folder: str, public_id: str) ->
 
     contents = await file.read()
 
-    # PDFs must use resource_type='raw'; images use 'image'
-    resource_type = 'raw' if ext == '.pdf' else 'image'
+    # Use 'image' for all types including PDFs — Cloudinary accepts PDFs as image resources
+    # and serves them without the delivery restrictions that apply to 'raw' resources
+    resource_type = 'image'
 
     # Include extension in public_id so Cloudinary URL preserves it
     public_id_with_ext = f"{public_id}{ext}"
