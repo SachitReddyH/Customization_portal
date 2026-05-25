@@ -6,7 +6,7 @@ import {
   getCategory, getCategories, getFloors, getRooms, getRoomOptions,
   getDirectOptions, getFlooringPackages,
   getMyVilla, getMySelections, upsertSelection, removeSelection, clearAllSelections,
-  requestQuote, submitInterest,
+  requestQuote, submitInterest, skipSpaceCustomisation,
   BASE,
 } from '../services/api'
 
@@ -300,6 +300,10 @@ export default function CategoryPage() {
   const [quoteSuccess,    setQuoteSuccess]    = useState(false)
   const [quoteError,      setQuoteError]      = useState('')
 
+  // Space Customisations — "Continue" confirm modal
+  const [spaceConfirmOpen, setSpaceConfirmOpen] = useState(false)
+  const [spaceLocking,     setSpaceLocking]     = useState(false)
+
   const handleRequestQuote = async () => {
     setQuoteSubmitting(true)
     setQuoteError('')
@@ -311,6 +315,16 @@ export default function CategoryPage() {
     } finally {
       setQuoteSubmitting(false)
     }
+  }
+
+  const handleContinueFromSpace = async () => {
+    setSpaceLocking(true)
+    try {
+      await skipSpaceCustomisation()
+    } catch { /* ignore — nav proceeds regardless */ }
+    finally { setSpaceLocking(false) }
+    setSpaceConfirmOpen(false)
+    navigate('/category/CAT002')
   }
 
   // Floor plan lightbox
@@ -1142,62 +1156,110 @@ export default function CategoryPage() {
                 </div>
             }
 
-            {/* ── Prev / Next navigation ── */}
-            {(() => {
-              // CAT001 uses the full order; all other categories exclude CAT001 (so Flooring = first)
-              const navOrder   = categoryId === 'CAT001' ? CATEGORY_ORDER : CATEGORY_ORDER.filter(c => c.id !== 'CAT001')
-              const currentIdx = navOrder.findIndex(c => c.id === categoryId)
-              const prevCat    = navOrder[currentIdx - 1]
-              const nextCat    = navOrder[currentIdx + 1]
-              const isFirst    = currentIdx === 0
-              const isLast     = currentIdx === navOrder.length - 1
+            {/* ── Navigation ── */}
+            {categoryId === 'CAT001' ? (
+              /* Space Customisations — no Next; show Quote + Continue instead */
+              <div className="cart-nav-section">
+                <div className="cart-nav-row" style={{ flexDirection: 'column', gap: 8 }}>
+                  {quoteSuccess ? (
+                    <div className="cart-nav-quote-success">✓ Quote submitted!</div>
+                  ) : (
+                    <button
+                      className="cart-nav-btn cart-nav-btn--quote cart-nav-btn--full"
+                      disabled={selections.length === 0 || quoteSubmitting}
+                      onClick={handleRequestQuote}
+                    >
+                      {quoteSubmitting ? 'Submitting…' : 'Request for Quote'}
+                    </button>
+                  )}
+                  <button
+                    className="cart-nav-btn cart-nav-btn--next cart-nav-btn--full"
+                    onClick={() => setSpaceConfirmOpen(true)}
+                  >
+                    Continue to Other Customisations →
+                  </button>
+                </div>
+                {quoteError && <p className="cart-nav-quote-error">{quoteError}</p>}
+              </div>
+            ) : (
+              /* All other categories — Prev / Next / Quote */
+              (() => {
+                const navOrder   = CATEGORY_ORDER.filter(c => c.id !== 'CAT001')
+                const currentIdx = navOrder.findIndex(c => c.id === categoryId)
+                const prevCat    = navOrder[currentIdx - 1]
+                const nextCat    = navOrder[currentIdx + 1]
+                const isFirst    = currentIdx === 0
+                const isLast     = currentIdx === navOrder.length - 1
 
-              return (
-                <div className="cart-nav-section">
-                  <div className="cart-nav-row">
-
-                    {/* Prev button — hidden on first category */}
-                    {!isFirst && (
-                      <button
-                        className="cart-nav-btn cart-nav-btn--prev"
-                        onClick={() => navigate(`/category/${prevCat.id}`)}
-                      >
-                        ← Prev
-                      </button>
-                    )}
-
-                    {/* Next OR Request for Quote on last category */}
-                    {isLast ? (
-                      quoteSuccess ? (
-                        <div className="cart-nav-quote-success">
-                          ✓ Quote submitted!
-                        </div>
+                return (
+                  <div className="cart-nav-section">
+                    <div className="cart-nav-row">
+                      {!isFirst && (
+                        <button
+                          className="cart-nav-btn cart-nav-btn--prev"
+                          onClick={() => navigate(`/category/${prevCat.id}`)}
+                        >
+                          ← Prev
+                        </button>
+                      )}
+                      {isLast ? (
+                        quoteSuccess ? (
+                          <div className="cart-nav-quote-success">✓ Quote submitted!</div>
+                        ) : (
+                          <button
+                            className="cart-nav-btn cart-nav-btn--quote"
+                            disabled={selections.length === 0 || quoteSubmitting}
+                            onClick={handleRequestQuote}
+                          >
+                            {quoteSubmitting ? 'Submitting…' : 'Request for Quote'}
+                          </button>
+                        )
                       ) : (
                         <button
-                          className="cart-nav-btn cart-nav-btn--quote"
-                          disabled={selections.length === 0 || quoteSubmitting}
-                          onClick={handleRequestQuote}
+                          className={`cart-nav-btn cart-nav-btn--next${isFirst ? ' cart-nav-btn--full' : ''}`}
+                          onClick={() => navigate(`/category/${nextCat.id}`)}
                         >
-                          {quoteSubmitting ? 'Submitting…' : 'Request for Quote'}
+                          Next →
                         </button>
-                      )
-                    ) : (
-                      <button
-                        className={`cart-nav-btn cart-nav-btn--next${isFirst ? ' cart-nav-btn--full' : ''}`}
-                        onClick={() => navigate(`/category/${nextCat.id}`)}
-                      >
-                        Next →
-                      </button>
-                    )}
+                      )}
+                    </div>
+                    {quoteError && <p className="cart-nav-quote-error">{quoteError}</p>}
                   </div>
-                  {quoteError && <p className="cart-nav-quote-error">{quoteError}</p>}
-                </div>
-              )
-            })()}
+                )
+              })()
+            )}
           </div>}
 
         </aside>
       </div>
+
+      {/* ── Space Customisations "Continue" confirm modal ── */}
+      {spaceConfirmOpen && (
+        <div className="qn-overlay" onClick={() => !spaceLocking && setSpaceConfirmOpen(false)}>
+          <div className="hub-skip-modal" onClick={e => e.stopPropagation()}>
+            <h3 className="hub-skip-modal-title">Continue to Other Customisations?</h3>
+            <p className="hub-skip-modal-body">
+              Once you continue, <strong>Space Customisations will be permanently locked</strong> and you will not be able to make any further changes to this category. Your remaining customisation categories will be unlocked.
+            </p>
+            <div className="hub-skip-modal-actions">
+              <button
+                className="hub-skip-modal-confirm"
+                onClick={handleContinueFromSpace}
+                disabled={spaceLocking}
+              >
+                {spaceLocking ? 'Please wait…' : 'Yes, Continue'}
+              </button>
+              <button
+                className="hub-skip-modal-cancel"
+                onClick={() => setSpaceConfirmOpen(false)}
+                disabled={spaceLocking}
+              >
+                Go Back
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Floor plan lightbox ── */}
       {lightboxUrl && (
