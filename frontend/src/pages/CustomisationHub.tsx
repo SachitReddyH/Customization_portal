@@ -146,6 +146,8 @@ export default function CustomisationHub() {
 
   // Resolve a plan URL — Cloudinary gives absolute URLs; old local uploads need BASE prepended
   const resolveUrl = (url: string) => url.startsWith('http') ? url : `${BASE}${url}`
+  // Detect PDF: local paths end in .pdf; Cloudinary raw uploads use /raw/upload/ in the URL
+  const isPdf = (url: string) => url.toLowerCase().includes('.pdf') || url.includes('/raw/upload/')
 
   // Floor plans
   const [drawingPlans, setDrawingPlans] = useState<{
@@ -707,7 +709,7 @@ export default function CustomisationHub() {
                       <p style={{ fontWeight: 600, marginBottom: 10, fontFamily: 'var(--font-body)', fontSize: 14 }}>
                         Standard Floor Plan
                       </p>
-                      {drawingPlans.standard_plan.url.toLowerCase().includes('.pdf') ? (
+                      {isPdf(drawingPlans.standard_plan.url) ? (
                         <a
                           href={resolveUrl(drawingPlans.standard_plan.url)}
                           target="_blank"
@@ -733,7 +735,7 @@ export default function CustomisationHub() {
                         Updated Floor Plan
                         <span style={{ background: '#F05E3E', color: '#fff', fontSize: 10, padding: '2px 7px', borderRadius: 4, fontWeight: 500 }}>Latest</span>
                       </p>
-                      {drawingPlans.updated_plan.url.toLowerCase().includes('.pdf') ? (
+                      {isPdf(drawingPlans.updated_plan.url) ? (
                         <a
                           href={resolveUrl(drawingPlans.updated_plan.url)}
                           target="_blank"
