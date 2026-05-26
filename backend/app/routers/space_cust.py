@@ -254,7 +254,7 @@ async def list_all_space_cust_requests(user=Depends(require_space_cust_access)):
 @router.post("/admin/{request_id}/respond")
 async def respond_to_space_cust_request(
     request_id: str,
-    quoted_price: float = Form(...),
+    quoted_price: Optional[float] = Form(None),
     admin_notes: Optional[str] = Form(None),
     floor_plan: Optional[UploadFile] = File(None),
     user=Depends(require_space_cust_access),
@@ -304,17 +304,26 @@ async def respond_to_space_cust_request(
                 })
 
     # Update the request
-    update_fields = {
-        "status":                "quoted",
-        "quoted_price":          quoted_price,
+    is_design = user.get("role") == "design_admin"
+
+    update_fields: dict = {
         "customer_notification": "quote_ready",
         "admin_notification":    None,
         "responded_at":          now,
         "reviewed_by":           user["_id"],
         "updated_at":            now,
     }
-    if admin_notes is not None:
-        update_fields["admin_notes"] = admin_notes
+    # Design admin only uploads floor plan — don't overwrite price/status set by admin
+    if not is_design:
+        update_fields["status"]       = "quoted"
+        update_fields["quoted_price"] = quoted_price
+        if admin_notes is not None:
+            update_fields["admin_notes"] = admin_notes
+    else:
+        # Only mark as quoted if not already quoted/accepted/denied
+        current_status = req.get("status", "pending")
+        if current_status in ("pending", "negotiating"):
+            update_fields["status"] = "quoted"
 
     result = await db.space_cust_requests.find_one_and_update(
         {"_id": ObjectId(request_id)},

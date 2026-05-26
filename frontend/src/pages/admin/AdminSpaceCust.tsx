@@ -49,6 +49,8 @@ interface SpaceCustRequest {
 }
 
 export default function AdminSpaceCust() {
+  const isDesignAdmin = sessionStorage.getItem('user_role') === 'design_admin'
+
   const [requests, setRequests] = useState<SpaceCustRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -105,23 +107,34 @@ export default function AdminSpaceCust() {
 
   const handleRespond = async (req: SpaceCustRequest) => {
     const form = formData[req.id]
-    if (!form?.price) {
-      setRowError(prev => ({ ...prev, [req.id]: 'Please enter a price' }))
+
+    // Design admin only uploads floor plan — price is not required
+    if (!isDesignAdmin) {
+      if (!form?.price) {
+        setRowError(prev => ({ ...prev, [req.id]: 'Please enter a price' }))
+        return
+      }
+      const price = parseFloat(form.price)
+      if (isNaN(price) || price <= 0) {
+        setRowError(prev => ({ ...prev, [req.id]: 'Please enter a valid price' }))
+        return
+      }
+    }
+
+    if (isDesignAdmin && !form?.file) {
+      setRowError(prev => ({ ...prev, [req.id]: 'Please select a floor plan file to upload' }))
       return
     }
-    const price = parseFloat(form.price)
-    if (isNaN(price) || price <= 0) {
-      setRowError(prev => ({ ...prev, [req.id]: 'Please enter a valid price' }))
-      return
-    }
+
+    const price = parseFloat(form?.price || '0')
 
     setSubmitting(prev => ({ ...prev, [req.id]: true }))
     setRowError(prev => ({ ...prev, [req.id]: '' }))
 
     try {
       const fd = new FormData()
-      fd.append('quoted_price', String(price))
-      if (form.notes) fd.append('admin_notes', form.notes)
+      if (!isDesignAdmin && price > 0) fd.append('quoted_price', String(price))
+      if (!isDesignAdmin && form.notes) fd.append('admin_notes', form.notes)
       if (form.file) fd.append('floor_plan', form.file)
 
       const updated = await respondToSpaceCustRequest(req.id, fd)
@@ -347,54 +360,62 @@ export default function AdminSpaceCust() {
                           {/* Response form — for pending / negotiating */}
                           {canRespond && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 520 }}>
-                              <p style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>Send Response</p>
+                              <p style={{ fontWeight: 600, fontSize: 13, color: '#333' }}>
+                                {isDesignAdmin ? 'Upload Updated Floor Plan' : 'Send Response'}
+                              </p>
 
-                              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                                <div style={{ flex: 1 }}>
+                              {/* Price — admin only */}
+                              {!isDesignAdmin && (
+                                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                                  <div style={{ flex: 1 }}>
+                                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#555', marginBottom: 5 }}>
+                                      Quoted Price (INR) *
+                                    </label>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="1000"
+                                      value={form.price}
+                                      onChange={e => updateForm(req.id, 'price', e.target.value)}
+                                      placeholder="e.g. 500000"
+                                      style={{
+                                        width: '100%',
+                                        padding: '9px 12px',
+                                        border: '1px solid #ddd',
+                                        borderRadius: 8,
+                                        fontSize: 14,
+                                        fontFamily: 'var(--font-body)',
+                                        outline: 'none',
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Notes — admin only */}
+                              {!isDesignAdmin && (
+                                <div>
                                   <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#555', marginBottom: 5 }}>
-                                    Quoted Price (INR) *
+                                    Admin Notes (optional)
                                   </label>
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    step="1000"
-                                    value={form.price}
-                                    onChange={e => updateForm(req.id, 'price', e.target.value)}
-                                    placeholder="e.g. 500000"
+                                  <textarea
+                                    value={form.notes}
+                                    onChange={e => updateForm(req.id, 'notes', e.target.value)}
+                                    placeholder="Add any notes for the customer…"
+                                    rows={3}
                                     style={{
                                       width: '100%',
                                       padding: '9px 12px',
                                       border: '1px solid #ddd',
                                       borderRadius: 8,
-                                      fontSize: 14,
+                                      fontSize: 13,
                                       fontFamily: 'var(--font-body)',
+                                      resize: 'vertical',
                                       outline: 'none',
                                     }}
                                   />
                                 </div>
-                              </div>
-
-                              <div>
-                                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#555', marginBottom: 5 }}>
-                                  Admin Notes (optional)
-                                </label>
-                                <textarea
-                                  value={form.notes}
-                                  onChange={e => updateForm(req.id, 'notes', e.target.value)}
-                                  placeholder="Add any notes for the customer…"
-                                  rows={3}
-                                  style={{
-                                    width: '100%',
-                                    padding: '9px 12px',
-                                    border: '1px solid #ddd',
-                                    borderRadius: 8,
-                                    fontSize: 13,
-                                    fontFamily: 'var(--font-body)',
-                                    resize: 'vertical',
-                                    outline: 'none',
-                                  }}
-                                />
-                              </div>
+                              )}
 
                               <div>
                                 <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#555', marginBottom: 5 }}>
@@ -420,7 +441,7 @@ export default function AdminSpaceCust() {
                                   onClick={() => handleRespond(req)}
                                   disabled={isSubmitting}
                                 >
-                                  {isSubmitting ? 'Sending…' : 'Send Response'}
+                                  {isSubmitting ? 'Uploading…' : isDesignAdmin ? 'Upload Floor Plan' : 'Send Response'}
                                 </button>
                                 {isSubmitting && (
                                   <span style={{ fontSize: 12, color: '#888' }}>
