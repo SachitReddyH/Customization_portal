@@ -303,15 +303,6 @@ async def respond_to_space_cust_request(
                     "updated_at":    now,
                 })
 
-        # Mark floor_plan_viewed=False on the customer so they see the notification
-        customer_id = req.get("customer_id")
-        if customer_id:
-            cust_oid = customer_id if isinstance(customer_id, ObjectId) else ObjectId(str(customer_id))
-            await db.users.update_one(
-                {"_id": cust_oid},
-                {"$set": {"floor_plan_viewed": False}},
-            )
-
     # Update the request
     update_fields = {
         "status":                "quoted",

@@ -230,6 +230,16 @@ export const reopenSpaceCustRequest = (requestId: string) =>
 export const reactivateSpaceCust = (customerId: string) =>
   api.post(`/admin/customers/${customerId}/reactivate-space-cust`).then(r => r.data)
 
+// Staff management
+export const listStaff = () =>
+  api.get('/admin/staff').then(r => r.data)
+
+export const createStaff = (data: { email: string; password: string; full_name: string; role: string }) =>
+  api.post('/admin/staff', data).then(r => r.data)
+
+export const deleteStaff = (id: string) =>
+  api.delete(`/admin/staff/${id}`)
+
 export const uploadOptionImage = (file: File, categoryId: string) => {
   const form = new FormData()
   form.append('file', file)

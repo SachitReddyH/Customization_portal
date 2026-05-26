@@ -244,6 +244,60 @@ async def reactivate_space_cust(customer_id: str, user=Depends(require_admin)):
     return {"reactivated": True}
 
 
+# ── Staff Management (design_admin / crm_admin) ───────────────────────────
+
+@router.get("/staff")
+async def list_staff(user=Depends(require_admin)):
+    db = get_db()
+    cursor = db.users.find({"role": {"$in": ["design_admin", "crm_admin"]}}).sort("created_at", -1)
+    staff = await cursor.to_list(length=None)
+    result = []
+    for s in staff:
+        result.append({
+            "id":         str(s["_id"]),
+            "email":      s["email"],
+            "full_name":  s["full_name"],
+            "role":       s["role"],
+            "is_active":  s.get("is_active", True),
+            "created_at": s.get("created_at"),
+        })
+    return result
+
+
+@router.post("/staff", status_code=201)
+async def create_staff(payload: UserCreate, user=Depends(require_admin)):
+    if payload.role not in ("design_admin", "crm_admin"):
+        raise HTTPException(status_code=400, detail="Role must be design_admin or crm_admin")
+    db = get_db()
+    if await db.users.find_one({"email": payload.email}):
+        raise HTTPException(status_code=400, detail="Email already registered")
+    now = datetime.now(timezone.utc)
+    doc = {
+        "email":           payload.email,
+        "hashed_password": hash_password(payload.password),
+        "full_name":       payload.full_name,
+        "phone":           payload.phone,
+        "role":            payload.role,
+        "is_active":       True,
+        "created_by":      user["_id"],
+        "created_at":      now,
+        "updated_at":      now,
+    }
+    result = await db.users.insert_one(doc)
+    doc["id"] = str(result.inserted_id)
+    return doc
+
+
+@router.delete("/staff/{staff_id}", status_code=204)
+async def delete_staff(staff_id: str, user=Depends(require_admin)):
+    db = get_db()
+    result = await db.users.delete_one(
+        {"_id": ObjectId(staff_id), "role": {"$in": ["design_admin", "crm_admin"]}}
+    )
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Staff user not found")
+
+
 @router.get("/dashboard")
 async def dashboard(user=Depends(require_admin)):
     db = get_db()
