@@ -92,6 +92,7 @@ function AppContent() {
         <Route path="/design" element={<DesignLayout />}>
           <Route index element={<Navigate to="/design/drawing" replace />} />
           <Route path="drawing" element={<AdminDrawingRegister />} />
+          <Route path="space-cust" element={<AdminSpaceCust />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

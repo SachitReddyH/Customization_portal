@@ -1,7 +1,7 @@
 """Space Customisation Quote workflow — CAT001 specific quote flow."""
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from app.database import get_db
-from app.core.deps import get_current_user, require_admin, require_any_admin
+from app.core.deps import get_current_user, require_admin, require_any_admin, require_space_cust_access
 from bson import ObjectId, Binary
 from datetime import datetime, timezone
 from typing import Optional
@@ -219,7 +219,7 @@ async def deny_space_cust_quote(user=Depends(get_current_user)):
 # ── Admin endpoints ────────────────────────────────────────────────────────────
 
 @router.get("/admin/all")
-async def list_all_space_cust_requests(user=Depends(require_any_admin)):
+async def list_all_space_cust_requests(user=Depends(require_space_cust_access)):
     """Admin: list all space cust requests sorted by requested_at desc."""
     db = get_db()
     cursor = db.space_cust_requests.find().sort("requested_at", -1)
@@ -257,9 +257,9 @@ async def respond_to_space_cust_request(
     quoted_price: float = Form(...),
     admin_notes: Optional[str] = Form(None),
     floor_plan: Optional[UploadFile] = File(None),
-    user=Depends(require_admin),
+    user=Depends(require_space_cust_access),
 ):
-    """Admin responds with a quoted price, optional notes, and optional floor plan."""
+    """Admin/Design responds with a quoted price, optional notes, and optional floor plan."""
     db = get_db()
     req = await db.space_cust_requests.find_one({"_id": ObjectId(request_id)})
     if not req:
@@ -342,7 +342,7 @@ async def respond_to_space_cust_request(
 
 
 @router.post("/admin/{request_id}/reopen")
-async def reopen_space_cust_request(request_id: str, user=Depends(require_admin)):
+async def reopen_space_cust_request(request_id: str, user=Depends(require_space_cust_access)):
     """Admin reopens (resets) a space cust request back to pending."""
     db = get_db()
     req = await db.space_cust_requests.find_one({"_id": ObjectId(request_id)})
