@@ -1294,14 +1294,6 @@ export default function CategoryPage() {
                           {spaceActionLoading === 'accept' ? 'Please wait…' : '✓ Accept Quotation'}
                         </button>
                         <button
-                          className="cart-nav-btn cart-nav-btn--next cart-nav-btn--full"
-                          style={{ background: '#f4f1ee', color: '#1a1a1a' }}
-                          onClick={handleNegotiateSpaceCust}
-                          disabled={!!spaceActionLoading}
-                        >
-                          {spaceActionLoading === 'negotiate' ? 'Please wait…' : 'Negotiate'}
-                        </button>
-                        <button
                           className="cart-nav-btn cart-nav-btn--full"
                           style={{ background: '#fff0ef', color: '#c0392b', border: '1px solid #f4a49e' }}
                           onClick={() => setSpaceDenyConfirm(true)}
@@ -1314,24 +1306,6 @@ export default function CategoryPage() {
                     )
                   }
 
-                  // Case D — negotiating
-                  if (status === 'negotiating') {
-                    return (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        <div style={{ background: '#fff8e1', border: '1px solid #ffe082', borderRadius: 8, padding: '10px 12px' }}>
-                          <p style={{ fontSize: 12.5, color: '#795548' }}>
-                            Negotiation in progress — our team will contact you shortly.
-                          </p>
-                        </div>
-                        <button
-                          className="cart-nav-btn cart-nav-btn--next cart-nav-btn--full"
-                          onClick={() => setSpaceConfirmOpen(true)}
-                        >
-                          Continue Without Changes →
-                        </button>
-                      </div>
-                    )
-                  }
 
                   // Case B — submitted, status = pending (waiting for admin)
                   if (status === 'pending' && spaceCustReq) {
