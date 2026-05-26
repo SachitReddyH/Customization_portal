@@ -16,7 +16,7 @@ def _fmt(villa: dict) -> dict:
 @router.get("/", response_model=List[VillaResponse])
 async def list_villas(user=Depends(get_current_user)):
     db = get_db()
-    if user["role"] == "admin":
+    if user["role"] in ("admin", "crm_admin", "design_admin"):
         cursor = db.villas.find().sort("villa_number", 1)
         villas = await cursor.to_list(length=None)
     else:
@@ -36,7 +36,7 @@ async def get_villa(villa_id: str, user=Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Villa not found")
 
     # Customers can only view their own villa
-    if user["role"] == "customer" and str(user.get("villa_id")) != villa_id:
+    if user["role"] not in ("admin", "crm_admin", "design_admin") and str(user.get("villa_id")) != villa_id:
         raise HTTPException(status_code=403, detail="Access denied")
 
     return _fmt(villa)

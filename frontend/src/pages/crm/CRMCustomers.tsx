@@ -66,9 +66,14 @@ export default function CRMCustomers() {
   useEffect(() => { load() }, [])
 
   const getVilla = (id?: string) => id ? villas.find(v => v.id === id) : undefined
+
   const sortedVillas = [...villas].sort((a, b) =>
     String(a.villa_number).localeCompare(String(b.villa_number), undefined, { numeric: true })
   )
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+  }
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault(); setFormError('')
@@ -82,9 +87,9 @@ export default function CRMCustomers() {
         email:     form.email.trim(),
         password:  form.password,
       }
-      if (form.phone)                    payload.phone = form.phone.trim()
-      if (form.villa_id)                 payload.villa_id = form.villa_id
-      if (form.customization_deadline)   payload.customization_deadline = form.customization_deadline
+      if (form.phone)                  payload.phone = form.phone.trim()
+      if (form.villa_id)               payload.villa_id = form.villa_id
+      if (form.customization_deadline) payload.customization_deadline = form.customization_deadline
       await createCustomer(payload)
       setShowModal(false); setForm(EMPTY_FORM); await load()
     } catch (err: any) {
@@ -170,35 +175,30 @@ export default function CRMCustomers() {
                   <div className="admin-form-field">
                     <label>Full Name *</label>
                     <input name="full_name" type="text" placeholder="Ravi Kumar"
-                      value={form.full_name}
-                      onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))}
+                      value={form.full_name} onChange={handleFormChange}
                       autoComplete="off" />
                   </div>
                   <div className="admin-form-field">
                     <label>Phone</label>
                     <input name="phone" type="tel" placeholder="+91 98765 43210"
-                      value={form.phone}
-                      onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
+                      value={form.phone} onChange={handleFormChange} />
                   </div>
                 </div>
                 <div className="admin-form-field">
                   <label>Email *</label>
                   <input name="email" type="email" placeholder="customer@example.com"
-                    value={form.email}
-                    onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+                    value={form.email} onChange={handleFormChange}
                     autoComplete="off" />
                 </div>
                 <div className="admin-form-field">
                   <label>Password *</label>
                   <input name="password" type="password" placeholder="Set initial password"
-                    value={form.password}
-                    onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
+                    value={form.password} onChange={handleFormChange}
                     autoComplete="new-password" />
                 </div>
                 <div className="admin-form-field">
                   <label>Assign Villa</label>
-                  <select name="villa_id" value={form.villa_id}
-                    onChange={e => setForm(p => ({ ...p, villa_id: e.target.value }))}>
+                  <select name="villa_id" value={form.villa_id} onChange={handleFormChange}>
                     <option value="">— No villa assigned —</option>
                     {sortedVillas.map(v => (
                       <option key={v.id} value={v.id}>
@@ -210,8 +210,7 @@ export default function CRMCustomers() {
                 <div className="admin-form-field">
                   <label>Customisation Deadline</label>
                   <input name="customization_deadline" type="date"
-                    value={form.customization_deadline}
-                    onChange={e => setForm(p => ({ ...p, customization_deadline: e.target.value }))} />
+                    value={form.customization_deadline} onChange={handleFormChange} />
                 </div>
                 {formError && <div className="admin-error" style={{ margin: 0 }}>{formError}</div>}
               </div>
