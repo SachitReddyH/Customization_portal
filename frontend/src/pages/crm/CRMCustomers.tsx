@@ -66,7 +66,9 @@ export default function CRMCustomers() {
   useEffect(() => { load() }, [])
 
   const getVilla = (id?: string) => id ? villas.find(v => v.id === id) : undefined
-  const unassignedVillas = villas.filter(v => !v.is_assigned)
+  const sortedVillas = [...villas].sort((a, b) =>
+    String(a.villa_number).localeCompare(String(b.villa_number), undefined, { numeric: true })
+  )
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault(); setFormError('')
@@ -198,8 +200,10 @@ export default function CRMCustomers() {
                   <select name="villa_id" value={form.villa_id}
                     onChange={e => setForm(p => ({ ...p, villa_id: e.target.value }))}>
                     <option value="">— No villa assigned —</option>
-                    {unassignedVillas.map(v => (
-                      <option key={v.id} value={v.id}>{formatVilla(v)}</option>
+                    {sortedVillas.map(v => (
+                      <option key={v.id} value={v.id}>
+                        {formatVilla(v)}{v.is_assigned ? ' (Assigned)' : ''}
+                      </option>
                     ))}
                   </select>
                 </div>
