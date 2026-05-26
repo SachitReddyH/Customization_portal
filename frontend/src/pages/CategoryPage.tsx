@@ -8,7 +8,7 @@ import {
   getMyVilla, getMySelections, upsertSelection, removeSelection, clearAllSelections,
   requestQuote, submitInterest, skipSpaceCustomisation,
   submitSpaceCustRequest, getMySpaceCustRequest,
-  acceptSpaceCustQuote, negotiateSpaceCustQuote, denySpaceCustQuote,
+  acceptSpaceCustQuote, denySpaceCustQuote,
   BASE, getToken,
 } from '../services/api'
 
@@ -796,18 +796,6 @@ export default function CategoryPage() {
       navigate('/category/CAT002')
     } catch (e: any) {
       setSpaceCustError(e?.response?.data?.detail || 'Failed to accept')
-    } finally {
-      setSpaceActionLoading('')
-    }
-  }
-
-  const handleNegotiateSpaceCust = async () => {
-    setSpaceActionLoading('negotiate')
-    try {
-      await negotiateSpaceCustQuote()
-      setSpaceCustReq((r: any) => r ? { ...r, status: 'negotiating', customer_notification: null } : r)
-    } catch (e: any) {
-      setSpaceCustError(e?.response?.data?.detail || 'Failed')
     } finally {
       setSpaceActionLoading('')
     }
