@@ -15,6 +15,7 @@ import AdminSpaceCust from './pages/admin/AdminSpaceCust'
 import AdminStaff from './pages/admin/AdminStaff'
 import CRMLayout from './pages/crm/CRMLayout'
 import DesignLayout from './pages/design/DesignLayout'
+import CRMDashboard from './pages/crm/CRMDashboard'
 import CRMCustomers from './pages/crm/CRMCustomers'
 import CRMQuotes from './pages/crm/CRMQuotes'
 import './index.css'
@@ -85,7 +86,8 @@ function AppContent() {
           <Route path="staff" element={<AdminStaff />} />
         </Route>
         <Route path="/crm" element={<CRMLayout />}>
-          <Route index element={<Navigate to="/crm/customers" replace />} />
+          <Route index element={<Navigate to="/crm/dashboard" replace />} />
+          <Route path="dashboard" element={<CRMDashboard />} />
           <Route path="customers" element={<CRMCustomers />} />
           <Route path="quotes" element={<CRMQuotes />} />
         </Route>

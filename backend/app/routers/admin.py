@@ -299,7 +299,7 @@ async def delete_staff(staff_id: str, user=Depends(require_admin)):
 
 
 @router.get("/dashboard")
-async def dashboard(user=Depends(require_admin)):
+async def dashboard(user=Depends(require_any_admin)):
     db = get_db()
     total_villas    = await db.villas.count_documents({})
     pending_quotes  = await db.quote_requests.count_documents({"status": "pending"})

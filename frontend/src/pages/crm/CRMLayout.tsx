@@ -1,15 +1,17 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { Users, FileText, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, FileText, LogOut } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { to: '/crm/customers',  label: 'Customers',      icon: Users,    end: false },
-  { to: '/crm/quotes',     label: 'Quote Requests', icon: FileText, end: false },
+  { to: '/crm/dashboard',  label: 'Dashboard',      icon: LayoutDashboard, end: false },
+  { to: '/crm/customers',  label: 'Customers',      icon: Users,           end: false },
+  { to: '/crm/quotes',     label: 'Quote Requests', icon: FileText,        end: false },
 ]
 
 function getPageTitle(pathname: string): string {
+  if (pathname.startsWith('/crm/dashboard')) return 'Dashboard'
   if (pathname.startsWith('/crm/customers')) return 'Customers'
   if (pathname.startsWith('/crm/quotes'))    return 'Quote Requests'
-  return 'CRM'
+  return 'Dashboard'
 }
 
 export default function CRMLayout() {

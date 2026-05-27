@@ -1,7 +1,7 @@
 """Customer interest notifications — e.g. 'Coming Soon' categories."""
 from fastapi import APIRouter, Depends
 from app.database import get_db
-from app.core.deps import get_current_user, require_admin
+from app.core.deps import get_current_user, require_admin, require_any_admin
 from bson import ObjectId
 from datetime import datetime, timezone
 from typing import List
@@ -34,7 +34,7 @@ async def submit_interest(payload: dict, user=Depends(get_current_user)):
 
 
 @router.get("/admin", tags=["admin"])
-async def list_interests(user=Depends(require_admin)):
+async def list_interests(user=Depends(require_any_admin)):
     """Admin: see all customers who expressed interest in Coming Soon categories."""
     db = get_db()
     cursor = db.interests.find({}).sort("updated_at", -1)
