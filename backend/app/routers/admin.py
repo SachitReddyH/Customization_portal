@@ -9,7 +9,7 @@ from app.schemas.category import CategoryUpdate, CategoryResponse
 from bson import ObjectId
 from datetime import datetime, timezone
 from typing import List
-import os, uuid
+import os, uuid, re as _re
 from app.core.cloudinary_upload import upload_image_to_cloudinary
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -130,9 +130,45 @@ async def get_customer_selections(customer_id: str, user=Depends(require_read_ac
             "status": "not_started",
         }
 
+    raw = selections_doc.get("selections", [])
+
+    # Batch-resolve option names and location names
+    option_ids  = list({s.get("option_id", "") for s in raw if s.get("option_id")})
+    location_ids = list({s.get("location_id") for s in raw if s.get("location_id")})
+
+    opts  = await db.customization_options.find({"option_id": {"$in": option_ids}}).to_list(length=None)
+    locs  = await db.locations.find({"location_id": {"$in": location_ids}}).to_list(length=None)
+
+    opt_map = {o["option_id"]: o for o in opts}
+    loc_map = {l["location_id"]: l for l in locs}
+
+    enriched = []
+    for sel in raw:
+        oid  = sel.get("option_id", "")
+        opt  = opt_map.get(oid)
+
+        if opt:
+            option_name = opt.get("option_name") or opt.get("space") or opt.get("description") or oid
+        else:
+            # Handle synthetic addon IDs like OPT-SC-003-ADN-BAT
+            m = _re.match(r'^(.+)-ADN-([A-Z]+)$', oid)
+            if m:
+                parent = opt_map.get(m.group(1))
+                addon_label = {"BAT": "Bathtub", "JAC": "Jacuzzi"}.get(m.group(2), m.group(2))
+                series = (parent.get("upgrade_spec") or parent.get("option_name") or "") if parent else ""
+                series = _re.sub(r'\s+[Ss]eries$', '', series).strip()
+                option_name = f"{addon_label} — {series}" if series else addon_label
+            else:
+                option_name = oid
+
+        loc     = loc_map.get(sel.get("location_id", ""))
+        room_label = (loc.get("space") or loc.get("floor") or sel.get("location_id")) if loc else sel.get("location_id")
+
+        enriched.append({**sel, "option_name": option_name, "room_label": room_label})
+
     return {
         "customer": customer_info,
-        "selections": selections_doc.get("selections", []),
+        "selections": enriched,
         "status": selections_doc.get("status", "in_progress"),
     }
 

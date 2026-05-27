@@ -19,8 +19,10 @@ interface Villa {
 
 interface Selection {
   option_id: string
+  option_name?: string
   category_id: string
   location_id?: string
+  room_label?: string
   selection_type: 'standard' | 'upgrade'
   [key: string]: unknown
 }
@@ -171,15 +173,15 @@ export default function GuestSelections() {
                                 <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}>
                                   <thead>
                                     <tr style={{ borderBottom: '1px solid #eee' }}>
-                                      <th style={{ textAlign: 'left', padding: '4px 8px', color: 'var(--text-muted)', fontWeight: 500 }}>Option ID</th>
+                                      <th style={{ textAlign: 'left', padding: '4px 8px', color: 'var(--text-muted)', fontWeight: 500 }}>Option</th>
                                       <th style={{ textAlign: 'left', padding: '4px 8px', color: 'var(--text-muted)', fontWeight: 500 }}>Type</th>
-                                      <th style={{ textAlign: 'left', padding: '4px 8px', color: 'var(--text-muted)', fontWeight: 500 }}>Location</th>
+                                      <th style={{ textAlign: 'left', padding: '4px 8px', color: 'var(--text-muted)', fontWeight: 500 }}>Room</th>
                                     </tr>
                                   </thead>
                                   <tbody>
                                     {items.map((sel, idx) => (
                                       <tr key={idx} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                                        <td style={{ padding: '4px 8px' }}>{sel.option_id}</td>
+                                        <td style={{ padding: '4px 8px' }}>{sel.option_name || sel.option_id}</td>
                                         <td style={{ padding: '4px 8px' }}>
                                           <span style={{
                                             fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 4,
@@ -191,7 +193,7 @@ export default function GuestSelections() {
                                           </span>
                                         </td>
                                         <td style={{ padding: '4px 8px', color: 'var(--text-secondary)' }}>
-                                          {sel.location_id || '—'}
+                                          {sel.room_label || '—'}
                                         </td>
                                       </tr>
                                     ))}
