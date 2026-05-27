@@ -57,7 +57,8 @@ export default function AdminStaff() {
       setForm({ ...BLANK })
       setShowForm(false)
     } catch (e: any) {
-      setFormError(e?.response?.data?.detail || 'Failed to create user')
+      const detail = e?.response?.data?.detail
+      setFormError(typeof detail === 'string' ? detail : 'Failed to create user — check all fields.')
     } finally { setSubmitting(false) }
   }
 
