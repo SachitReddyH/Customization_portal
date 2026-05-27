@@ -18,6 +18,10 @@ import DesignLayout from './pages/design/DesignLayout'
 import CRMDashboard from './pages/crm/CRMDashboard'
 import CRMCustomers from './pages/crm/CRMCustomers'
 import CRMQuotes from './pages/crm/CRMQuotes'
+import GuestLayout from './pages/guest/GuestLayout'
+import GuestCustomers from './pages/guest/GuestCustomers'
+import GuestFloorPlans from './pages/guest/GuestFloorPlans'
+import GuestSelections from './pages/guest/GuestSelections'
 import './index.css'
 
 // Module-level blob cache — survives all navigations for the session
@@ -95,6 +99,12 @@ function AppContent() {
           <Route index element={<Navigate to="/design/drawing" replace />} />
           <Route path="drawing" element={<AdminDrawingRegister />} />
           <Route path="space-cust" element={<AdminSpaceCust />} />
+        </Route>
+        <Route path="/guest" element={<GuestLayout />}>
+          <Route index element={<Navigate to="/guest/customers" replace />} />
+          <Route path="customers" element={<GuestCustomers />} />
+          <Route path="floor-plans" element={<GuestFloorPlans />} />
+          <Route path="selections" element={<GuestSelections />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from fastapi.responses import Response
 from app.database import get_db
-from app.core.deps import get_current_user, require_drawing_access
+from app.core.deps import get_current_user, require_drawing_access, require_read_access
 from bson import ObjectId, Binary
 from datetime import datetime, timezone
 from typing import Optional
@@ -27,7 +27,7 @@ def _plan_doc(plan: Optional[dict], uploader_name: Optional[str] = None) -> Opti
 # ── List all villas (admin/design) ────────────────────────────────────────────
 
 @router.get("/")
-async def list_drawing_register(user=Depends(require_drawing_access)):
+async def list_drawing_register(user=Depends(require_read_access)):
     """List all villas with their drawing register status — 4 bulk queries total."""
     db = get_db()
 
@@ -142,7 +142,7 @@ async def view_floor_plan(plan_type: str, user=Depends(get_current_user)):
 # ── Admin: view any villa's floor plan PDF ────────────────────────────────────
 
 @router.get("/{villa_id}/view-plan/{plan_type}")
-async def admin_view_floor_plan(villa_id: str, plan_type: str, user=Depends(require_drawing_access)):
+async def admin_view_floor_plan(villa_id: str, plan_type: str, user=Depends(require_read_access)):
     """Stream a villa's floor plan PDF directly from MongoDB (admin/design access)."""
     if plan_type not in ("standard", "updated"):
         raise HTTPException(status_code=400, detail="plan_type must be 'standard' or 'updated'")

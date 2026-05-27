@@ -34,6 +34,13 @@ async def require_any_admin(user=Depends(get_current_user)):
     return user
 
 
+async def require_read_access(user=Depends(get_current_user)):
+    """Allows all staff roles to read data (view-only for guest_admin)."""
+    if user.get("role") not in ("admin", "crm_admin", "design_admin", "guest_admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    return user
+
+
 async def require_drawing_access(user=Depends(get_current_user)):
     """Allows admin and design_admin to manage drawing register."""
     if user.get("role") not in ("admin", "design_admin"):

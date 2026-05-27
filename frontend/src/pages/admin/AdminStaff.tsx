@@ -14,10 +14,12 @@ interface StaffUser {
 const ROLE_LABELS: Record<string, string> = {
   design_admin: 'Design Admin',
   crm_admin:    'CRM Admin',
+  guest_admin:  'Guest Admin',
 }
 const ROLE_COLORS: Record<string, React.CSSProperties> = {
   design_admin: { background: '#f3e8ff', color: '#7c3aed', border: '1px solid #d8b4fe' },
   crm_admin:    { background: '#e0f2fe', color: '#0369a1', border: '1px solid #7dd3fc' },
+  guest_admin:  { background: '#f0fdf4', color: '#166534', border: '1px solid #86efac' },
 }
 
 const BLANK = { email: '', password: '', full_name: '', role: 'design_admin' }
@@ -126,6 +128,7 @@ export default function AdminStaff() {
             >
               <option value="design_admin">Design Admin</option>
               <option value="crm_admin">CRM Admin</option>
+              <option value="guest_admin">Guest Admin</option>
             </select>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>

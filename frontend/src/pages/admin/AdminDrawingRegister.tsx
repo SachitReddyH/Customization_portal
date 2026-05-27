@@ -24,13 +24,14 @@ const fullUrl = (path: string) =>
   path.startsWith('/static/') ? `${BASE}${path}` : path
 
 function PlanCell({
-  villaId, planType, plan, onUploaded, onRemoved,
+  villaId, planType, plan, onUploaded, onRemoved, readOnly,
 }: {
   villaId: string
   planType: 'standard' | 'updated'
   plan: Plan | null
   onUploaded: (entry: VillaEntry) => void
   onRemoved: (villaId: string, planType: 'standard' | 'updated') => void
+  readOnly?: boolean
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
@@ -123,34 +124,38 @@ function PlanCell({
               <span className="dr-plan-by">by {plan.uploaded_by_name}</span>
             )}
           </div>
-          <div style={{ display: 'flex', gap: 4 }}>
-            <button
-              className="admin-btn admin-btn--ghost admin-btn--sm dr-reupload-btn"
-              onClick={() => inputRef.current?.click()}
-              disabled={uploading || removing}
-            >
-              <RefreshCw size={12} /> {uploading ? 'Uploading…' : 'Replace'}
-            </button>
-            <button
-              className="admin-btn admin-btn--danger admin-btn--sm"
-              onClick={handleRemove}
-              disabled={uploading || removing}
-              title="Remove floor plan"
-            >
-              <Trash2 size={12} /> {removing ? 'Removing…' : 'Remove'}
-            </button>
-          </div>
+          {!readOnly && (
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button
+                className="admin-btn admin-btn--ghost admin-btn--sm dr-reupload-btn"
+                onClick={() => inputRef.current?.click()}
+                disabled={uploading || removing}
+              >
+                <RefreshCw size={12} /> {uploading ? 'Uploading…' : 'Replace'}
+              </button>
+              <button
+                className="admin-btn admin-btn--danger admin-btn--sm"
+                onClick={handleRemove}
+                disabled={uploading || removing}
+                title="Remove floor plan"
+              >
+                <Trash2 size={12} /> {removing ? 'Removing…' : 'Remove'}
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="dr-plan-empty">
           <span className="dr-plan-status dr-plan-status--missing">Not uploaded</span>
-          <button
-            className="admin-btn admin-btn--primary admin-btn--sm"
-            onClick={() => inputRef.current?.click()}
-            disabled={uploading}
-          >
-            <Upload size={12} /> {uploading ? 'Uploading…' : 'Upload'}
-          </button>
+          {!readOnly && (
+            <button
+              className="admin-btn admin-btn--primary admin-btn--sm"
+              onClick={() => inputRef.current?.click()}
+              disabled={uploading}
+            >
+              <Upload size={12} /> {uploading ? 'Uploading…' : 'Upload'}
+            </button>
+          )}
         </div>
       )}
 
@@ -173,7 +178,7 @@ function PlanCell({
   )
 }
 
-export default function AdminDrawingRegister() {
+export default function AdminDrawingRegister({ readOnly }: { readOnly?: boolean } = {}) {
   const isDesignAdmin = sessionStorage.getItem('user_role') === 'design_admin'
 
   const [entries, setEntries] = useState<VillaEntry[]>([])
@@ -297,6 +302,7 @@ export default function AdminDrawingRegister() {
                       plan={entry.standard_plan}
                       onUploaded={handleUploaded}
                       onRemoved={handleRemoved}
+                      readOnly={readOnly}
                     />
                   </td>
                   {!isDesignAdmin && (
@@ -307,6 +313,7 @@ export default function AdminDrawingRegister() {
                         plan={entry.updated_plan}
                         onUploaded={handleUploaded}
                         onRemoved={handleRemoved}
+                        readOnly={readOnly}
                       />
                     </td>
                   )}
