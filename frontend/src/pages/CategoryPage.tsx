@@ -361,8 +361,10 @@ export default function CategoryPage() {
   const isAddonTab   = activeTab === 'addon'
 
   // Map of location_id → package name for rooms covered by a selected package
+  // Only applies within Flooring (CAT002) — must not bleed into other categories
   const packageCoveredRooms = useMemo<Record<string, string>>(() => {
     const covered: Record<string, string> = {}
+    if (categoryId !== 'CAT002') return covered
     const pkgSel = selections.find(s => s.category_id === 'CAT002' && s.sub_section === 'package')
     if (!pkgSel) return covered
     const pkgOpt = optionMap[pkgSel.option_id]
@@ -370,7 +372,7 @@ export default function CategoryPage() {
     const pkgName = pkgOpt.option_name ?? pkgOpt.description ?? 'Selected Package'
     pkgOpt.rooms_covered.forEach(r => { covered[r.location_id] = pkgName })
     return covered
-  }, [selections, optionMap])
+  }, [categoryId, selections, optionMap])
 
   /* ── Load floors (also used for retry) ─────────── */
   const loadFloors = useCallback(async (catId: string) => {
