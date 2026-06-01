@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutGrid, Layers, Bath, ArrowUpSquare,
@@ -197,6 +197,14 @@ export default function CustomisationHub() {
   const [quoteSuccess,    setQuoteSuccess]    = useState(false)
   const [quoteError,      setQuoteError]      = useState('')
   const [quoteNotes,      setQuoteNotes]      = useState('')
+  const [lockToast,       setLockToast]       = useState('')
+  const lockToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const showLockToast = (msg: string) => {
+    if (lockToastTimer.current) clearTimeout(lockToastTimer.current)
+    setLockToast(msg)
+    lockToastTimer.current = setTimeout(() => setLockToast(''), 3500)
+  }
 
   const handleRequestQuote = async () => {
     setQuoteSubmitting(true)
@@ -450,8 +458,18 @@ export default function CustomisationHub() {
                       ...(isFloorPlan ? { background: '#F05E3E', border: 'none' } : {}),
                     }}
                     onClick={() => {
-                      if (isFloorPlan) setFloorPlanOpen(true)
-                      else if (!isNotUnlocked && !isAccepted) navigate(`/category/${cat.id}`)
+                      if (isFloorPlan) { setFloorPlanOpen(true); return }
+                      if (isAccepted) {
+                        showLockToast('Your customisations are locked — the quote has been accepted.')
+                      } else if (isNotUnlocked) {
+                        if (cat.id === 'CAT001') {
+                          showLockToast('Please view your floor plan first to access Space Customisations.')
+                        } else {
+                          showLockToast('Complete your Space Customisation first to unlock all other upgrades.')
+                        }
+                      } else {
+                        navigate(`/category/${cat.id}`)
+                      }
                     }}
                   >
                     <span className="card-icon">
@@ -833,6 +851,24 @@ export default function CustomisationHub() {
             className="mv-lightbox-img"
             onClick={e => e.stopPropagation()}
           />
+        </div>
+      )}
+
+      {/* ── Lock toast ── */}
+      {lockToast && (
+        <div style={{
+          position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+          background: 'rgba(30,20,10,0.92)', color: '#fff',
+          padding: '13px 24px', borderRadius: 12,
+          fontSize: 14, fontWeight: 500,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.35)',
+          zIndex: 9999, pointerEvents: 'none',
+          maxWidth: 420, textAlign: 'center',
+          backdropFilter: 'blur(6px)',
+          display: 'flex', alignItems: 'center', gap: 10,
+        }}>
+          <span style={{ fontSize: 18 }}>🔒</span>
+          {lockToast}
         </div>
       )}
 
