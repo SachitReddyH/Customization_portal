@@ -142,7 +142,7 @@ export const markQuoteRead = (id: string) =>
   api.post(`/quotes/${id}/read`).then(r => r.data)
 
 export const updateQuote = (id: string, data: {
-  status: string; admin_notes?: string; quoted_price?: number; item_prices?: any[]
+  status: string; quoted_price?: number; item_prices?: any[]
 }) => api.patch(`/quotes/${id}`, data).then(r => r.data)
 
 export const sendQuoteToCustomer = (id: string, data: {

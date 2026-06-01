@@ -22,7 +22,7 @@ class QuoteRequestResponse(BaseModel):
     status: str                             # pending | reviewed | quoted | accepted | rejected
     notification_type: Optional[str] = None # new | updated | None (None = seen by admin)
     customer_notes: Optional[str] = None
-    admin_notes: Optional[str] = None
+
     quoted_price: Optional[float] = None
     item_prices: Optional[List[dict]] = None        # per-line-item prices set by admin
     customer_notification: Optional[str] = None     # 'quoted' | None  (customer-facing bell)
@@ -39,6 +39,6 @@ class QuoteRequestResponse(BaseModel):
 
 class QuoteStatusUpdate(BaseModel):
     status: str
-    admin_notes: Optional[str] = None
+
     quoted_price: Optional[float] = None
     item_prices: Optional[List[ItemPrice]] = None  # per-line-item prices

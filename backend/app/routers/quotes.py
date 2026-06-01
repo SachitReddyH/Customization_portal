@@ -141,7 +141,6 @@ async def create_or_update_quote(payload: QuoteRequestCreate, user=Depends(get_c
         "status":             "pending",
         "notification_type":  "new",
         "customer_notes":     payload.customer_notes,
-        "admin_notes":        None,
         "quoted_price":       None,
         "selection_snapshot": snapshot,
         "requested_at":       now,
@@ -228,8 +227,6 @@ async def send_quote_to_customer(quote_id: str, payload: QuoteStatusUpdate, user
         "reviewed_at":           now,
         "reviewed_by":           user["_id"],
     }
-    if payload.admin_notes is not None:
-        update["admin_notes"] = payload.admin_notes
     if payload.item_prices is not None:
         update["item_prices"]   = [ip.model_dump() for ip in payload.item_prices]
         update["quoted_price"]  = sum(ip.price for ip in payload.item_prices)
@@ -345,8 +342,6 @@ async def update_quote(quote_id: str, payload: QuoteStatusUpdate, user=Depends(r
         "reviewed_at":       now,
         "reviewed_by":       user["_id"],
     }
-    if payload.admin_notes is not None:
-        update["admin_notes"] = payload.admin_notes
     if payload.item_prices is not None:
         # Save individual line-item prices and auto-compute total
         update["item_prices"] = [ip.model_dump() for ip in payload.item_prices]

@@ -10,7 +10,6 @@ interface Quote {
   status: string
   notification_type?: string | null
   customer_notes?: string
-  admin_notes?: string
   quoted_price?: number
   item_prices?: Array<{ option_id: string; location_id?: string; price: number }>
   requested_at: string
@@ -221,14 +220,6 @@ export default function CRMQuotes() {
                     <div className="quote-customer-notes">
                       <p className="quote-snapshot-title">Customer Notes</p>
                       <p className="quote-customer-notes-body">{q.customer_notes}</p>
-                    </div>
-                  )}
-
-                  {/* Admin notes (read-only display) */}
-                  {q.admin_notes && (
-                    <div className="quote-customer-notes">
-                      <p className="quote-snapshot-title">Admin Notes</p>
-                      <p className="quote-customer-notes-body">{q.admin_notes}</p>
                     </div>
                   )}
 

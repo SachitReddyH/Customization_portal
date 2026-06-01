@@ -275,7 +275,7 @@ async def reactivate_space_cust(customer_id: str, user=Depends(require_admin)):
         {"customer_id": ObjectId(customer_id)},
         {"$set": {"status": "pending", "customer_notification": None,
                   "admin_notification": None, "quoted_price": None,
-                  "admin_notes": None, "responded_at": None}},
+                  "responded_at": None}},
     )
     return {"reactivated": True}
 

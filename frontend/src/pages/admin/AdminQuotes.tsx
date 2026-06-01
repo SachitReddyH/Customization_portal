@@ -11,7 +11,6 @@ interface Quote {
   status: string
   notification_type?: string | null
   customer_notes?: string
-  admin_notes?: string
   quoted_price?: number
   item_prices?: Array<{ option_id: string; location_id?: string; price: number }>
   requested_at: string
@@ -33,7 +32,6 @@ function resolveSnapshotName(s: any): string {
 
 interface EditState {
   status: string
-  admin_notes: string
   item_prices: Record<number, string>   // flat snapshot index → price string
 }
 
@@ -123,11 +121,10 @@ export default function AdminQuotes() {
   const getEditState = (q: Quote): EditState =>
     editStates[q.id] ?? {
       status: q.status,
-      admin_notes: q.admin_notes || '',
       item_prices: buildInitialPrices(q),
     }
 
-  const setEditField = (id: string, field: 'status' | 'admin_notes', value: string) => {
+  const setEditField = (id: string, field: 'status', value: string) => {
     const q = quotes.find(q => q.id === id)!
     setEditStates(prev => ({ ...prev, [id]: { ...getEditState(q), [field]: value } }))
   }
@@ -148,7 +145,6 @@ export default function AdminQuotes() {
         ...prev,
         [id]: {
           status: q.status,
-          admin_notes: q.admin_notes || '',
           item_prices: buildInitialPrices(q),
         }
       }))
@@ -184,7 +180,6 @@ export default function AdminQuotes() {
 
       const total = cleanItemPrices.reduce((sum, ip) => sum + ip.price, 0)
       const payload: any = { status: es.status }
-      if (es.admin_notes.trim()) payload.admin_notes = es.admin_notes.trim()
       if (cleanItemPrices.length > 0) {
         payload.item_prices = cleanItemPrices
         payload.quoted_price = total

@@ -123,7 +123,6 @@ async def submit_space_cust_request(body: SpaceCustSubmitBody = SpaceCustSubmitB
         "selection_snapshot": snapshot,
         "customer_notes":     customer_notes,
         "quoted_price":       None,
-        "admin_notes":        None,
         "customer_notification": None,
         "admin_notification": None,
         "requested_at":       now,
@@ -263,7 +262,6 @@ async def list_all_space_cust_requests(user=Depends(require_space_cust_access)):
 async def respond_to_space_cust_request(
     request_id: str,
     quoted_price: Optional[float] = Form(None),
-    admin_notes: Optional[str] = Form(None),
     floor_plan: Optional[UploadFile] = File(None),
     user=Depends(require_space_cust_access),
 ):
@@ -325,8 +323,6 @@ async def respond_to_space_cust_request(
     if not is_design:
         update_fields["status"]       = "quoted"
         update_fields["quoted_price"] = quoted_price
-        if admin_notes is not None:
-            update_fields["admin_notes"] = admin_notes
     else:
         # Only mark as quoted if not already quoted/accepted/denied
         current_status = req.get("status", "pending")
@@ -372,7 +368,6 @@ async def reopen_space_cust_request(request_id: str, user=Depends(require_space_
         {"$set": {
             "status":                "pending",
             "quoted_price":          None,
-            "admin_notes":           None,
             "customer_notification": None,
             "admin_notification":    None,
             "responded_at":          None,

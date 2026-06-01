@@ -40,7 +40,6 @@ interface SpaceCustRequest {
   status: string
   selection_snapshot: any[]
   quoted_price?: number | null
-  admin_notes?: string | null
   customer_notes?: string | null
   customer_notification?: string | null
   admin_notification?: string | null
@@ -135,7 +134,6 @@ export default function AdminSpaceCust() {
     try {
       const fd = new FormData()
       if (!isDesignAdmin && price > 0) fd.append('quoted_price', String(price))
-      if (!isDesignAdmin && form.notes) fd.append('admin_notes', form.notes)
       if (form.file) fd.append('floor_plan', form.file)
 
       const updated = await respondToSpaceCustRequest(req.id, fd)
@@ -164,7 +162,7 @@ export default function AdminSpaceCust() {
       setRequests(prev =>
         prev.map(r =>
           r.id === req.id
-            ? { ...r, status: 'pending', quoted_price: null, admin_notes: null, customer_notification: null, admin_notification: null, responded_at: null }
+            ? { ...r, status: 'pending', quoted_price: null, customer_notification: null, admin_notification: null, responded_at: null }
             : r
         )
       )
@@ -353,14 +351,6 @@ export default function AdminSpaceCust() {
                             </div>
                           )}
 
-                          {/* Admin notes display (if already responded) */}
-                          {req.admin_notes && (
-                            <div style={{ marginBottom: 16, padding: '10px 14px', background: '#fff', borderRadius: 8, border: '1px solid #ece9e4' }}>
-                              <p style={{ fontSize: 12, fontWeight: 600, color: '#888', marginBottom: 4 }}>Admin Notes</p>
-                              <p style={{ fontSize: 13 }}>{req.admin_notes}</p>
-                            </div>
-                          )}
-
                           {/* Error for this row */}
                           {rowErr && (
                             <p style={{ color: '#d94f4f', fontSize: 13, marginBottom: 12 }}>{rowErr}</p>
@@ -398,31 +388,6 @@ export default function AdminSpaceCust() {
                                       }}
                                     />
                                   </div>
-                                </div>
-                              )}
-
-                              {/* Notes — admin only */}
-                              {!isDesignAdmin && (
-                                <div>
-                                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#555', marginBottom: 5 }}>
-                                    Admin Notes (optional)
-                                  </label>
-                                  <textarea
-                                    value={form.notes}
-                                    onChange={e => updateForm(req.id, 'notes', e.target.value)}
-                                    placeholder="Add any notes for the customer…"
-                                    rows={3}
-                                    style={{
-                                      width: '100%',
-                                      padding: '9px 12px',
-                                      border: '1px solid #ddd',
-                                      borderRadius: 8,
-                                      fontSize: 13,
-                                      fontFamily: 'var(--font-body)',
-                                      resize: 'vertical',
-                                      outline: 'none',
-                                    }}
-                                  />
                                 </div>
                               )}
 

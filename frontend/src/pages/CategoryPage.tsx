@@ -1277,9 +1277,6 @@ export default function CategoryPage() {
                               {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(spaceCustReq.quoted_price)}
                             </p>
                           )}
-                          {spaceCustReq?.admin_notes && (
-                            <p style={{ fontSize: 12, color: '#555', marginTop: 6 }}>{spaceCustReq.admin_notes}</p>
-                          )}
                         </div>
                         <button
                           className="cart-nav-btn cart-nav-btn--prev cart-nav-btn--full"
