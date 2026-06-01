@@ -6,7 +6,7 @@ import {
   getCategory, getCategories, getFloors, getRooms, getRoomOptions,
   getDirectOptions, getFlooringPackages,
   getMyVilla, getMySelections, upsertSelection, removeSelection, clearAllSelections,
-  requestQuote, submitInterest, skipSpaceCustomisation,
+  requestQuote, submitInterest, skipSpaceCustomisation, getMyDrawingPlans,
   submitSpaceCustRequest, getMySpaceCustRequest,
   acceptSpaceCustQuote, denySpaceCustQuote,
   BASE, getToken,
@@ -314,6 +314,7 @@ export default function CategoryPage() {
   const [spaceActionLoading, setSpaceActionLoading] = useState('')
   const [spaceDenyConfirm,  setSpaceDenyConfirm]  = useState(false)
   const [customerNotes,     setCustomerNotes]     = useState('')
+  const [spaceCustLocked,   setSpaceCustLocked]   = useState(false)
 
   const handleRequestQuote = async () => {
     setQuoteSubmitting(true)
@@ -332,6 +333,7 @@ export default function CategoryPage() {
     setSpaceLocking(true)
     try {
       await skipSpaceCustomisation()
+      setSpaceCustLocked(true)
     } catch { /* ignore — nav proceeds regardless */ }
     finally { setSpaceLocking(false) }
     setSpaceConfirmOpen(false)
@@ -413,6 +415,10 @@ export default function CategoryPage() {
         setCategoryNames(map)
       }).catch(console.error)
     }
+    // Space cust lock status (space_customisation_skipped covers accept/deny/skip paths)
+    getMyDrawingPlans().then((d: any) => {
+      if (d?.space_customisation_skipped) setSpaceCustLocked(true)
+    }).catch(() => {})
   }, []) // runs once on mount only
 
   /* ── Per-category loads ─────────────────────────── */
@@ -795,6 +801,7 @@ export default function CategoryPage() {
     try {
       await acceptSpaceCustQuote()
       setSpaceCustReq((r: any) => r ? { ...r, status: 'accepted', customer_notification: null } : r)
+      setSpaceCustLocked(true)
       setSpaceConfirmOpen(false)
       navigate('/category/CAT002')
     } catch (e: any) {
@@ -809,6 +816,7 @@ export default function CategoryPage() {
     try {
       await denySpaceCustQuote()
       setSpaceCustReq((r: any) => r ? { ...r, status: 'denied', customer_notification: null } : r)
+      setSpaceCustLocked(true)
       setSpaceDenyConfirm(false)
       navigate('/category/CAT002')
     } catch (e: any) {
@@ -1219,12 +1227,14 @@ export default function CategoryPage() {
                                   <span className="cart-item-room">{opt.space}</span>
                                 )}
                               </div>
-                              <button
-                                className="cart-item-remove"
-                                onClick={() => handleRemoveFromCart(sel)}
-                              >
-                                <X size={13} />
-                              </button>
+                              {!(sel.category_id === 'CAT001' && spaceCustLocked) && (
+                                <button
+                                  className="cart-item-remove"
+                                  onClick={() => handleRemoveFromCart(sel)}
+                                >
+                                  <X size={13} />
+                                </button>
+                              )}
                             </div>
                           )
                         })}
