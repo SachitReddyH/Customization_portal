@@ -41,6 +41,7 @@ interface SpaceCustRequest {
   selection_snapshot: any[]
   quoted_price?: number | null
   admin_notes?: string | null
+  customer_notes?: string | null
   customer_notification?: string | null
   admin_notification?: string | null
   requested_at: string
@@ -341,6 +342,14 @@ export default function AdminSpaceCust() {
                                   </div>
                                 ))}
                               </div>
+                            </div>
+                          )}
+
+                          {/* Customer notes */}
+                          {req.customer_notes && (
+                            <div style={{ marginBottom: 16, padding: '10px 14px', background: '#fffbeb', borderRadius: 8, border: '1px solid #fde68a' }}>
+                              <p style={{ fontSize: 12, fontWeight: 600, color: '#92400e', marginBottom: 4 }}>Customer Notes</p>
+                              <p style={{ fontSize: 13, color: '#78350f' }}>{req.customer_notes}</p>
                             </div>
                           )}
 

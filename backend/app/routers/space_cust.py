@@ -5,8 +5,13 @@ from app.core.deps import get_current_user, require_admin, require_any_admin, re
 from bson import ObjectId, Binary
 from datetime import datetime, timezone
 from typing import Optional
+from pydantic import BaseModel
 import os
 import re as _re
+
+
+class SpaceCustSubmitBody(BaseModel):
+    customer_notes: Optional[str] = None
 
 router = APIRouter(prefix="/space-cust", tags=["space-cust"])
 
@@ -84,7 +89,7 @@ def _enrich_request(req: dict) -> dict:
 # ── Customer endpoints ─────────────────────────────────────────────────────────
 
 @router.post("/request")
-async def submit_space_cust_request(user=Depends(get_current_user)):
+async def submit_space_cust_request(body: SpaceCustSubmitBody = SpaceCustSubmitBody(), user=Depends(get_current_user)):
     """Customer submits (or re-submits) a space customisation quote request."""
     if user["role"] != "customer":
         raise HTTPException(status_code=403, detail="Only customers can submit space customisation requests")
@@ -92,6 +97,7 @@ async def submit_space_cust_request(user=Depends(get_current_user)):
     db = get_db()
     now = datetime.now(timezone.utc)
     snapshot = await _build_cat001_snapshot(db, user)
+    customer_notes = (body.customer_notes or "").strip() or None
 
     existing = await db.space_cust_requests.find_one({"customer_id": user["_id"]})
 
@@ -99,11 +105,12 @@ async def submit_space_cust_request(user=Depends(get_current_user)):
         result = await db.space_cust_requests.find_one_and_update(
             {"_id": existing["_id"]},
             {"$set": {
-                "selection_snapshot": snapshot,
-                "status": "pending",
+                "selection_snapshot":  snapshot,
+                "customer_notes":      customer_notes,
+                "status":              "pending",
                 "customer_notification": None,
-                "admin_notification": None,
-                "updated_at": now,
+                "admin_notification":  None,
+                "updated_at":          now,
             }},
             return_document=True,
         )
@@ -114,6 +121,7 @@ async def submit_space_cust_request(user=Depends(get_current_user)):
         "villa_id":           user.get("villa_id"),
         "status":             "pending",
         "selection_snapshot": snapshot,
+        "customer_notes":     customer_notes,
         "quoted_price":       None,
         "admin_notes":        None,
         "customer_notification": None,

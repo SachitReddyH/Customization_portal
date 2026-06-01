@@ -313,6 +313,7 @@ export default function CategoryPage() {
   const [spaceSubmitting,   setSpaceSubmitting]   = useState(false)
   const [spaceActionLoading, setSpaceActionLoading] = useState('')
   const [spaceDenyConfirm,  setSpaceDenyConfirm]  = useState(false)
+  const [customerNotes,     setCustomerNotes]     = useState('')
 
   const handleRequestQuote = async () => {
     setQuoteSubmitting(true)
@@ -780,7 +781,7 @@ export default function CategoryPage() {
     setSpaceSubmitting(true)
     setSpaceCustError('')
     try {
-      const req = await submitSpaceCustRequest()
+      const req = await submitSpaceCustRequest(customerNotes.trim() || undefined)
       setSpaceCustReq(req)
     } catch (e: any) {
       setSpaceCustError(e?.response?.data?.detail || 'Failed to submit')
@@ -1306,6 +1307,19 @@ export default function CategoryPage() {
                             Your request has been submitted. Awaiting response from Capstone Life.
                           </p>
                         </div>
+                        <textarea
+                          value={customerNotes}
+                          onChange={e => setCustomerNotes(e.target.value)}
+                          placeholder="Update your notes or requirements… (optional)"
+                          rows={3}
+                          style={{
+                            width: '100%', padding: '9px 11px', fontSize: 12.5,
+                            border: '1px solid #ddd', borderRadius: 8,
+                            fontFamily: 'var(--font-body)', resize: 'vertical',
+                            outline: 'none', boxSizing: 'border-box',
+                            color: 'var(--text-primary)',
+                          }}
+                        />
                         <button
                           className="cart-nav-btn cart-nav-btn--quote cart-nav-btn--full"
                           disabled={spaceSubmitting}
@@ -1327,6 +1341,19 @@ export default function CategoryPage() {
                   // Case A — no request yet (status is undefined / no spaceCustReq)
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <textarea
+                        value={customerNotes}
+                        onChange={e => setCustomerNotes(e.target.value)}
+                        placeholder="Add any notes or special requirements for our team… (optional)"
+                        rows={3}
+                        style={{
+                          width: '100%', padding: '9px 11px', fontSize: 12.5,
+                          border: '1px solid #ddd', borderRadius: 8,
+                          fontFamily: 'var(--font-body)', resize: 'vertical',
+                          outline: 'none', boxSizing: 'border-box',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
                       <button
                         className="cart-nav-btn cart-nav-btn--quote cart-nav-btn--full"
                         disabled={cat001Sels.length === 0 || spaceSubmitting}

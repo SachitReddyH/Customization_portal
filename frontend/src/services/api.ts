@@ -200,8 +200,8 @@ export const removeFloorPlan = (villaId: string, planType: 'standard' | 'updated
   api.delete(`/drawing-register/${villaId}/plan/${planType}`).then(r => r.data)
 
 // Space Customisation quote workflow
-export const submitSpaceCustRequest = () =>
-  api.post('/space-cust/request').then(r => r.data)
+export const submitSpaceCustRequest = (customerNotes?: string) =>
+  api.post('/space-cust/request', { customer_notes: customerNotes || null }).then(r => r.data)
 
 export const getMySpaceCustRequest = () =>
   api.get('/space-cust/my').then(r => r.data)
