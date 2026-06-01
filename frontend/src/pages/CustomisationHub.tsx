@@ -196,12 +196,13 @@ export default function CustomisationHub() {
   const [quoteSubmitting, setQuoteSubmitting] = useState(false)
   const [quoteSuccess,    setQuoteSuccess]    = useState(false)
   const [quoteError,      setQuoteError]      = useState('')
+  const [quoteNotes,      setQuoteNotes]      = useState('')
 
   const handleRequestQuote = async () => {
     setQuoteSubmitting(true)
     setQuoteError('')
     try {
-      await requestQuote({})
+      await requestQuote({ customer_notes: quoteNotes.trim() || undefined })
       setQuoteSuccess(true)
       // Refresh quote state so the bell reflects the new request immediately
       getMyQuotes().then((quotes: any[]) => {
@@ -575,13 +576,28 @@ export default function CustomisationHub() {
                 <>
                   {quoteError && <p className="hub-cart-quote-error">{quoteError}</p>}
                   {selections.length > 0 && (
-                    <button
-                      className="hub-cart-quote-btn"
-                      disabled={quoteSubmitting}
-                      onClick={handleRequestQuote}
-                    >
-                      {quoteSubmitting ? 'Submitting…' : 'Request for Quote'}
-                    </button>
+                    <>
+                      <textarea
+                        value={quoteNotes}
+                        onChange={e => setQuoteNotes(e.target.value)}
+                        placeholder="Add any additional notes for our team… (optional)"
+                        rows={3}
+                        style={{
+                          width: '100%', padding: '9px 11px', fontSize: 12.5,
+                          border: '1px solid #ddd', borderRadius: 8, marginBottom: 10,
+                          fontFamily: 'var(--font-body)', resize: 'vertical',
+                          outline: 'none', boxSizing: 'border-box',
+                          color: '#1a1a1a', background: '#fff',
+                        }}
+                      />
+                      <button
+                        className="hub-cart-quote-btn"
+                        disabled={quoteSubmitting}
+                        onClick={handleRequestQuote}
+                      >
+                        {quoteSubmitting ? 'Submitting…' : 'Request for Quote'}
+                      </button>
+                    </>
                   )}
                   {hasViewedFloorPlan && !spaceCustomisationSkipped && !selections.some((s: any) => s.category_id === 'CAT001') && (
                     <button
