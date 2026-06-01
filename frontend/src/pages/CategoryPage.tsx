@@ -6,7 +6,7 @@ import {
   getCategory, getCategories, getFloors, getRooms, getRoomOptions,
   getDirectOptions, getFlooringPackages,
   getMyVilla, getMySelections, upsertSelection, removeSelection, clearAllSelections,
-  requestQuote, submitInterest, skipSpaceCustomisation, getMyDrawingPlans,
+  requestQuote, getMyQuotes, submitInterest, skipSpaceCustomisation, getMyDrawingPlans,
   submitSpaceCustRequest, getMySpaceCustRequest,
   acceptSpaceCustQuote, denySpaceCustQuote,
   BASE, getToken,
@@ -419,6 +419,12 @@ export default function CategoryPage() {
     // Space cust lock status (space_customisation_skipped covers accept/deny/skip paths)
     getMyDrawingPlans().then((d: any) => {
       if (d?.space_customisation_skipped) setSpaceCustLocked(true)
+    }).catch(() => {})
+    // Pre-set quoteSuccess if an active quote already exists so button stays disabled
+    getMyQuotes().then((quotes: any[]) => {
+      if (quotes?.some((q: any) => ['pending', 'reviewed'].includes(q.status))) {
+        setQuoteSuccess(true)
+      }
     }).catch(() => {})
   }, []) // runs once on mount only
 
@@ -1423,7 +1429,7 @@ export default function CategoryPage() {
                       )}
                       {isLast ? (
                         quoteSuccess ? (
-                          <div className="cart-nav-quote-success">✓ Quote submitted!</div>
+                          <div className="cart-nav-quote-success">✓ Quote request sent</div>
                         ) : (
                           <button
                             className="cart-nav-btn cart-nav-btn--quote"

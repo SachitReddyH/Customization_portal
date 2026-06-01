@@ -585,7 +585,7 @@ export default function CustomisationHub() {
               )}
             </div>
             <div className="hub-cart-footer">
-              {quoteSuccess ? (
+              {(quoteSuccess || ['pending', 'reviewed'].includes(myQuote?.status)) ? (
                 <div className="hub-cart-quote-success">
                   <span>✓</span>
                   <span>Quote request submitted!<br />Our team will be in touch soon.</span>
