@@ -230,6 +230,9 @@ export const reopenSpaceCustRequest = (requestId: string) =>
 export const reactivateSpaceCust = (customerId: string) =>
   api.post(`/admin/customers/${customerId}/reactivate-space-cust`).then(r => r.data)
 
+export const getCostBreakdown = () =>
+  api.get('/admin/analytics/cost-breakdown').then(r => r.data)
+
 // Staff management
 export const listStaff = () =>
   api.get('/admin/staff').then(r => r.data)

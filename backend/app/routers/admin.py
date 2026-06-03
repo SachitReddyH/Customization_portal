@@ -9,7 +9,7 @@ from app.schemas.category import CategoryUpdate, CategoryResponse
 from bson import ObjectId
 from datetime import datetime, timezone
 from typing import List
-import os, uuid, re as _re
+import os, uuid, re as _re, asyncio
 from app.core.cloudinary_upload import upload_image_to_cloudinary
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -332,6 +332,103 @@ async def delete_staff(staff_id: str, user=Depends(require_admin)):
     )
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Staff user not found")
+
+
+@router.get("/analytics/cost-breakdown")
+async def cost_breakdown(user=Depends(require_any_admin)):
+    """Category-wise cost breakdown aggregated from all customer selections."""
+    db = get_db()
+
+    # Fetch all data needed (sequential awaits)
+    all_sel_docs = await db.customer_selections.find().to_list(length=None)
+    all_opts     = await db.customization_options.find(
+        {}, {"option_id": 1, "option_name": 1, "space": 1, "price_inr": 1, "price_unit": 1, "category_id": 1}
+    ).to_list(length=None)
+    cats_list    = await db.categories.find({}, {"category_id": 1, "name": 1, "sort_order": 1}).to_list(length=None)
+    all_users    = await db.users.find({"role": "customer"}, {"_id": 1, "villa_id": 1}).to_list(length=None)
+
+    opt_map       = {o["option_id"]: o for o in all_opts}
+    cat_name_map  = {c["category_id"]: c["name"] for c in cats_list}
+    cat_order_map = {c["category_id"]: c.get("sort_order", 99) for c in cats_list}
+    cust_villa_map = {str(u["_id"]): str(u.get("villa_id", "")) for u in all_users if u.get("villa_id")}
+
+    category_data: dict = {}
+
+    for sel_doc in all_sel_docs:
+        cust_id  = str(sel_doc.get("customer_id", ""))
+        villa_id = cust_villa_map.get(cust_id, "")
+
+        for sel in sel_doc.get("selections", []):
+            cat_id   = sel.get("category_id", "")
+            opt_id   = sel.get("option_id", "")
+            opt      = opt_map.get(opt_id)
+            price    = float(opt.get("price_inr") or 0) if opt else 0.0
+            opt_name = (opt.get("option_name") or opt.get("space") or opt_id) if opt else opt_id
+
+            if cat_id not in category_data:
+                category_data[cat_id] = {
+                    "category_id":   cat_id,
+                    "category_name": cat_name_map.get(cat_id, cat_id),
+                    "sort_order":    cat_order_map.get(cat_id, 99),
+                    "total_cost":    0.0,
+                    "villas":        set(),
+                    "items":         {},
+                }
+
+            cd = category_data[cat_id]
+            cd["total_cost"] += price
+            if villa_id:
+                cd["villas"].add(villa_id)
+
+            if opt_id not in cd["items"]:
+                cd["items"][opt_id] = {
+                    "option_name": opt_name,
+                    "unit_price":  price,
+                    "count":       0,
+                    "total_cost":  0.0,
+                    "villas":      set(),
+                }
+            item = cd["items"][opt_id]
+            item["count"]      += 1
+            item["total_cost"] += price
+            if villa_id:
+                item["villas"].add(villa_id)
+
+    grand_total = sum(cd["total_cost"] for cd in category_data.values())
+    all_villas  = set()
+    for cd in category_data.values():
+        all_villas |= cd["villas"]
+
+    categories_out = []
+    for cat_id, cd in sorted(category_data.items(), key=lambda x: x[1]["sort_order"]):
+        items_out = sorted(
+            [
+                {
+                    "option_id":    oid,
+                    "option_name":  item["option_name"],
+                    "unit_price":   item["unit_price"],
+                    "count":        item["count"],
+                    "total_cost":   item["total_cost"],
+                    "villas_opted": len(item["villas"]),
+                }
+                for oid, item in cd["items"].items()
+            ],
+            key=lambda x: -x["total_cost"],
+        )
+        categories_out.append({
+            "category_id":   cat_id,
+            "category_name": cd["category_name"],
+            "total_cost":    cd["total_cost"],
+            "percentage":    round(cd["total_cost"] / grand_total * 100, 1) if grand_total > 0 else 0.0,
+            "villas_opted":  len(cd["villas"]),
+            "items":         items_out,
+        })
+
+    return {
+        "categories":   categories_out,
+        "grand_total":  grand_total,
+        "total_villas": len(all_villas),
+    }
 
 
 @router.get("/dashboard")

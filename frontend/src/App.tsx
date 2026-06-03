@@ -13,6 +13,7 @@ import AdminOptions from './pages/admin/AdminOptions'
 import AdminDrawingRegister from './pages/admin/AdminDrawingRegister'
 import AdminSpaceCust from './pages/admin/AdminSpaceCust'
 import AdminStaff from './pages/admin/AdminStaff'
+import CostBreakdown from './pages/admin/CostBreakdown'
 import CRMLayout from './pages/crm/CRMLayout'
 import DesignLayout from './pages/design/DesignLayout'
 import CRMDashboard from './pages/crm/CRMDashboard'
@@ -86,6 +87,7 @@ function AppContent() {
           <Route path="quotes" element={<AdminQuotes />} />
           <Route path="options" element={<AdminOptions />} />
           <Route path="drawing" element={<AdminDrawingRegister />} />
+          <Route path="cost-breakdown" element={<CostBreakdown />} />
           <Route path="space-cust" element={<AdminSpaceCust />} />
           <Route path="staff" element={<AdminStaff />} />
         </Route>
@@ -94,6 +96,7 @@ function AppContent() {
           <Route path="dashboard" element={<CRMDashboard />} />
           <Route path="customers" element={<CRMCustomers />} />
           <Route path="quotes" element={<CRMQuotes />} />
+          <Route path="cost-breakdown" element={<CostBreakdown />} />
         </Route>
         <Route path="/design" element={<DesignLayout />}>
           <Route index element={<Navigate to="/design/drawing" replace />} />

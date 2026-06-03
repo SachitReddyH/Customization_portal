@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Users, FileText, LogOut, Settings2, FolderOpen, LayoutGrid, UserCog } from 'lucide-react'
+import { LayoutDashboard, Users, FileText, LogOut, Settings2, FolderOpen, LayoutGrid, UserCog, BarChart2 } from 'lucide-react'
 import { listQuotes, listSpaceCustRequests } from '../../services/api'
 import './admin.css'
 
@@ -13,6 +13,7 @@ function getPageTitle(pathname: string): string {
   if (pathname.startsWith('/admin/quotes')) return 'Quote Requests'
   if (pathname.startsWith('/admin/options')) return 'Options Manager'
   if (pathname.startsWith('/admin/drawing')) return 'Drawing Register'
+  if (pathname.startsWith('/admin/cost-breakdown')) return 'Cost Breakdown'
   if (pathname.startsWith('/admin/space-cust')) return 'Space Customisations'
   if (pathname.startsWith('/admin/staff')) return 'Staff Users'
   return 'Admin'
@@ -64,8 +65,9 @@ export default function AdminLayout() {
   }
 
   const badges: Record<string, number> = {
-    '/admin/quotes':     quotesCount,
-    '/admin/space-cust': spaceCustCount,
+    '/admin/quotes':          quotesCount,
+    '/admin/space-cust':      spaceCustCount,
+    '/admin/cost-breakdown':  0,
   }
 
   const NAV_ITEMS = [
@@ -73,8 +75,9 @@ export default function AdminLayout() {
     { to: '/admin/customers',   label: 'Customers',           icon: Users,           end: false },
     { to: '/admin/quotes',      label: 'Quote Requests',      icon: FileText,        end: false },
     { to: '/admin/options',     label: 'Options Manager',     icon: Settings2,       end: false },
-    { to: '/admin/drawing',     label: 'Drawing Register',    icon: FolderOpen,      end: false },
-    { to: '/admin/space-cust',  label: 'Space Customisations',icon: LayoutGrid,      end: false },
+    { to: '/admin/drawing',         label: 'Drawing Register',    icon: FolderOpen,  end: false },
+    { to: '/admin/cost-breakdown',  label: 'Cost Breakdown',      icon: BarChart2,   end: false },
+    { to: '/admin/space-cust',      label: 'Space Customisations',icon: LayoutGrid,  end: false },
     { to: '/admin/staff',       label: 'Staff Users',         icon: UserCog,         end: false },
   ]
 
