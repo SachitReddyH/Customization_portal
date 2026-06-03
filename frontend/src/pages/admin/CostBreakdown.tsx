@@ -100,7 +100,7 @@ export default function CostBreakdown() {
               <th style={th}>Category</th>
               <th style={thR}>Phase 1 Cost (₹)</th>
               <th style={thC}>% of Total</th>
-              <th style={thR}>—</th>
+              <th style={thR}></th>
               <th style={thC}>Villas Opted</th>
             </tr>
           </thead>
@@ -154,88 +154,106 @@ export default function CostBreakdown() {
                     <td style={{ ...catTd, textAlign: 'center', fontWeight: 600 }}>{cat.villas_opted}</td>
                   </tr>
 
-                  {/* ── Drill-down rows ── */}
+                  {/* ── Drill-down panel (single spanning cell = clean separation) ── */}
                   {isExpanded && (
-                    <>
-                      {/* Sub-header */}
-                      <tr key={`${cat.category_id}-subhead`}>
-                        <td style={{
-                          padding: '7px 16px 7px 44px',
-                          background: '#f0ede9', fontWeight: 700,
-                          fontSize: 11, color: '#666', textTransform: 'uppercase',
-                          letterSpacing: '0.05em', borderBottom: '1px solid #e0dbd4',
+                    <tr key={`${cat.category_id}-drill`}>
+                      <td colSpan={5} style={{
+                        padding: '0 20px 16px 20px',
+                        background: rowBg,
+                        borderBottom: '2px solid #e8e4df',
+                      }}>
+                        {/* Card container */}
+                        <div style={{
+                          border: '1px solid #e0dbd4',
+                          borderTop: `3px solid ${ORANGE}`,
+                          borderRadius: '0 0 8px 8px',
+                          overflow: 'hidden',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                         }}>
-                          Option / Package
-                        </td>
-                        <td style={{
-                          padding: '7px 16px', background: '#f0ede9', fontWeight: 700,
-                          fontSize: 11, color: '#666', textAlign: 'right',
-                          textTransform: 'uppercase', letterSpacing: '0.05em',
-                          borderBottom: '1px solid #e0dbd4', whiteSpace: 'nowrap',
-                        }}>
-                          Unit Price (₹)
-                        </td>
-                        <td style={{
-                          padding: '7px 16px', background: '#f0ede9', fontWeight: 700,
-                          fontSize: 11, color: '#666', textAlign: 'center',
-                          textTransform: 'uppercase', letterSpacing: '0.05em',
-                          borderBottom: '1px solid #e0dbd4',
-                        }}>
-                          Count
-                        </td>
-                        <td style={{
-                          padding: '7px 16px', background: '#f0ede9', fontWeight: 700,
-                          fontSize: 11, color: '#666', textAlign: 'right',
-                          textTransform: 'uppercase', letterSpacing: '0.05em',
-                          borderBottom: '1px solid #e0dbd4', whiteSpace: 'nowrap',
-                        }}>
-                          Total Cost (₹)
-                        </td>
-                        <td style={{
-                          padding: '7px 16px', background: '#f0ede9', fontWeight: 700,
-                          fontSize: 11, color: '#666', textAlign: 'center',
-                          textTransform: 'uppercase', letterSpacing: '0.05em',
-                          borderBottom: '1px solid #e0dbd4', whiteSpace: 'nowrap',
-                        }}>
-                          Villas Opted
-                        </td>
-                      </tr>
-
-                      {/* Items */}
-                      {cat.items.map((item, iIdx) => {
-                        const itemBg = iIdx % 2 === 0 ? '#faf8f5' : '#fff'
-                        const isLast = iIdx === cat.items.length - 1
-                        const itemTd: React.CSSProperties = {
-                          padding: '9px 16px',
-                          fontSize: 13, color: '#2a2a2a',
-                          borderBottom: isLast ? '2px solid #e0dbd4' : '1px solid #ece9e4',
-                          background: itemBg, verticalAlign: 'middle',
-                        }
-                        return (
-                          <tr key={item.option_id}>
-                            <td style={{ ...itemTd, paddingLeft: 44, fontWeight: 500 }}>
-                              {item.option_name}
-                            </td>
-                            <td style={{ ...itemTd, textAlign: 'right', color: '#555' }}>
-                              {item.unit_price === 0
-                                ? <span style={{ color: '#ccc' }}>—</span>
-                                : inr(item.unit_price)}
-                            </td>
-                            <td style={{ ...itemTd, textAlign: 'center', fontWeight: 700, color: ORANGE }}>
-                              {item.count}
-                            </td>
-                            <td style={{ ...itemTd, textAlign: 'right', fontWeight: 700, color: '#1a1a1a' }}>
-                              {item.total_cost === 0
-                                ? <span style={{ color: '#ccc' }}>—</span>
-                                : inr(item.total_cost)}
-                            </td>
-                            <td style={{ ...itemTd, textAlign: 'center', color: '#555' }}>
-                              {item.villas_opted}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </>
+                          <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+                            <colgroup>
+                              <col style={{ width: '40%' }} />
+                              <col style={{ width: '18%' }} />
+                              <col style={{ width: '10%' }} />
+                              <col style={{ width: '20%' }} />
+                              <col style={{ width: '12%' }} />
+                            </colgroup>
+                            <thead>
+                              <tr style={{ background: '#f7f4f0' }}>
+                                {[
+                                  ['Option / Package', 'left'],
+                                  ['Unit Price (₹)',   'right'],
+                                  ['Count',            'center'],
+                                  ['Total Cost (₹)',   'right'],
+                                  ['Villas Opted',     'center'],
+                                ].map(([label, align]) => (
+                                  <th key={label as string} style={{
+                                    padding: '8px 14px',
+                                    fontSize: 11, fontWeight: 700,
+                                    color: '#888',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em',
+                                    textAlign: align as any,
+                                    borderBottom: '1px solid #e0dbd4',
+                                    whiteSpace: 'nowrap',
+                                  }}>
+                                    {label}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {cat.items.map((item, iIdx) => (
+                                <tr
+                                  key={item.option_id}
+                                  style={{ background: iIdx % 2 === 0 ? '#fff' : '#faf8f6' }}
+                                >
+                                  <td style={{
+                                    padding: '10px 14px', fontSize: 13,
+                                    fontWeight: 500, color: '#1a1a1a',
+                                    borderBottom: '1px solid #ece9e4',
+                                  }}>
+                                    {item.option_name}
+                                  </td>
+                                  <td style={{
+                                    padding: '10px 14px', fontSize: 13,
+                                    textAlign: 'right', color: '#555',
+                                    borderBottom: '1px solid #ece9e4',
+                                  }}>
+                                    {item.unit_price === 0
+                                      ? <span style={{ color: '#ccc' }}>—</span>
+                                      : inr(item.unit_price)}
+                                  </td>
+                                  <td style={{
+                                    padding: '10px 14px', fontSize: 13,
+                                    textAlign: 'center', fontWeight: 700, color: ORANGE,
+                                    borderBottom: '1px solid #ece9e4',
+                                  }}>
+                                    {item.count}
+                                  </td>
+                                  <td style={{
+                                    padding: '10px 14px', fontSize: 13,
+                                    textAlign: 'right', fontWeight: 700, color: '#1a1a1a',
+                                    borderBottom: '1px solid #ece9e4',
+                                  }}>
+                                    {item.total_cost === 0
+                                      ? <span style={{ color: '#ccc' }}>—</span>
+                                      : inr(item.total_cost)}
+                                  </td>
+                                  <td style={{
+                                    padding: '10px 14px', fontSize: 13,
+                                    textAlign: 'center', color: '#555',
+                                    borderBottom: '1px solid #ece9e4',
+                                  }}>
+                                    {item.villas_opted}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </td>
+                    </tr>
                   )}
                 </>
               )
