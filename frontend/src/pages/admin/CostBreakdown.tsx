@@ -91,21 +91,24 @@ export default function CostBreakdown() {
   }
 
   const drillThStyle: React.CSSProperties = {
-    background: '#e8e7e5',
-    color: '#555',
-    padding: '5px 10px',
-    fontWeight: 600,
+    background: '#f0ede9',
+    color: '#666',
+    padding: '7px 14px',
+    fontWeight: 700,
     fontSize: 11,
     textAlign: 'left',
-    borderBottom: '1px solid #d5d3d0',
+    borderBottom: '2px solid #e0ddd8',
+    textTransform: 'uppercase',
+    letterSpacing: '0.04em',
   }
 
   const drillTdStyle: React.CSSProperties = {
-    padding: '5px 10px',
-    fontSize: 12,
-    borderBottom: '1px solid #ede',
+    padding: '9px 14px',
+    fontSize: 13,
+    color: '#2a2a2a',
+    borderBottom: '1px solid #e8e5e1',
     verticalAlign: 'middle',
-    background: '#f5f4f2',
+    background: '#fff',
   }
 
   return (
@@ -162,30 +165,43 @@ export default function CostBreakdown() {
                   </tr>
                   {isExpanded && (
                     <tr key={`${cat.category_id}-drill`}>
-                      <td colSpan={4} style={{ padding: 0, background: '#f5f4f2' }}>
-                        <div style={{ padding: '0 0 8px 32px' }}>
+                      <td colSpan={4} style={{ padding: 0 }}>
+                        <div style={{
+                          margin: '0 0 4px 0',
+                          borderLeft: `4px solid ${ORANGE}`,
+                          background: '#faf9f7',
+                        }}>
                           <table style={{ borderCollapse: 'collapse', width: '100%' }}>
                             <thead>
                               <tr>
-                                <th style={drillThStyle}>Option / Package</th>
+                                <th style={{ ...drillThStyle, paddingLeft: 28 }}>Option / Package</th>
                                 <th style={{ ...drillThStyle, textAlign: 'right' }}>Unit Price (₹)</th>
-                                <th style={{ ...drillThStyle, textAlign: 'right' }}>Count</th>
+                                <th style={{ ...drillThStyle, textAlign: 'center' }}>Count</th>
                                 <th style={{ ...drillThStyle, textAlign: 'right' }}>Total Cost (₹)</th>
-                                <th style={{ ...drillThStyle, textAlign: 'right' }}>Villas Opted</th>
+                                <th style={{ ...drillThStyle, textAlign: 'center' }}>Villas Opted</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {cat.items.map(item => (
-                                <tr key={item.option_id}>
-                                  <td style={drillTdStyle}>{item.option_name}</td>
-                                  <td style={{ ...drillTdStyle, textAlign: 'right' }}>
-                                    {item.unit_price === 0 ? '—' : inr(item.unit_price)}
+                              {cat.items.map((item, iIdx) => (
+                                <tr
+                                  key={item.option_id}
+                                  style={{ background: iIdx % 2 === 0 ? '#fff' : '#faf8f6' }}
+                                >
+                                  <td style={{ ...drillTdStyle, paddingLeft: 28, fontWeight: 500 }}>
+                                    {item.option_name}
                                   </td>
-                                  <td style={{ ...drillTdStyle, textAlign: 'right' }}>{item.count}</td>
-                                  <td style={{ ...drillTdStyle, textAlign: 'right' }}>
-                                    {item.total_cost === 0 ? '—' : inr(item.total_cost)}
+                                  <td style={{ ...drillTdStyle, textAlign: 'right', color: '#444' }}>
+                                    {item.unit_price === 0 ? <span style={{ color: '#bbb' }}>—</span> : inr(item.unit_price)}
                                   </td>
-                                  <td style={{ ...drillTdStyle, textAlign: 'right' }}>{item.villas_opted}</td>
+                                  <td style={{ ...drillTdStyle, textAlign: 'center', fontWeight: 600, color: '#F05E3E' }}>
+                                    {item.count}
+                                  </td>
+                                  <td style={{ ...drillTdStyle, textAlign: 'right', fontWeight: 600, color: '#1a1a1a' }}>
+                                    {item.total_cost === 0 ? <span style={{ color: '#bbb' }}>—</span> : inr(item.total_cost)}
+                                  </td>
+                                  <td style={{ ...drillTdStyle, textAlign: 'center', color: '#555' }}>
+                                    {item.villas_opted}
+                                  </td>
                                 </tr>
                               ))}
                             </tbody>
