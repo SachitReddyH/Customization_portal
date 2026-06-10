@@ -40,15 +40,17 @@ function formatVilla(v: Villa): string {
   return parts.join(' – ')
 }
 
+const ORANGE = '#F05E3E'
+
 export default function GuestSelections() {
-  const [customers, setCustomers]         = useState<Customer[]>([])
-  const [villas, setVillas]               = useState<Villa[]>([])
-  const [categories, setCategories]       = useState<Category[]>([])
-  const [loading, setLoading]             = useState(true)
-  const [error, setError]                 = useState('')
-  const [expandedId, setExpandedId]       = useState<string | null>(null)
+  const [customers, setCustomers]             = useState<Customer[]>([])
+  const [villas, setVillas]                   = useState<Villa[]>([])
+  const [categories, setCategories]           = useState<Category[]>([])
+  const [loading, setLoading]                 = useState(true)
+  const [error, setError]                     = useState('')
+  const [expandedId, setExpandedId]           = useState<string | null>(null)
   const [selectionsCache, setSelectionsCache] = useState<Record<string, any>>({})
-  const [loadingId, setLoadingId]         = useState<string | null>(null)
+  const [loadingId, setLoadingId]             = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -120,9 +122,9 @@ export default function GuestSelections() {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Villa</th>
-                <th>Actions</th>
+                <th style={{ width: '30%' }}>Name</th>
+                <th style={{ width: '45%' }}>Villa</th>
+                <th style={{ width: '25%' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -135,9 +137,9 @@ export default function GuestSelections() {
                 const grouped   = groupByCategory(selections)
 
                 return [
-                  <tr key={c.id}>
+                  <tr key={c.id} style={{ background: isOpen ? '#fef9f7' : undefined }}>
                     <td style={{ fontWeight: 600 }}>{c.full_name}</td>
-                    <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                    <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
                       {villa ? formatVilla(villa) : <span style={{ color: 'var(--text-muted)' }}>Unassigned</span>}
                     </td>
                     <td>
@@ -158,49 +160,125 @@ export default function GuestSelections() {
 
                   isOpen && (
                     <tr key={`${c.id}-detail`}>
-                      <td colSpan={3} style={{ padding: '12px 20px', background: '#fafaf9' }}>
+                      <td colSpan={3} style={{
+                        padding: '0 0 4px 0',
+                        background: '#fafaf8',
+                        borderBottom: '2px solid #e8e4df',
+                      }}>
                         {cached?.error ? (
-                          <div style={{ color: '#c0392b', fontSize: 13 }}>Failed to load selections.</div>
+                          <div style={{ padding: '16px 20px', color: '#c0392b', fontSize: 13 }}>
+                            Failed to load selections.
+                          </div>
                         ) : selections.length === 0 ? (
-                          <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>No selections yet.</div>
+                          <div style={{ padding: '16px 20px', color: 'var(--text-muted)', fontSize: 13 }}>
+                            No selections yet.
+                          </div>
                         ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                            {Object.entries(grouped).map(([catId, items]) => (
-                              <div key={catId}>
-                                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6, color: '#333' }}>
-                                  {catMap[catId] ?? catId}
-                                </div>
-                                <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}>
-                                  <thead>
-                                    <tr style={{ borderBottom: '1px solid #eee' }}>
-                                      <th style={{ textAlign: 'left', padding: '4px 8px', color: 'var(--text-muted)', fontWeight: 500 }}>Option</th>
-                                      <th style={{ textAlign: 'left', padding: '4px 8px', color: 'var(--text-muted)', fontWeight: 500 }}>Type</th>
-                                      <th style={{ textAlign: 'left', padding: '4px 8px', color: 'var(--text-muted)', fontWeight: 500 }}>Room</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {items.map((sel, idx) => (
-                                      <tr key={idx} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                                        <td style={{ padding: '4px 8px' }}>{sel.option_name || sel.option_id}</td>
-                                        <td style={{ padding: '4px 8px' }}>
-                                          <span style={{
-                                            fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 4,
-                                            background: sel.selection_type === 'upgrade' ? '#fff7ed' : '#f3f4f6',
-                                            color:      sel.selection_type === 'upgrade' ? '#c2410c'  : '#374151',
-                                            border:     sel.selection_type === 'upgrade' ? '1px solid #fed7aa' : '1px solid #e5e7eb',
-                                          }}>
-                                            {sel.selection_type}
-                                          </span>
-                                        </td>
-                                        <td style={{ padding: '4px 8px', color: 'var(--text-secondary)' }}>
-                                          {sel.room_label || '—'}
+                          /* Single unified table for all categories */
+                          <div style={{ padding: '12px 20px 4px 20px' }}>
+                            <div style={{
+                              border: '1px solid #e0dbd4',
+                              borderTop: `3px solid ${ORANGE}`,
+                              borderRadius: '0 0 8px 8px',
+                              overflow: 'hidden',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                            }}>
+                              <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+                                <colgroup>
+                                  <col style={{ width: '55%' }} />
+                                  <col style={{ width: '20%' }} />
+                                  <col style={{ width: '25%' }} />
+                                </colgroup>
+                                {/* Column headers — shown once at top */}
+                                <thead>
+                                  <tr style={{ background: '#f7f4f0' }}>
+                                    {(['OPTION', 'TYPE', 'ROOM'] as const).map(label => (
+                                      <th key={label} style={{
+                                        padding: '8px 14px',
+                                        fontSize: 11,
+                                        fontWeight: 700,
+                                        color: '#888',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.05em',
+                                        textAlign: 'left',
+                                        borderBottom: '1px solid #e0dbd4',
+                                        whiteSpace: 'nowrap',
+                                      }}>
+                                        {label}
+                                      </th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {Object.entries(grouped).map(([catId, items], gIdx) => (
+                                    <>
+                                      {/* Category section header */}
+                                      <tr
+                                        key={`cat-${catId}`}
+                                        style={{
+                                          background: gIdx % 2 === 0 ? '#f2efea' : '#ede9e3',
+                                          borderTop: gIdx === 0 ? 'none' : '2px solid #e0dbd4',
+                                        }}
+                                      >
+                                        <td
+                                          colSpan={3}
+                                          style={{
+                                            padding: '7px 14px',
+                                            fontWeight: 700,
+                                            fontSize: 12,
+                                            color: '#444',
+                                            letterSpacing: '0.02em',
+                                          }}
+                                        >
+                                          {catMap[catId] ?? catId}
                                         </td>
                                       </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            ))}
+
+                                      {/* Items under this category */}
+                                      {items.map((sel, idx) => (
+                                        <tr
+                                          key={`${catId}-${idx}`}
+                                          style={{
+                                            background: idx % 2 === 0 ? '#fff' : '#faf8f6',
+                                            borderBottom: '1px solid #ece9e4',
+                                          }}
+                                        >
+                                          <td style={{
+                                            padding: '9px 14px',
+                                            fontSize: 13,
+                                            fontWeight: 500,
+                                            color: '#1a1a1a',
+                                          }}>
+                                            {sel.option_name || sel.option_id}
+                                          </td>
+                                          <td style={{ padding: '9px 14px' }}>
+                                            <span style={{
+                                              display: 'inline-block',
+                                              fontSize: 11,
+                                              fontWeight: 600,
+                                              padding: '2px 8px',
+                                              borderRadius: 4,
+                                              background: sel.selection_type === 'upgrade' ? '#fff7ed' : '#f3f4f6',
+                                              color:      sel.selection_type === 'upgrade' ? '#c2410c'  : '#374151',
+                                              border:     sel.selection_type === 'upgrade' ? '1px solid #fed7aa' : '1px solid #e5e7eb',
+                                            }}>
+                                              {sel.selection_type}
+                                            </span>
+                                          </td>
+                                          <td style={{
+                                            padding: '9px 14px',
+                                            fontSize: 13,
+                                            color: sel.room_label ? '#555' : '#bbb',
+                                          }}>
+                                            {sel.room_label || '—'}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
                           </div>
                         )}
                       </td>
