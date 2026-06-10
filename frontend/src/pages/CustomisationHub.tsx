@@ -192,10 +192,9 @@ export default function CustomisationHub() {
     finally { setSkipLoading(false) }
   }
 
-  // Cart quote state
+  // Cart quote state — initialize from localStorage so it survives navigation instantly
   const [quoteSubmitting, setQuoteSubmitting] = useState(false)
-  const [quoteSuccess,    setQuoteSuccess]    = useState(false)
-  const [quoteChecked,    setQuoteChecked]    = useState(false)   // true after first fetch resolves
+  const [quoteSuccess,    setQuoteSuccess]    = useState(() => localStorage.getItem('quote_requested') === '1')
   const [quoteError,      setQuoteError]      = useState('')
   const [quoteNotes,      setQuoteNotes]      = useState('')
   const [lockToast,       setLockToast]       = useState('')
@@ -213,6 +212,7 @@ export default function CustomisationHub() {
     try {
       await requestQuote({ customer_notes: quoteNotes.trim() || undefined })
       setQuoteSuccess(true)
+      localStorage.setItem('quote_requested', '1')
       // Refresh quote state so the bell reflects the new request immediately
       getMyQuotes().then((quotes: any[]) => {
         if (quotes?.length) setMyQuote(quotes[0])
@@ -228,10 +228,23 @@ export default function CustomisationHub() {
   const fetchQuote = () => {
     getMyQuotes()
       .then((quotes: any[]) => {
-        if (quotes?.length) setMyQuote(quotes[0])
+        if (quotes?.length) {
+          setMyQuote(quotes[0])
+          // Keep localStorage in sync with server state
+          const s = quotes[0].status
+          if (['pending', 'reviewed', 'quoted'].includes(s)) {
+            localStorage.setItem('quote_requested', '1')
+            setQuoteSuccess(true)
+          } else {
+            // Quote was accepted / cancelled — allow re-request
+            localStorage.removeItem('quote_requested')
+          }
+        } else {
+          localStorage.removeItem('quote_requested')
+          setQuoteSuccess(false)
+        }
       })
       .catch(() => {})
-      .finally(() => setQuoteChecked(true))
   }
 
   useEffect(() => {
@@ -338,6 +351,8 @@ export default function CustomisationHub() {
       const updated = await requestQuoteChanges(myQuote.id)
       setMyQuote(updated)
       setSelectionsStatus('in_progress')
+      setQuoteSuccess(false)
+      localStorage.removeItem('quote_requested')
       setQuotePanelOpen(false)
     } catch { /* ignore */ }
     finally { setEditLoading(false) }
@@ -589,16 +604,15 @@ export default function CustomisationHub() {
               )}
             </div>
             <div className="hub-cart-footer">
-              {!quoteChecked ? (
-                /* Wait for the initial quote fetch before showing anything — prevents
-                   the button flashing on every mount before the API responds */
-                <div style={{ padding: '8px 0', textAlign: 'center', color: '#bbb', fontSize: 13 }}>
-                  …
-                </div>
-              ) : (quoteSuccess || ['pending', 'reviewed'].includes(myQuote?.status)) ? (
+              {(quoteSuccess || ['pending', 'reviewed', 'quoted'].includes(myQuote?.status)) ? (
                 <div className="hub-cart-quote-success">
                   <span>✓</span>
-                  <span>Quote request submitted!<br />Our team will be in touch soon.</span>
+                  <span>
+                    {myQuote?.status === 'quoted'
+                      ? <>Quote received! Check the <strong>bell icon</strong> to review your price.</>
+                      : <>Quote request submitted!<br />Our team will be in touch soon.</>
+                    }
+                  </span>
                 </div>
               ) : (
                 <>

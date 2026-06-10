@@ -297,10 +297,9 @@ export default function CategoryPage() {
   // Cart collapsed
   const [cartCollapsed, setCartCollapsed] = useState(false)
 
-  // Quote (last category only)
+  // Quote (last category only) — init from localStorage so it survives navigation instantly
   const [quoteSubmitting, setQuoteSubmitting] = useState(false)
-  const [quoteSuccess,    setQuoteSuccess]    = useState(false)
-  const [quoteChecked,    setQuoteChecked]    = useState(false)   // true after first fetch resolves
+  const [quoteSuccess,    setQuoteSuccess]    = useState(() => localStorage.getItem('quote_requested') === '1')
   const [quoteError,      setQuoteError]      = useState('')
 
   // Space Customisations — "Continue" confirm modal
@@ -324,6 +323,7 @@ export default function CategoryPage() {
     try {
       await requestQuote({ customer_notes: quoteNotes.trim() || undefined })
       setQuoteSuccess(true)
+      localStorage.setItem('quote_requested', '1')
     } catch (e: any) {
       setQuoteError(e?.response?.data?.detail || 'Failed to submit. Please try again.')
     } finally {
@@ -421,15 +421,19 @@ export default function CategoryPage() {
     getMyDrawingPlans().then((d: any) => {
       if (d?.space_customisation_skipped) setSpaceCustLocked(true)
     }).catch(() => {})
-    // Pre-set quoteSuccess if an active quote already exists so button stays disabled
+    // Sync quote state from server — covers cases where localStorage is stale
     getMyQuotes()
       .then((quotes: any[]) => {
-        if (quotes?.some((q: any) => ['pending', 'reviewed'].includes(q.status))) {
+        const active = quotes?.find((q: any) => ['pending', 'reviewed', 'quoted'].includes(q.status))
+        if (active) {
           setQuoteSuccess(true)
+          localStorage.setItem('quote_requested', '1')
+        } else {
+          setQuoteSuccess(false)
+          localStorage.removeItem('quote_requested')
         }
       })
       .catch(() => {})
-      .finally(() => setQuoteChecked(true))
   }, []) // runs once on mount only
 
   /* ── Per-category loads ─────────────────────────── */
@@ -1407,7 +1411,7 @@ export default function CategoryPage() {
 
                 return (
                   <div className="cart-nav-section">
-                    {isLast && quoteChecked && !quoteSuccess && (
+                    {isLast && !quoteSuccess && (
                       <textarea
                         value={quoteNotes}
                         onChange={e => setQuoteNotes(e.target.value)}
@@ -1432,12 +1436,7 @@ export default function CategoryPage() {
                         </button>
                       )}
                       {isLast ? (
-                        !quoteChecked ? (
-                          /* Block rendering until we know quote status — prevents flash */
-                          <button className="cart-nav-btn cart-nav-btn--quote" disabled>
-                            Request for Quote
-                          </button>
-                        ) : quoteSuccess ? (
+                        quoteSuccess ? (
                           <div className="cart-nav-quote-success">✓ Quote request sent</div>
                         ) : (
                           <button
