@@ -300,6 +300,7 @@ export default function CategoryPage() {
   // Quote (last category only)
   const [quoteSubmitting, setQuoteSubmitting] = useState(false)
   const [quoteSuccess,    setQuoteSuccess]    = useState(false)
+  const [quoteChecked,    setQuoteChecked]    = useState(false)   // true after first fetch resolves
   const [quoteError,      setQuoteError]      = useState('')
 
   // Space Customisations — "Continue" confirm modal
@@ -421,11 +422,14 @@ export default function CategoryPage() {
       if (d?.space_customisation_skipped) setSpaceCustLocked(true)
     }).catch(() => {})
     // Pre-set quoteSuccess if an active quote already exists so button stays disabled
-    getMyQuotes().then((quotes: any[]) => {
-      if (quotes?.some((q: any) => ['pending', 'reviewed'].includes(q.status))) {
-        setQuoteSuccess(true)
-      }
-    }).catch(() => {})
+    getMyQuotes()
+      .then((quotes: any[]) => {
+        if (quotes?.some((q: any) => ['pending', 'reviewed'].includes(q.status))) {
+          setQuoteSuccess(true)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setQuoteChecked(true))
   }, []) // runs once on mount only
 
   /* ── Per-category loads ─────────────────────────── */
@@ -1403,7 +1407,7 @@ export default function CategoryPage() {
 
                 return (
                   <div className="cart-nav-section">
-                    {isLast && !quoteSuccess && (
+                    {isLast && quoteChecked && !quoteSuccess && (
                       <textarea
                         value={quoteNotes}
                         onChange={e => setQuoteNotes(e.target.value)}
@@ -1428,7 +1432,12 @@ export default function CategoryPage() {
                         </button>
                       )}
                       {isLast ? (
-                        quoteSuccess ? (
+                        !quoteChecked ? (
+                          /* Block rendering until we know quote status — prevents flash */
+                          <button className="cart-nav-btn cart-nav-btn--quote" disabled>
+                            Request for Quote
+                          </button>
+                        ) : quoteSuccess ? (
                           <div className="cart-nav-quote-success">✓ Quote request sent</div>
                         ) : (
                           <button

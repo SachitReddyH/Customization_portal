@@ -195,6 +195,7 @@ export default function CustomisationHub() {
   // Cart quote state
   const [quoteSubmitting, setQuoteSubmitting] = useState(false)
   const [quoteSuccess,    setQuoteSuccess]    = useState(false)
+  const [quoteChecked,    setQuoteChecked]    = useState(false)   // true after first fetch resolves
   const [quoteError,      setQuoteError]      = useState('')
   const [quoteNotes,      setQuoteNotes]      = useState('')
   const [lockToast,       setLockToast]       = useState('')
@@ -225,9 +226,12 @@ export default function CustomisationHub() {
 
   // Poll quote status — runs on mount and every 15 s so the bell updates live
   const fetchQuote = () => {
-    getMyQuotes().then((quotes: any[]) => {
-      if (quotes?.length) setMyQuote(quotes[0])
-    }).catch(() => {})
+    getMyQuotes()
+      .then((quotes: any[]) => {
+        if (quotes?.length) setMyQuote(quotes[0])
+      })
+      .catch(() => {})
+      .finally(() => setQuoteChecked(true))
   }
 
   useEffect(() => {
@@ -585,7 +589,13 @@ export default function CustomisationHub() {
               )}
             </div>
             <div className="hub-cart-footer">
-              {(quoteSuccess || ['pending', 'reviewed'].includes(myQuote?.status)) ? (
+              {!quoteChecked ? (
+                /* Wait for the initial quote fetch before showing anything — prevents
+                   the button flashing on every mount before the API responds */
+                <div style={{ padding: '8px 0', textAlign: 'center', color: '#bbb', fontSize: 13 }}>
+                  …
+                </div>
+              ) : (quoteSuccess || ['pending', 'reviewed'].includes(myQuote?.status)) ? (
                 <div className="hub-cart-quote-success">
                   <span>✓</span>
                   <span>Quote request submitted!<br />Our team will be in touch soon.</span>
