@@ -185,14 +185,13 @@ export default function GuestSelections() {
                             }}>
                               <table style={{ borderCollapse: 'collapse', width: '100%' }}>
                                 <colgroup>
-                                  <col style={{ width: '55%' }} />
-                                  <col style={{ width: '20%' }} />
-                                  <col style={{ width: '25%' }} />
+                                  <col style={{ width: '70%' }} />
+                                  <col style={{ width: '30%' }} />
                                 </colgroup>
                                 {/* Column headers — shown once at top */}
                                 <thead>
                                   <tr style={{ background: '#f7f4f0' }}>
-                                    {(['OPTION', 'TYPE', 'ROOM'] as const).map(label => (
+                                    {(['OPTION', 'ROOM'] as const).map(label => (
                                       <th key={label} style={{
                                         padding: '8px 14px',
                                         fontSize: 11,
@@ -221,7 +220,7 @@ export default function GuestSelections() {
                                         }}
                                       >
                                         <td
-                                          colSpan={3}
+                                          colSpan={2}
                                           style={{
                                             padding: '7px 14px',
                                             fontWeight: 700,
@@ -250,20 +249,6 @@ export default function GuestSelections() {
                                             color: '#1a1a1a',
                                           }}>
                                             {sel.option_name || sel.option_id}
-                                          </td>
-                                          <td style={{ padding: '9px 14px' }}>
-                                            <span style={{
-                                              display: 'inline-block',
-                                              fontSize: 11,
-                                              fontWeight: 600,
-                                              padding: '2px 8px',
-                                              borderRadius: 4,
-                                              background: sel.selection_type === 'upgrade' ? '#fff7ed' : '#f3f4f6',
-                                              color:      sel.selection_type === 'upgrade' ? '#c2410c'  : '#374151',
-                                              border:     sel.selection_type === 'upgrade' ? '1px solid #fed7aa' : '1px solid #e5e7eb',
-                                            }}>
-                                              {sel.selection_type}
-                                            </span>
                                           </td>
                                           <td style={{
                                             padding: '9px 14px',
