@@ -24,6 +24,12 @@ services:
         sync: false                    # Set this in Render dashboard
       - key: ADMIN_PASSWORD
         sync: false                    # Set this in Render dashboard
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false                    # Set this in Render dashboard
+      - key: CLOUDINARY_API_KEY
+        sync: false                    # Set this in Render dashboard
+      - key: CLOUDINARY_API_SECRET
+        sync: false                    # Set this in Render dashboard
 
   # ─── Frontend (React / Vite) ──────────────────────────────────────────────
   - type: web
