@@ -31,11 +31,8 @@ function resolveSnapshotName(s: any): string {
 }
 
 interface EditState {
-  status: string
   item_prices: Record<number, string>   // flat snapshot index → price string
 }
-
-const STATUS_OPTIONS = ['pending', 'reviewed', 'quoted', 'accepted', 'rejected']
 
 const fmtINR = (n: number) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n)
@@ -125,15 +122,7 @@ export default function AdminQuotes() {
   useEffect(() => { load() }, [])
 
   const getEditState = (q: Quote): EditState =>
-    editStates[q.id] ?? {
-      status: q.status,
-      item_prices: buildInitialPrices(q),
-    }
-
-  const setEditField = (id: string, field: 'status', value: string) => {
-    const q = quotes.find(q => q.id === id)!
-    setEditStates(prev => ({ ...prev, [id]: { ...getEditState(q), [field]: value } }))
-  }
+    editStates[q.id] ?? { item_prices: buildInitialPrices(q) }
 
   const setItemPrice = (id: string, idx: number, value: string) => {
     const q = quotes.find(q => q.id === id)!
@@ -149,10 +138,7 @@ export default function AdminQuotes() {
     if (expandedId !== id) {
       setEditStates(prev => ({
         ...prev,
-        [id]: {
-          status: q.status,
-          item_prices: buildInitialPrices(q),
-        }
+        [id]: { item_prices: buildInitialPrices(q) }
       }))
       if (q.notification_type) {
         try {
@@ -185,7 +171,7 @@ export default function AdminQuotes() {
         .map(({ option_id, location_id, price }) => ({ option_id, location_id, price }))
 
       const total = cleanItemPrices.reduce((sum, ip) => sum + ip.price, 0)
-      const payload: any = { status: es.status }
+      const payload: any = { status: q.status }
       if (cleanItemPrices.length > 0) {
         payload.item_prices = cleanItemPrices
         payload.quoted_price = total
@@ -433,21 +419,7 @@ export default function AdminQuotes() {
                     </div>
                   )}
 
-                  {/* Admin fields — hidden when frozen */}
-                  {!isFrozen && (
-                    <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 8 }}>
-                      <div className="admin-form-field" style={{ flex: '0 0 180px' }}>
-                        <label>Status</label>
-                        <select value={es.status} onChange={e => setEditField(q.id, 'status', e.target.value)}>
-                          {STATUS_OPTIONS.map(s => (
-                            <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  )}
-
-                  {saveError[q.id] && <div className="admin-error" style={{ margin: 0 }}>{saveError[q.id]}</div>}
+                    {saveError[q.id] && <div className="admin-error" style={{ margin: 0 }}>{saveError[q.id]}</div>}
 
                   <div className="quote-expand-actions">
                     {isFrozen ? (
