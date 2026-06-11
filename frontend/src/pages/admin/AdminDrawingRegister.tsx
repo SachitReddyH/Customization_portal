@@ -24,14 +24,15 @@ const fullUrl = (path: string) =>
   path.startsWith('/static/') ? `${BASE}${path}` : path
 
 function PlanCell({
-  villaId, planType, plan, onUploaded, onRemoved, readOnly,
+  villaId, planType, plan, onUploaded, onRemoved, readOnly, noReplace,
 }: {
   villaId: string
   planType: 'standard' | 'updated'
   plan: Plan | null
   onUploaded: (entry: VillaEntry) => void
   onRemoved: (villaId: string, planType: 'standard' | 'updated') => void
-  readOnly?: boolean
+  readOnly?: boolean   // hides all actions including Upload
+  noReplace?: boolean  // allows Upload when empty, but hides Replace + Remove
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
@@ -124,7 +125,7 @@ function PlanCell({
               <span className="dr-plan-by">by {plan.uploaded_by_name}</span>
             )}
           </div>
-          {!readOnly && (
+          {!readOnly && !noReplace && (
             <div style={{ display: 'flex', gap: 4 }}>
               <button
                 className="admin-btn admin-btn--ghost admin-btn--sm dr-reupload-btn"
@@ -180,8 +181,6 @@ function PlanCell({
 
 export default function AdminDrawingRegister({ readOnly }: { readOnly?: boolean } = {}) {
   const isDesignAdmin = sessionStorage.getItem('user_role') === 'design_admin'
-  // Design admin and guest: view-only on all columns
-  const effectiveReadOnly = readOnly || isDesignAdmin
 
   const [entries, setEntries] = useState<VillaEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -304,7 +303,8 @@ export default function AdminDrawingRegister({ readOnly }: { readOnly?: boolean 
                       plan={entry.standard_plan}
                       onUploaded={handleUploaded}
                       onRemoved={handleRemoved}
-                      readOnly={effectiveReadOnly}
+                      readOnly={readOnly}
+                      noReplace={isDesignAdmin}
                     />
                   </td>
                   <td>
@@ -314,7 +314,7 @@ export default function AdminDrawingRegister({ readOnly }: { readOnly?: boolean 
                       plan={entry.updated_plan}
                       onUploaded={handleUploaded}
                       onRemoved={handleRemoved}
-                      readOnly={effectiveReadOnly}
+                      readOnly={readOnly || isDesignAdmin}
                     />
                   </td>
                 </tr>
