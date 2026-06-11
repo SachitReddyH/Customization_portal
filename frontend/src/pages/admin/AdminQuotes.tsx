@@ -169,7 +169,7 @@ export default function AdminQuotes() {
         .map(({ option_id, location_id, price }) => ({ option_id, location_id, price }))
 
       const total = cleanItemPrices.reduce((sum, ip) => sum + ip.price, 0)
-      const payload: any = { status: q.status }
+      const payload: any = { status: 'reviewed' }
       if (cleanItemPrices.length > 0) {
         payload.item_prices = cleanItemPrices
         payload.quoted_price = total
