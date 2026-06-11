@@ -320,8 +320,14 @@ async def create_staff(payload: UserCreate, user=Depends(require_admin)):
         "updated_at":      now,
     }
     result = await db.users.insert_one(doc)
-    doc["id"] = str(result.inserted_id)
-    return doc
+    return {
+        "id":         str(result.inserted_id),
+        "email":      payload.email,
+        "full_name":  payload.full_name,
+        "role":       payload.role,
+        "is_active":  True,
+        "created_at": now,
+    }
 
 
 @router.delete("/staff/{staff_id}", status_code=204)
