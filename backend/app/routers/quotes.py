@@ -120,6 +120,7 @@ async def create_or_update_quote(payload: QuoteRequestCreate, user=Depends(get_c
         # ── UPDATE existing pending quote ──────────────────────────
         update_fields = {
             "selection_snapshot": snapshot,
+            "status":             "pending",
             "notification_type":  "updated",
             "updated_at":         now,
         }
@@ -285,7 +286,7 @@ async def request_changes(quote_id: str, user=Depends(get_current_user)):
     result = await db.quote_requests.find_one_and_update(
         {"_id": ObjectId(quote_id)},
         {"$set": {
-            "status":                "pending",
+            "status":                "editing",
             "customer_notification": None,
             "notification_type":     None,
             "item_prices":           [],
