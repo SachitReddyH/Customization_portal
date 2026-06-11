@@ -269,9 +269,9 @@ export default function AdminDrawingRegister({ readOnly, crmMode }: { readOnly?:
                 <th>Villa</th>
                 <th>Customer</th>
                 <th>Type</th>
-                <th style={{ width: 260 }}>Standard Floor Plan</th>
-                {!crmMode && <th style={{ width: 260 }}>Updated Floor Plan</th>}
-                {crmMode  && <th style={{ width: 260 }}>Signed Off Floor Plan</th>}
+                <th style={{ width: 220 }}>Standard Floor Plan</th>
+                <th style={{ width: 220 }}>Updated Floor Plan</th>
+                <th style={{ width: 220 }}>Signed Off Floor Plan</th>
               </tr>
             </thead>
             <tbody>
@@ -297,6 +297,7 @@ export default function AdminDrawingRegister({ readOnly, crmMode }: { readOnly?:
                   <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                     {entry.villa_type ?? '—'}
                   </td>
+                  {/* Standard — CRM: view only; design: upload only; admin: full */}
                   <td>
                     <PlanCell
                       villaId={entry.villa_id}
@@ -308,29 +309,28 @@ export default function AdminDrawingRegister({ readOnly, crmMode }: { readOnly?:
                       noReplace={isDesignAdmin}
                     />
                   </td>
-                  {!crmMode && (
-                    <td>
-                      <PlanCell
-                        villaId={entry.villa_id}
-                        planType="updated"
-                        plan={entry.updated_plan}
-                        onUploaded={handleUploaded}
-                        onRemoved={handleRemoved}
-                        readOnly={readOnly || isDesignAdmin}
-                      />
-                    </td>
-                  )}
-                  {crmMode && (
-                    <td>
-                      <PlanCell
-                        villaId={entry.villa_id}
-                        planType="signed_off"
-                        plan={entry.signed_off_plan}
-                        onUploaded={handleUploaded}
-                        onRemoved={handleRemoved}
-                      />
-                    </td>
-                  )}
+                  {/* Updated — CRM: view only; design: view only; admin: full */}
+                  <td>
+                    <PlanCell
+                      villaId={entry.villa_id}
+                      planType="updated"
+                      plan={entry.updated_plan}
+                      onUploaded={handleUploaded}
+                      onRemoved={handleRemoved}
+                      readOnly={readOnly || isDesignAdmin || crmMode}
+                    />
+                  </td>
+                  {/* Signed Off — CRM: full; admin: full; design: view only */}
+                  <td>
+                    <PlanCell
+                      villaId={entry.villa_id}
+                      planType="signed_off"
+                      plan={entry.signed_off_plan}
+                      onUploaded={handleUploaded}
+                      onRemoved={handleRemoved}
+                      readOnly={readOnly || isDesignAdmin}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
