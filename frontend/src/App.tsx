@@ -101,7 +101,6 @@ function AppContent() {
         <Route path="/design" element={<DesignLayout />}>
           <Route index element={<Navigate to="/design/drawing" replace />} />
           <Route path="drawing" element={<AdminDrawingRegister />} />
-          <Route path="space-cust" element={<AdminSpaceCust />} />
         </Route>
         <Route path="/guest" element={<GuestLayout />}>
           <Route index element={<Navigate to="/guest/customers" replace />} />
