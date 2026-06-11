@@ -96,6 +96,7 @@ function AppContent() {
           <Route path="dashboard" element={<CRMDashboard />} />
           <Route path="customers" element={<CRMCustomers />} />
           <Route path="quotes" element={<CRMQuotes />} />
+          <Route path="drawing" element={<AdminDrawingRegister crmMode={true} />} />
           <Route path="cost-breakdown" element={<CostBreakdown />} />
         </Route>
         <Route path="/design" element={<DesignLayout />}>

@@ -187,7 +187,7 @@ export const markFloorPlanViewed = () =>
 export const skipSpaceCustomisation = () =>
   api.post('/drawing-register/skip-space-customisation').then(r => r.data)
 
-export const uploadFloorPlan = (villaId: string, file: File, planType: 'standard' | 'updated') => {
+export const uploadFloorPlan = (villaId: string, file: File, planType: 'standard' | 'updated' | 'signed_off') => {
   const form = new FormData()
   form.append('file', file)
   form.append('plan_type', planType)
@@ -196,7 +196,7 @@ export const uploadFloorPlan = (villaId: string, file: File, planType: 'standard
   }).then(r => r.data)
 }
 
-export const removeFloorPlan = (villaId: string, planType: 'standard' | 'updated') =>
+export const removeFloorPlan = (villaId: string, planType: 'standard' | 'updated' | 'signed_off') =>
   api.delete(`/drawing-register/${villaId}/plan/${planType}`).then(r => r.data)
 
 // Space Customisation quote workflow

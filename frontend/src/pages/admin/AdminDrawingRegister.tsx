@@ -16,8 +16,9 @@ interface VillaEntry {
   villa_type?: string
   customer_name?: string
   customer_email?: string
-  standard_plan: Plan | null
-  updated_plan:  Plan | null
+  standard_plan:   Plan | null
+  updated_plan:    Plan | null
+  signed_off_plan: Plan | null
 }
 
 const fullUrl = (path: string) =>
@@ -27,10 +28,10 @@ function PlanCell({
   villaId, planType, plan, onUploaded, onRemoved, readOnly, noReplace,
 }: {
   villaId: string
-  planType: 'standard' | 'updated'
+  planType: 'standard' | 'updated' | 'signed_off'
   plan: Plan | null
   onUploaded: (entry: VillaEntry) => void
-  onRemoved: (villaId: string, planType: 'standard' | 'updated') => void
+  onRemoved: (villaId: string, planType: 'standard' | 'updated' | 'signed_off') => void
   readOnly?: boolean   // hides all actions including Upload
   noReplace?: boolean  // allows Upload when empty, but hides Replace + Remove
 }) {
@@ -179,7 +180,7 @@ function PlanCell({
   )
 }
 
-export default function AdminDrawingRegister({ readOnly }: { readOnly?: boolean } = {}) {
+export default function AdminDrawingRegister({ readOnly, crmMode }: { readOnly?: boolean; crmMode?: boolean } = {}) {
   const isDesignAdmin = sessionStorage.getItem('user_role') === 'design_admin'
 
   const [entries, setEntries] = useState<VillaEntry[]>([])
@@ -209,11 +210,10 @@ export default function AdminDrawingRegister({ readOnly }: { readOnly?: boolean 
     ))
   }
 
-  const handleRemoved = (villaId: string, planType: 'standard' | 'updated') => {
+  const handleRemoved = (villaId: string, planType: 'standard' | 'updated' | 'signed_off') => {
+    const field = planType === 'standard' ? 'standard_plan' : planType === 'updated' ? 'updated_plan' : 'signed_off_plan'
     setEntries(prev => prev.map(e =>
-      e.villa_id === villaId
-        ? { ...e, [planType === 'standard' ? 'standard_plan' : 'updated_plan']: null }
-        : e
+      e.villa_id === villaId ? { ...e, [field]: null } : e
     ))
   }
 
@@ -270,7 +270,8 @@ export default function AdminDrawingRegister({ readOnly }: { readOnly?: boolean 
                 <th>Customer</th>
                 <th>Type</th>
                 <th style={{ width: 260 }}>Standard Floor Plan</th>
-                <th style={{ width: 260 }}>Updated Floor Plan</th>
+                {!crmMode && <th style={{ width: 260 }}>Updated Floor Plan</th>}
+                {crmMode  && <th style={{ width: 260 }}>Signed Off Floor Plan</th>}
               </tr>
             </thead>
             <tbody>
@@ -303,20 +304,33 @@ export default function AdminDrawingRegister({ readOnly }: { readOnly?: boolean 
                       plan={entry.standard_plan}
                       onUploaded={handleUploaded}
                       onRemoved={handleRemoved}
-                      readOnly={readOnly}
+                      readOnly={readOnly || crmMode}
                       noReplace={isDesignAdmin}
                     />
                   </td>
-                  <td>
-                    <PlanCell
-                      villaId={entry.villa_id}
-                      planType="updated"
-                      plan={entry.updated_plan}
-                      onUploaded={handleUploaded}
-                      onRemoved={handleRemoved}
-                      readOnly={readOnly || isDesignAdmin}
-                    />
-                  </td>
+                  {!crmMode && (
+                    <td>
+                      <PlanCell
+                        villaId={entry.villa_id}
+                        planType="updated"
+                        plan={entry.updated_plan}
+                        onUploaded={handleUploaded}
+                        onRemoved={handleRemoved}
+                        readOnly={readOnly || isDesignAdmin}
+                      />
+                    </td>
+                  )}
+                  {crmMode && (
+                    <td>
+                      <PlanCell
+                        villaId={entry.villa_id}
+                        planType="signed_off"
+                        plan={entry.signed_off_plan}
+                        onUploaded={handleUploaded}
+                        onRemoved={handleRemoved}
+                      />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

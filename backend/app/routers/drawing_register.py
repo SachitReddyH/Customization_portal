@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from fastapi.responses import Response
 from app.database import get_db
-from app.core.deps import get_current_user, require_drawing_access, require_read_access
+from app.core.deps import get_current_user, require_read_access
 from bson import ObjectId, Binary
 from datetime import datetime, timezone
 from typing import Optional
@@ -9,13 +9,13 @@ import os
 
 router = APIRouter(prefix="/drawing-register", tags=["drawing-register"])
 
-ALLOWED_EXTS = {'.jpg', '.jpeg', '.png', '.webp', '.pdf'}
+ALLOWED_EXTS  = {'.jpg', '.jpeg', '.png', '.webp', '.pdf'}
+VALID_PLAN_TYPES = {"standard", "updated", "signed_off"}
 
 
 def _plan_doc(plan: Optional[dict], uploader_name: Optional[str] = None) -> Optional[dict]:
     if not plan:
         return None
-    # Don't expose raw binary data — use a sentinel URL so frontend knows a plan exists
     return {
         "url":              plan.get("url", "db"),
         "is_pdf":           plan.get("is_pdf", False),
@@ -24,15 +24,17 @@ def _plan_doc(plan: Optional[dict], uploader_name: Optional[str] = None) -> Opti
     }
 
 
-# ── List all villas (admin/design) ────────────────────────────────────────────
+# ── List all villas ────────────────────────────────────────────────────────────
 
 @router.get("/")
 async def list_drawing_register(user=Depends(require_read_access)):
-    """List all villas with their drawing register status — 4 bulk queries total."""
+    """List all villas with their drawing register status."""
     db = get_db()
 
     villas    = await db.villas.find().sort("villa_number", 1).to_list(length=None)
-    reg_docs  = await db.drawing_register.find({}, {"standard_plan.data": 0, "updated_plan.data": 0}).to_list(length=None)
+    reg_docs  = await db.drawing_register.find(
+        {}, {"standard_plan.data": 0, "updated_plan.data": 0, "signed_off_plan.data": 0}
+    ).to_list(length=None)
     customers = await db.users.find(
         {"role": "customer", "villa_id": {"$ne": None}}
     ).to_list(length=None)
@@ -42,7 +44,7 @@ async def list_drawing_register(user=Depends(require_read_access)):
 
     uploader_ids = set()
     for d in reg_docs:
-        for key in ("standard_plan", "updated_plan"):
+        for key in ("standard_plan", "updated_plan", "signed_off_plan"):
             p = d.get(key) or {}
             if p.get("uploaded_by"):
                 uploader_ids.add(p["uploaded_by"])
@@ -56,20 +58,22 @@ async def list_drawing_register(user=Depends(require_read_access)):
     for villa in villas:
         vid      = str(villa["_id"])
         reg      = reg_map.get(vid)
-        std      = (reg.get("standard_plan") or {}) if reg else {}
-        upd      = (reg.get("updated_plan")  or {}) if reg else {}
+        std      = (reg.get("standard_plan")   or {}) if reg else {}
+        upd      = (reg.get("updated_plan")    or {}) if reg else {}
+        sgn      = (reg.get("signed_off_plan") or {}) if reg else {}
         customer = customer_map.get(vid)
 
         result.append({
-            "villa_id":       vid,
-            "villa_number":   villa.get("villa_number"),
-            "villa_name":     villa.get("villa_name"),
-            "villa_type":     villa.get("villa_type"),
-            "customer_name":  customer.get("full_name") if customer else None,
-            "customer_email": customer.get("email") if customer else None,
-            "standard_plan":  _plan_doc(std or None, user_map.get(str(std.get("uploaded_by", "")))),
-            "updated_plan":   _plan_doc(upd or None, user_map.get(str(upd.get("uploaded_by", "")))),
-            "updated_at":     reg["updated_at"].isoformat() if reg and reg.get("updated_at") else None,
+            "villa_id":        vid,
+            "villa_number":    villa.get("villa_number"),
+            "villa_name":      villa.get("villa_name"),
+            "villa_type":      villa.get("villa_type"),
+            "customer_name":   customer.get("full_name") if customer else None,
+            "customer_email":  customer.get("email") if customer else None,
+            "standard_plan":   _plan_doc(std or None, user_map.get(str(std.get("uploaded_by", "")))),
+            "updated_plan":    _plan_doc(upd or None, user_map.get(str(upd.get("uploaded_by", "")))),
+            "signed_off_plan": _plan_doc(sgn or None, user_map.get(str(sgn.get("uploaded_by", "")))),
+            "updated_at":      reg["updated_at"].isoformat() if reg and reg.get("updated_at") else None,
         })
 
     return result
@@ -79,7 +83,6 @@ async def list_drawing_register(user=Depends(require_read_access)):
 
 @router.get("/my")
 async def my_drawing_register(user=Depends(get_current_user)):
-    """Return floor plan status for the current user's villa."""
     db = get_db()
     floor_plan_viewed           = bool(user.get("floor_plan_viewed", False))
     space_customisation_skipped = bool(user.get("space_customisation_skipped", False))
@@ -90,10 +93,9 @@ async def my_drawing_register(user=Depends(get_current_user)):
                 "floor_plan_viewed": floor_plan_viewed,
                 "space_customisation_skipped": space_customisation_skipped}
 
-    # Exclude binary data from this response
     doc = await db.drawing_register.find_one(
         {"villa_id": villa_id},
-        {"standard_plan.data": 0, "updated_plan.data": 0}
+        {"standard_plan.data": 0, "updated_plan.data": 0, "signed_off_plan.data": 0}
     )
     if not doc:
         return {"standard_plan": None, "updated_plan": None,
@@ -114,7 +116,6 @@ async def my_drawing_register(user=Depends(get_current_user)):
 
 @router.get("/view-plan/{plan_type}")
 async def view_floor_plan(plan_type: str, user=Depends(get_current_user)):
-    """Stream the floor plan PDF directly from MongoDB."""
     if plan_type not in ("standard", "updated"):
         raise HTTPException(status_code=400, detail="plan_type must be 'standard' or 'updated'")
 
@@ -139,13 +140,12 @@ async def view_floor_plan(plan_type: str, user=Depends(get_current_user)):
     )
 
 
-# ── Admin: view any villa's floor plan PDF ────────────────────────────────────
+# ── Admin/staff: view any villa's floor plan PDF ───────────────────────────────
 
 @router.get("/{villa_id}/view-plan/{plan_type}")
 async def admin_view_floor_plan(villa_id: str, plan_type: str, user=Depends(require_read_access)):
-    """Stream a villa's floor plan PDF directly from MongoDB (admin/design access)."""
-    if plan_type not in ("standard", "updated"):
-        raise HTTPException(status_code=400, detail="plan_type must be 'standard' or 'updated'")
+    if plan_type not in VALID_PLAN_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid plan_type")
 
     db = get_db()
     doc = await db.drawing_register.find_one({"villa_id": ObjectId(villa_id)})
@@ -190,13 +190,19 @@ async def mark_floor_plan_viewed(user=Depends(get_current_user)):
     return {"floor_plan_viewed": True}
 
 
-# ── Remove floor plan ────────────────────────────────────────────────────────
+# ── Remove floor plan ─────────────────────────────────────────────────────────
 
 @router.delete("/{villa_id}/plan/{plan_type}", status_code=200)
-async def remove_floor_plan(villa_id: str, plan_type: str, user=Depends(require_drawing_access)):
-    """Clear a floor plan (standard or updated) for a villa."""
-    if plan_type not in ("standard", "updated"):
-        raise HTTPException(status_code=400, detail="plan_type must be 'standard' or 'updated'")
+async def remove_floor_plan(villa_id: str, plan_type: str, user=Depends(get_current_user)):
+    if plan_type not in VALID_PLAN_TYPES:
+        raise HTTPException(status_code=400, detail="Invalid plan_type")
+
+    role = user.get("role")
+    # CRM admin can only manage signed_off
+    if role == "crm_admin" and plan_type != "signed_off":
+        raise HTTPException(status_code=403, detail="CRM admin can only manage signed-off floor plans")
+    if role not in ("admin", "design_admin", "crm_admin"):
+        raise HTTPException(status_code=403, detail="Access denied")
 
     db = get_db()
     plan_field = f"{plan_type}_plan"
@@ -218,10 +224,17 @@ async def upload_floor_plan(
     villa_id: str,
     plan_type: str = Form(...),
     file: UploadFile = File(...),
-    user=Depends(require_drawing_access),
+    user=Depends(get_current_user),
 ):
-    if plan_type not in ("standard", "updated"):
-        raise HTTPException(status_code=400, detail="plan_type must be 'standard' or 'updated'")
+    if plan_type not in VALID_PLAN_TYPES:
+        raise HTTPException(status_code=400, detail="plan_type must be 'standard', 'updated', or 'signed_off'")
+
+    role = user.get("role")
+    # CRM admin can only upload signed_off plans
+    if role == "crm_admin" and plan_type != "signed_off":
+        raise HTTPException(status_code=403, detail="CRM admin can only upload signed-off floor plans")
+    if role not in ("admin", "design_admin", "crm_admin"):
+        raise HTTPException(status_code=403, detail="Access denied")
 
     ext = os.path.splitext(file.filename or '')[1].lower()
     if ext not in ALLOWED_EXTS:
@@ -232,14 +245,13 @@ async def upload_floor_plan(
     if not villa:
         raise HTTPException(status_code=404, detail="Villa not found")
 
-    # Read file bytes and store directly in MongoDB — no third-party storage needed
     contents = await file.read()
     is_pdf   = ext == ".pdf"
     now      = datetime.now(timezone.utc)
 
     plan_field = f"{plan_type}_plan"
     plan_data  = {
-        "url":         "db",        # sentinel — data is stored in 'data' field
+        "url":         "db",
         "is_pdf":      is_pdf,
         "data":        Binary(contents),
         "uploaded_at": now,
@@ -254,28 +266,30 @@ async def upload_floor_plan(
         )
     else:
         await db.drawing_register.insert_one({
-            "villa_id":      villa["_id"],
-            "standard_plan": plan_data if plan_type == "standard" else None,
-            "updated_plan":  plan_data if plan_type == "updated"  else None,
-            "updated_at":    now,
+            "villa_id":        villa["_id"],
+            "standard_plan":   plan_data if plan_type == "standard"   else None,
+            "updated_plan":    plan_data if plan_type == "updated"    else None,
+            "signed_off_plan": plan_data if plan_type == "signed_off" else None,
+            "updated_at":      now,
         })
 
-    # Return metadata (no binary) for the frontend
     doc = await db.drawing_register.find_one(
         {"villa_id": villa["_id"]},
-        {"standard_plan.data": 0, "updated_plan.data": 0}
+        {"standard_plan.data": 0, "updated_plan.data": 0, "signed_off_plan.data": 0}
     )
-    std = (doc.get("standard_plan") or {}) if doc else {}
-    upd = (doc.get("updated_plan")  or {}) if doc else {}
+    std = (doc.get("standard_plan")   or {}) if doc else {}
+    upd = (doc.get("updated_plan")    or {}) if doc else {}
+    sgn = (doc.get("signed_off_plan") or {}) if doc else {}
 
     uploader_name = user.get("full_name")
 
     return {
-        "villa_id":      str(villa["_id"]),
-        "villa_number":  villa.get("villa_number"),
-        "villa_name":    villa.get("villa_name"),
-        "villa_type":    villa.get("villa_type"),
-        "standard_plan": _plan_doc(std or None, uploader_name if plan_type == "standard" else None),
-        "updated_plan":  _plan_doc(upd or None, uploader_name if plan_type == "updated"  else None),
-        "updated_at":    now.isoformat(),
+        "villa_id":        str(villa["_id"]),
+        "villa_number":    villa.get("villa_number"),
+        "villa_name":      villa.get("villa_name"),
+        "villa_type":      villa.get("villa_type"),
+        "standard_plan":   _plan_doc(std or None, uploader_name if plan_type == "standard"   else None),
+        "updated_plan":    _plan_doc(upd or None, uploader_name if plan_type == "updated"    else None),
+        "signed_off_plan": _plan_doc(sgn or None, uploader_name if plan_type == "signed_off" else None),
+        "updated_at":      now.isoformat(),
     }
