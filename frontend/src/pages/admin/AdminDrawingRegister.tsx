@@ -271,7 +271,7 @@ export default function AdminDrawingRegister({ readOnly, crmMode }: { readOnly?:
                 <th>Type</th>
                 <th style={{ width: 220 }}>Standard Floor Plan</th>
                 <th style={{ width: 220 }}>Updated Floor Plan</th>
-                <th style={{ width: 220 }}>Signed Off Floor Plan</th>
+                {!isDesignAdmin && !readOnly && <th style={{ width: 220 }}>Signed Off Floor Plan</th>}
               </tr>
             </thead>
             <tbody>
@@ -320,17 +320,18 @@ export default function AdminDrawingRegister({ readOnly, crmMode }: { readOnly?:
                       readOnly={readOnly || isDesignAdmin || crmMode}
                     />
                   </td>
-                  {/* Signed Off — CRM: full; admin: full; design: view only */}
-                  <td>
-                    <PlanCell
-                      villaId={entry.villa_id}
-                      planType="signed_off"
-                      plan={entry.signed_off_plan}
-                      onUploaded={handleUploaded}
-                      onRemoved={handleRemoved}
-                      readOnly={readOnly || isDesignAdmin}
-                    />
-                  </td>
+                  {/* Signed Off — admin: full; CRM: full; design + guest: hidden */}
+                  {!isDesignAdmin && !readOnly && (
+                    <td>
+                      <PlanCell
+                        villaId={entry.villa_id}
+                        planType="signed_off"
+                        plan={entry.signed_off_plan}
+                        onUploaded={handleUploaded}
+                        onRemoved={handleRemoved}
+                      />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
