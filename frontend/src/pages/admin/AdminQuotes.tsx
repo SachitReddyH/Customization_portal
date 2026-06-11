@@ -58,9 +58,15 @@ function buildInitialPrices(q: Quote): Record<number, string> {
   const prices: Record<number, string> = {}
   const snapshot = q.selection_snapshot || []
   if (q.item_prices && q.item_prices.length > 0) {
-    // Use previously saved per-item prices
-    q.item_prices.forEach((ip, i) => {
-      prices[i] = ip.price != null ? String(ip.price) : ''
+    // Build a lookup by option_id + location_id so positions stay correct
+    // even when only some items have prices (sparse array → wrong index mapping otherwise)
+    const byKey: Record<string, number> = {}
+    q.item_prices.forEach(ip => {
+      byKey[`${ip.option_id}__${ip.location_id ?? ''}`] = ip.price
+    })
+    snapshot.forEach((s: any, i: number) => {
+      const key = `${s.option_id}__${s.location_id ?? ''}`
+      if (byKey[key] != null) prices[i] = String(byKey[key])
     })
   } else {
     // Pre-fill from option price_inr in snapshot
