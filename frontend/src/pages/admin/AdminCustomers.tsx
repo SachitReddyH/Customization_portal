@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Plus, X, Eye, EyeOff } from 'lucide-react'
+import { Plus, X, KeyRound } from 'lucide-react'
 import {
   listCustomers,
   createCustomer,
   deleteCustomer,
   listAllVillas,
-  getCustomerPassword,
+  resetCustomerPassword,
 } from '../../services/api'
 
 interface Customer {
@@ -72,22 +72,22 @@ export default function AdminCustomers() {
   const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, string | null>>({})
-  const [loadingPassword, setLoadingPassword] = useState<string | null>(null)
+  const [resetTarget, setResetTarget] = useState<Customer | null>(null)
+  const [resetPassword, setResetPassword] = useState('')
+  const [resetting, setResetting] = useState(false)
+  const [resetError, setResetError] = useState('')
+  const [resetSuccess, setResetSuccess] = useState(false)
 
-  const handleTogglePassword = async (id: string) => {
-    if (id in revealedPasswords) {
-      setRevealedPasswords(prev => { const n = { ...prev }; delete n[id]; return n })
-      return
-    }
-    setLoadingPassword(id)
+  const handleResetConfirm = async () => {
+    if (!resetTarget || !resetPassword.trim()) { setResetError('Password cannot be empty.'); return }
+    setResetting(true); setResetError('')
     try {
-      const data = await getCustomerPassword(id)
-      setRevealedPasswords(prev => ({ ...prev, [id]: data.password }))
-    } catch {
-      setRevealedPasswords(prev => ({ ...prev, [id]: null }))
+      await resetCustomerPassword(resetTarget.id, resetPassword.trim())
+      setResetSuccess(true)
+    } catch (err: any) {
+      setResetError(err.response?.data?.detail || 'Failed to reset password.')
     } finally {
-      setLoadingPassword(null)
+      setResetting(false)
     }
   }
 
@@ -189,14 +189,12 @@ export default function AdminCustomers() {
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Villa</th>
-                <th>Password</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               {customers.map(c => {
                 const villa = getVilla(c.villa_id)
-                const isRevealed = c.id in revealedPasswords
-                const pw = revealedPasswords[c.id]
                 return (
                   <tr key={c.id}>
                     <td style={{ fontWeight: 600 }}>{c.full_name}</td>
@@ -210,21 +208,13 @@ export default function AdminCustomers() {
                       )}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {isRevealed && (
-                          <span style={{ fontFamily: 'monospace', fontSize: 13, color: pw ? 'var(--text-primary)' : 'var(--text-muted)' }}>
-                            {pw ?? 'Not on record'}
-                          </span>
-                        )}
-                        <button
-                          className="admin-btn admin-btn--ghost admin-btn--sm"
-                          onClick={() => handleTogglePassword(c.id)}
-                          disabled={loadingPassword === c.id}
-                          title={isRevealed ? 'Hide password' : 'View password'}
-                        >
-                          {isRevealed ? <EyeOff size={13} /> : <Eye size={13} />}
-                        </button>
-                      </div>
+                      <button
+                        className="admin-btn admin-btn--ghost admin-btn--sm"
+                        onClick={() => { setResetTarget(c); setResetPassword(''); setResetError(''); setResetSuccess(false) }}
+                        title="Reset password"
+                      >
+                        <KeyRound size={13} /> Reset Password
+                      </button>
                     </td>
                   </tr>
                 )
@@ -385,6 +375,50 @@ export default function AdminCustomers() {
               >
                 {deleting ? 'Deleting…' : 'Delete'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Reset Password Modal ── */}
+      {resetTarget && (
+        <div className="admin-modal-overlay" onClick={e => { if (e.target === e.currentTarget && !resetting) setResetTarget(null) }}>
+          <div className="admin-modal" style={{ maxWidth: 400 }}>
+            <div className="admin-modal-header">
+              <h3>Reset Password</h3>
+              <button className="admin-modal-close" onClick={() => setResetTarget(null)} disabled={resetting}><X size={18} /></button>
+            </div>
+            <div className="admin-modal-body">
+              {resetSuccess ? (
+                <p style={{ color: '#1a7a47', fontWeight: 500 }}>Password updated successfully for <strong>{resetTarget.full_name}</strong>.</p>
+              ) : (
+                <>
+                  <p style={{ fontSize: 13, marginBottom: 14, color: 'var(--text-secondary)' }}>
+                    Set a new password for <strong>{resetTarget.full_name}</strong>.
+                  </p>
+                  <div className="admin-form-field">
+                    <label>New Password *</label>
+                    <input
+                      type="text"
+                      placeholder="Enter new password"
+                      value={resetPassword}
+                      onChange={e => setResetPassword(e.target.value)}
+                      autoComplete="off"
+                    />
+                  </div>
+                  {resetError && <p className="admin-error" style={{ margin: 0 }}>{resetError}</p>}
+                </>
+              )}
+            </div>
+            <div className="admin-modal-footer">
+              <button className="admin-btn admin-btn--ghost" onClick={() => setResetTarget(null)} disabled={resetting}>
+                {resetSuccess ? 'Close' : 'Cancel'}
+              </button>
+              {!resetSuccess && (
+                <button className="admin-btn admin-btn--primary" onClick={handleResetConfirm} disabled={resetting}>
+                  {resetting ? 'Saving…' : 'Save Password'}
+                </button>
+              )}
             </div>
           </div>
         </div>

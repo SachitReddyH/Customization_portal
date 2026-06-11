@@ -50,7 +50,6 @@ async def create_customer(payload: UserCreate, user=Depends(require_any_admin)):
     doc = {
         "email": payload.email,
         "hashed_password": hash_password(payload.password),
-        "plain_password": payload.password,
         "full_name": payload.full_name,
         "phone": payload.phone,
         "role": "customer",
@@ -107,16 +106,20 @@ async def delete_customer(customer_id: str, user=Depends(require_admin)):
     await db.customer_selections.delete_one({"customer_id": ObjectId(customer_id)})
 
 
-@router.get("/customers/{customer_id}/password")
-async def get_customer_password(customer_id: str, user=Depends(require_admin)):
+@router.post("/customers/{customer_id}/reset-password")
+async def reset_customer_password(customer_id: str, payload: dict, user=Depends(require_admin)):
+    new_password = payload.get("password", "").strip()
+    if not new_password:
+        raise HTTPException(status_code=422, detail="Password cannot be empty")
     db = get_db()
     customer = await db.users.find_one({"_id": ObjectId(customer_id), "role": "customer"})
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
-    plain = customer.get("plain_password")
-    if not plain:
-        raise HTTPException(status_code=404, detail="Password not on record (created before this feature was added)")
-    return {"password": plain}
+    await db.users.update_one(
+        {"_id": ObjectId(customer_id)},
+        {"$set": {"hashed_password": hash_password(new_password)}}
+    )
+    return {"ok": True}
 
 
 @router.get("/customers/{customer_id}/selections")

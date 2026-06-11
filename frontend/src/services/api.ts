@@ -126,8 +126,8 @@ export const deleteCustomer = (id: string) =>
 export const getCustomerSelections = (id: string) =>
   api.get(`/admin/customers/${id}/selections`).then(r => r.data)
 
-export const getCustomerPassword = (id: string) =>
-  api.get(`/admin/customers/${id}/password`).then(r => r.data)
+export const resetCustomerPassword = (id: string, password: string) =>
+  api.post(`/admin/customers/${id}/reset-password`, { password }).then(r => r.data)
 
 export const listAllVillas = () =>
   api.get('/villas/').then(r => r.data)
