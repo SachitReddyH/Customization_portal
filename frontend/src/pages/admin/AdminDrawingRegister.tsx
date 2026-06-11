@@ -180,6 +180,8 @@ function PlanCell({
 
 export default function AdminDrawingRegister({ readOnly }: { readOnly?: boolean } = {}) {
   const isDesignAdmin = sessionStorage.getItem('user_role') === 'design_admin'
+  // Design admin and guest: view-only on all columns
+  const effectiveReadOnly = readOnly || isDesignAdmin
 
   const [entries, setEntries] = useState<VillaEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -269,7 +271,7 @@ export default function AdminDrawingRegister({ readOnly }: { readOnly?: boolean 
                 <th>Customer</th>
                 <th>Type</th>
                 <th style={{ width: 260 }}>Standard Floor Plan</th>
-                {!isDesignAdmin && <th style={{ width: 260 }}>Updated Floor Plan</th>}
+                <th style={{ width: 260 }}>Updated Floor Plan</th>
               </tr>
             </thead>
             <tbody>
@@ -302,21 +304,19 @@ export default function AdminDrawingRegister({ readOnly }: { readOnly?: boolean 
                       plan={entry.standard_plan}
                       onUploaded={handleUploaded}
                       onRemoved={handleRemoved}
-                      readOnly={readOnly}
+                      readOnly={effectiveReadOnly}
                     />
                   </td>
-                  {!isDesignAdmin && (
-                    <td>
-                      <PlanCell
-                        villaId={entry.villa_id}
-                        planType="updated"
-                        plan={entry.updated_plan}
-                        onUploaded={handleUploaded}
-                        onRemoved={handleRemoved}
-                        readOnly={readOnly}
-                      />
-                    </td>
-                  )}
+                  <td>
+                    <PlanCell
+                      villaId={entry.villa_id}
+                      planType="updated"
+                      plan={entry.updated_plan}
+                      onUploaded={handleUploaded}
+                      onRemoved={handleRemoved}
+                      readOnly={effectiveReadOnly}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
