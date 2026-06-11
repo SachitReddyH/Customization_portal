@@ -50,6 +50,7 @@ async def create_customer(payload: UserCreate, user=Depends(require_any_admin)):
     doc = {
         "email": payload.email,
         "hashed_password": hash_password(payload.password),
+        "plain_password": payload.password,
         "full_name": payload.full_name,
         "phone": payload.phone,
         "role": "customer",
@@ -104,6 +105,18 @@ async def delete_customer(customer_id: str, user=Depends(require_admin)):
 
     await db.users.delete_one({"_id": ObjectId(customer_id)})
     await db.customer_selections.delete_one({"customer_id": ObjectId(customer_id)})
+
+
+@router.get("/customers/{customer_id}/password")
+async def get_customer_password(customer_id: str, user=Depends(require_admin)):
+    db = get_db()
+    customer = await db.users.find_one({"_id": ObjectId(customer_id), "role": "customer"})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    plain = customer.get("plain_password")
+    if not plain:
+        raise HTTPException(status_code=404, detail="Password not on record (created before this feature was added)")
+    return {"password": plain}
 
 
 @router.get("/customers/{customer_id}/selections")

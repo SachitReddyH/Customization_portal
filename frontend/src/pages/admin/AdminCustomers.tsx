@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Eye, EyeOff } from 'lucide-react'
 import {
   listCustomers,
   createCustomer,
   deleteCustomer,
   listAllVillas,
+  getCustomerPassword,
 } from '../../services/api'
 
 interface Customer {
@@ -70,6 +71,25 @@ export default function AdminCustomers() {
 
   const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null)
   const [deleting, setDeleting] = useState(false)
+
+  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, string | null>>({})
+  const [loadingPassword, setLoadingPassword] = useState<string | null>(null)
+
+  const handleTogglePassword = async (id: string) => {
+    if (id in revealedPasswords) {
+      setRevealedPasswords(prev => { const n = { ...prev }; delete n[id]; return n })
+      return
+    }
+    setLoadingPassword(id)
+    try {
+      const data = await getCustomerPassword(id)
+      setRevealedPasswords(prev => ({ ...prev, [id]: data.password }))
+    } catch {
+      setRevealedPasswords(prev => ({ ...prev, [id]: null }))
+    } finally {
+      setLoadingPassword(null)
+    }
+  }
 
   const load = async () => {
     setLoading(true)
@@ -169,11 +189,14 @@ export default function AdminCustomers() {
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Villa</th>
+                <th>Password</th>
               </tr>
             </thead>
             <tbody>
               {customers.map(c => {
                 const villa = getVilla(c.villa_id)
+                const isRevealed = c.id in revealedPasswords
+                const pw = revealedPasswords[c.id]
                 return (
                   <tr key={c.id}>
                     <td style={{ fontWeight: 600 }}>{c.full_name}</td>
@@ -185,6 +208,23 @@ export default function AdminCustomers() {
                       ) : (
                         <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>Unassigned</span>
                       )}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {isRevealed && (
+                          <span style={{ fontFamily: 'monospace', fontSize: 13, color: pw ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                            {pw ?? 'Not on record'}
+                          </span>
+                        )}
+                        <button
+                          className="admin-btn admin-btn--ghost admin-btn--sm"
+                          onClick={() => handleTogglePassword(c.id)}
+                          disabled={loadingPassword === c.id}
+                          title={isRevealed ? 'Hide password' : 'View password'}
+                        >
+                          {isRevealed ? <EyeOff size={13} /> : <Eye size={13} />}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )
