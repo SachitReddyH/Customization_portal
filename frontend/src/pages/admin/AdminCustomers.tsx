@@ -3,6 +3,7 @@ import { Plus, X, KeyRound, Trash2 } from 'lucide-react'
 import {
   listCustomers,
   createCustomer,
+  deleteCustomer,
   listAllVillas,
   resetCustomerPassword,
 } from '../../services/api'
