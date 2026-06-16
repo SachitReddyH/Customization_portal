@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Plus, X, KeyRound } from 'lucide-react'
+import { Plus, X, KeyRound, Trash2 } from 'lucide-react'
 import {
   listCustomers,
   createCustomer,
-  deleteCustomer,
   listAllVillas,
   resetCustomerPassword,
 } from '../../services/api'
@@ -208,13 +207,23 @@ export default function AdminCustomers() {
                       )}
                     </td>
                     <td>
-                      <button
-                        className="admin-btn admin-btn--ghost admin-btn--sm"
-                        onClick={() => { setResetTarget(c); setResetPassword(''); setResetError(''); setResetSuccess(false) }}
-                        title="Reset password"
-                      >
-                        <KeyRound size={13} /> Reset Password
-                      </button>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button
+                          className="admin-btn admin-btn--ghost admin-btn--sm"
+                          onClick={() => { setResetTarget(c); setResetPassword(''); setResetError(''); setResetSuccess(false) }}
+                          title="Reset password"
+                        >
+                          <KeyRound size={13} /> Reset Password
+                        </button>
+                        <button
+                          className="admin-btn admin-btn--ghost admin-btn--sm"
+                          onClick={() => setDeleteTarget(c)}
+                          title="Remove customer"
+                          style={{ color: '#c0392b', borderColor: '#c0392b' }}
+                        >
+                          <Trash2 size={13} /> Remove
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )
