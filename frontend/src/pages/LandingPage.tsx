@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { login } from '../services/api'
 
 export default function LandingPage() {
@@ -93,6 +93,17 @@ export default function LandingPage() {
           <button className="btn-submit" type="submit" disabled={loading}>
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
+
+          <p style={{ textAlign: 'right', marginTop: 4, marginBottom: 0 }}>
+            <Link
+              to="/forgot-password"
+              style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}
+              onMouseOver={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.9)')}
+              onMouseOut={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
+            >
+              Forgot password?
+            </Link>
+          </p>
         </form>
 
         <p className="modal-footer">

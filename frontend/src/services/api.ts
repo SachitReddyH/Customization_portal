@@ -41,6 +41,12 @@ export const login = (email: string, password: string) =>
 export const getMe = () =>
   api.get('/auth/me').then(r => r.data)
 
+export const forgotPassword = (email: string) =>
+  api.post('/auth/forgot-password', { email }).then(r => r.data as { reset_token: string | null; expires_in_minutes?: number })
+
+export const resetPassword = (token: string, new_password: string) =>
+  api.post('/auth/reset-password', { token, new_password }).then(r => r.data)
+
 /* ── Categories ──────────────────────────────── */
 export const getCategories = () =>
   api.get('/categories/').then(r => r.data)

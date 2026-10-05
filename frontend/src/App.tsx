@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, Component } from 'react'
 import type { ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import LandingPage from './pages/LandingPage'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import CustomisationHub from './pages/CustomisationHub'
 import CategoryPage from './pages/CategoryPage'
 import AdminLayout from './pages/admin/AdminLayout'
@@ -78,6 +80,8 @@ function AppContent() {
 
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/hub" element={<CustomisationHub />} />
         <Route path="/category/:categoryId" element={<CategoryPage />} />
         <Route path="/admin" element={<AdminLayout />}>
