@@ -97,9 +97,7 @@ export default function LandingPage() {
           <p style={{ textAlign: 'right', marginTop: 4, marginBottom: 0 }}>
             <Link
               to="/forgot-password"
-              style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}
-              onMouseOver={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.9)')}
-              onMouseOut={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
+              style={{ fontSize: 13, color: '#fff', textDecoration: 'underline', fontWeight: 600 }}
             >
               Forgot password?
             </Link>
